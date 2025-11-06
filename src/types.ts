@@ -1,8 +1,23 @@
-// FIX: Import React to use React types like React.FC
-import React from 'react';
+import React from "react";
 import { THEMES } from "./constants";
 
-export type ThemeColor = 'blue' | 'pink' | 'green' | 'orange' | 'purple' | 'teal' | 'indigo' | 'red' | 'yellow' | 'wine' | 'bw' | 'blush' | 'sunset' | 'ocean' | 'forest' | 'lavender';
+export type ThemeColor =
+  | "blue"
+  | "pink"
+  | "green"
+  | "orange"
+  | "purple"
+  | "teal"
+  | "indigo"
+  | "red"
+  | "yellow"
+  | "wine"
+  | "bw"
+  | "blush"
+  | "sunset"
+  | "ocean"
+  | "forest"
+  | "lavender";
 
 export type ThemeConfig = {
   name: ThemeColor;
@@ -17,12 +32,12 @@ export type ThemeConfig = {
   accentTextLight: string;
 };
 
-export type ThemeMode = 'light' | 'dark' | 'black';
+export type ThemeMode = "light" | "dark" | "black";
 
-export type Shape = 'flower' | 'circle' | 'heart';
+export type Shape = "flower" | "circle" | "heart";
 
-export type DayStatus = 'sick';
-export type WeatherCondition = 'sunny' | 'cloudy' | 'bad';
+export type DayStatus = "sick";
+export type WeatherCondition = "sunny" | "cloudy" | "bad";
 
 export type DayEntry = {
   hours: number;
@@ -42,7 +57,7 @@ export type DayLog = {
   hours: number;
 };
 
-export type ActivityType = 'visit' | 'study';
+export type ActivityType = "visit" | "study";
 
 export type ActivityItem = {
   id: string;
@@ -64,7 +79,11 @@ export type GroupArrangement = {
   territory?: string;
 };
 
-export type UserRole = 'publisher' | 'aux_pioneer' | 'reg_pioneer' | 'spec_pioneer';
+export type UserRole =
+  | "publisher"
+  | "aux_pioneer"
+  | "reg_pioneer"
+  | "spec_pioneer";
 
 export type SetupData = {
   name: string;
@@ -81,13 +100,17 @@ export type TutorialStep = {
   target: string; // CSS Selector
   title: string;
   content: string;
-  position?: 'top' | 'bottom' | 'left' | 'right';
+  position?: "top" | "bottom" | "left" | "right";
   highlightPadding?: number;
 };
 
 export type TutorialsSeen = {
-  // FIX: Add 'achievements' to the type to match usage in App.tsx
-  [key in 'tracker' | 'activity' | 'history' | 'planning' | 'achievements']?: boolean;
+  [key in
+    | "tracker"
+    | "activity"
+    | "history"
+    | "planning"
+    | "achievements"]?: boolean;
 };
 
 export type Achievement = {
@@ -142,4 +165,9 @@ export type PlanningData = {
   [dateKey: string]: PlanningBlock[];
 };
 
-export type AppView = 'tracker' | 'activity' | 'history' | 'planning' | 'achievements';
+export type AppView =
+  | "tracker"
+  | "activity"
+  | "history"
+  | "planning"
+  | "achievements";
