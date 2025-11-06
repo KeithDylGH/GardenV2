@@ -1824,7 +1824,6 @@ const App: React.FC = () => {
         onClose={() => setSidebarOpen(false)}
         performanceMode={performanceMode}
         onSetPerformanceMode={setPerformanceMode}
-        onShowWelcome={handleShowWelcome}
         onExport={handleExportData}
         onImport={handleImportClick}
         themeColor={displayThemeColor}

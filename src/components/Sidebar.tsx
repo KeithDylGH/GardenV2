@@ -20,7 +20,6 @@ interface SidebarProps {
   onClose: () => void;
   performanceMode: boolean;
   onSetPerformanceMode: (enabled: boolean) => void;
-  onShowWelcome: () => void;
   onExport: () => void;
   onImport: () => void;
   themeColor: ThemeColor;
@@ -41,7 +40,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   onClose,
   performanceMode,
   onSetPerformanceMode,
-  onShowWelcome,
   onExport,
   onImport,
   themeColor,
@@ -224,15 +222,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               <SettingsIcon className={`w-6 h-6 mr-3 ${theme.text}`} />
               <p className="font-semibold text-slate-700 dark:text-slate-200">
                 Configuración
-              </p>
-            </button>
-            <button
-              onClick={onShowWelcome}
-              className="w-full text-left p-3 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50"
-            >
-              <HomeModernIcon className={`w-6 h-6 mr-3 ${theme.text}`} />
-              <p className="font-semibold text-slate-700 dark:text-slate-200">
-                Ver Bienvenida
               </p>
             </button>
           </div>

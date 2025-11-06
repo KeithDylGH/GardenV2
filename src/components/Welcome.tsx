@@ -375,7 +375,7 @@ const RoleButton: React.FC<{
     className={`w-full p-3 rounded-lg text-sm font-semibold transition-colors border-2 ${
       current === value
         ? `${theme.bg} text-white border-transparent`
-        : "bg-white dark:bg-slate-700/50 border-slate-300 dark:border-slate-600"
+        : "bg-slate-800 text-white border-slate-600"
     }`}
   >
     {label}
@@ -556,7 +556,8 @@ const Welcome: React.FC<WelcomeProps> = ({
   const mainTextColor = isEffectiveLight ? "text-slate-900" : "text-white";
   const subTextColor = isEffectiveLight ? "text-slate-600" : "text-slate-400";
   const cardBgColor = isEffectiveLight ? "bg-white/60" : "bg-slate-900/60";
-  const inputBgColor = isEffectiveLight ? "bg-white/80" : "bg-slate-800";
+  // Option C: force dark inputs with white text
+  const inputBgColor = "bg-slate-800";
   const inputBorderColor = isEffectiveLight
     ? "border-slate-300"
     : "border-slate-600";
@@ -818,7 +819,7 @@ const Welcome: React.FC<WelcomeProps> = ({
                                   type="text"
                                   value={name}
                                   onChange={(e) => setName(e.target.value)}
-                                  className={`w-full pl-10 pr-4 py-2 ${inputBgColor} border ${inputBorderColor} rounded-lg focus:ring-2 ${displayTheme.ring} outline-none transition`}
+                                  className={`w-full pl-10 pr-4 py-2 ${inputBgColor} border ${inputBorderColor} rounded-lg focus:ring-2 ${displayTheme.ring} outline-none transition text-white`}
                                 />
                               </div>
                             </div>
@@ -878,7 +879,7 @@ const Welcome: React.FC<WelcomeProps> = ({
                               onChange={(e) =>
                                 setGoal(parseInt(e.target.value, 10))
                               }
-                              className={`w-full mt-2 p-3 text-center text-2xl font-bold ${inputBgColor} border ${inputBorderColor} rounded-lg focus:ring-2 ${displayTheme.ring} outline-none transition`}
+                              className={`w-full mt-2 p-3 text-center text-2xl font-bold ${inputBgColor} border ${inputBorderColor} rounded-lg focus:ring-2 ${displayTheme.ring} outline-none transition text-white`}
                               inputMode="numeric"
                             />
                           </div>
@@ -901,7 +902,7 @@ const Welcome: React.FC<WelcomeProps> = ({
                                   setCurrentMonthHours(e.target.value)
                                 }
                                 placeholder="0:00"
-                                className={`w-full mt-2 p-3 text-center text-xl ${inputBgColor} border ${inputBorderColor} rounded-lg focus:ring-2 ${displayTheme.ring} outline-none transition`}
+                                className={`w-full mt-2 p-3 text-center text-xl ${inputBgColor} border ${inputBorderColor} rounded-lg focus:ring-2 ${displayTheme.ring} outline-none transition text-white`}
                                 inputMode="decimal"
                               />
                             </div>
@@ -953,13 +954,7 @@ const Welcome: React.FC<WelcomeProps> = ({
                                             [dateKey]: e.target.value,
                                           }))
                                         }
-                                        className={`w-24 px-2 py-1 ${
-                                          isEffectiveLight
-                                            ? "bg-slate-200"
-                                            : "bg-slate-700/80"
-                                        } border ${inputBorderColor} rounded-lg text-right focus:ring-2 ${
-                                          displayTheme.ring
-                                        } outline-none transition`}
+                                        className={`w-24 px-2 py-1 ${inputBgColor} border ${inputBorderColor} rounded-lg text-right focus:ring-2 ${displayTheme.ring} outline-none transition text-white`}
                                         inputMode="decimal"
                                       />
                                     </div>
@@ -1126,7 +1121,7 @@ const Welcome: React.FC<WelcomeProps> = ({
                                 Color
                               </label>
                               <div className="grid grid-cols-8 gap-2">
-                                {THEME_LIST.map((themeOption) => (
+                                {THEME_LIST.slice(0, 8).map((themeOption) => (
                                   <button
                                     key={themeOption.name}
                                     onClick={() =>
