@@ -1,0 +1,5 @@
+{
+  "name": "Garden",
+  "description": "Una aplicación para registrar horas de servicio, establecer metas y planificar tu ministerio.",
+  "requestFramePermissions": []
+}
