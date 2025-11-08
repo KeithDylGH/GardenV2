@@ -68,10 +68,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-baseline space-x-2">
         <GardenIcon className={`w-7 h-7 -ml-1 ${theme.text}`} />
         <h2 className="text-2xl font-logotype text-slate-800 dark:text-slate-100">
-          Garden
+          garden
         </h2>
         <p className="text-sm font-semibold text-slate-400 dark:text-slate-500 pt-1">
-          v1.1.0
+          v1.1.2
         </p>
       </div>
 

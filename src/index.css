@@ -6,7 +6,9 @@ body {
   font-family: "Inter", sans-serif;
 }
 .font-logotype {
-  font-family: "Pacifico", cursive;
+  font-family: "Stack Sans Notch", sans-serif;
+  font-weight: bold;
+  font-style: normal;
 }
 /* True Black (OLED) Theme Overrides */
 html.theme-black.dark {

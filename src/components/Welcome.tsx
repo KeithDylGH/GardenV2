@@ -768,7 +768,7 @@ const Welcome: React.FC<WelcomeProps> = ({
                         <h2
                           className={`text-8xl font-logotype ${mainTextColor}`}
                         >
-                          Garden
+                          garden
                         </h2>
                       </div>
                     ) : (

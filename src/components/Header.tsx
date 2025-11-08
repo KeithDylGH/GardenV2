@@ -24,8 +24,8 @@ const Header: React.FC<HeaderProps> = ({
   isSimpleMode,
 }) => {
   const theme = THEMES[themeColor] || THEMES.blue;
-  const useCustomFont = ["Garden"].includes(title);
-  const isTitleClickable = title === "Garden" && !isSimpleMode;
+  const useCustomFont = title.toLowerCase() === "garden";
+  const isTitleClickable = useCustomFont && !isSimpleMode;
 
   const TitleComponent = isTitleClickable ? "button" : "h1";
 
@@ -46,14 +46,16 @@ const Header: React.FC<HeaderProps> = ({
           id="header-title"
           onClick={isTitleClickable ? onTitleClick : undefined}
           className={`absolute left-1/2 -translate-x-1/2 text-3xl text-slate-900 dark:text-slate-100 ${
-            useCustomFont ? "font-logotype pb-1" : "font-bold tracking-tight"
+            useCustomFont
+              ? "font-logotype font-bold lowercase pb-1"
+              : "font-bold tracking-tight"
           } ${
             isTitleClickable
               ? "cursor-pointer hover:opacity-80 transition-opacity active:opacity-75"
               : ""
           }`}
         >
-          {title}
+          {useCustomFont ? "garden" : title}
         </TitleComponent>
 
         <button
