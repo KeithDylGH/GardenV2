@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ThemeColor } from "../types";
+import { ThemeColor, ThemeMode } from "../types";
 import { THEMES } from "../constants";
 import { hoursToHHMM } from "../utils";
 import { PlayIcon } from "./icons/PlayIcon";
@@ -20,6 +20,8 @@ interface TimerProps {
   notificationPermission: NotificationPermission;
   onRequestNotificationPermission: () => Promise<void>;
   performanceMode: boolean;
+  isSimpleMode: boolean;
+  themeMode: ThemeMode;
 }
 
 const TIMER_STORAGE = {
@@ -35,6 +37,8 @@ const Timer: React.FC<TimerProps> = ({
   notificationPermission,
   onRequestNotificationPermission,
   performanceMode,
+  isSimpleMode = false,
+  themeMode = "dark",
 }) => {
   const [time, setTime] = useState(0); // in seconds
   const [isActive, setIsActive] = useState(false);
@@ -189,6 +193,9 @@ const Timer: React.FC<TimerProps> = ({
     )}:${String(seconds).padStart(2, "0")}`;
   };
 
+  const checkIconColorClass =
+    isSimpleMode && themeMode === "light" ? "text-slate-900" : "";
+
   return (
     <div className="flex flex-col items-center w-full">
       <p className="text-4xl font-mono font-bold text-slate-800 dark:text-slate-100 tracking-tight mb-4">
@@ -235,7 +242,7 @@ const Timer: React.FC<TimerProps> = ({
             }`}
             aria-label="Finalizar y agregar horas"
           >
-            <CheckIcon className="w-7 h-7" />
+            <CheckIcon className={`w-7 h-7 ${checkIconColorClass}`} />
           </button>
         ) : (
           <div className="w-14 h-14" />

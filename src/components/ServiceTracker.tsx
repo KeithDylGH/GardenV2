@@ -9,6 +9,7 @@ import {
   HistoryLog,
   ActivityItem,
   UserRole,
+  ThemeMode,
 } from "../types";
 import { THEMES } from "../constants";
 import { HelpIcon } from "./icons/HelpIcon";
@@ -46,6 +47,7 @@ interface ServiceTrackerProps {
   archives: Record<string, HistoryLog>;
   currentServiceYear: string;
   activities: ActivityItem[];
+  themeMode: ThemeMode;
   isSimpleMode: boolean;
 }
 
@@ -74,6 +76,7 @@ const ServiceTracker: React.FC<ServiceTrackerProps> = ({
   archives,
   currentServiceYear,
   activities,
+  themeMode,
   isSimpleMode,
 }) => {
   const theme = THEMES[themeColor] || THEMES.blue;
@@ -300,6 +303,8 @@ const ServiceTracker: React.FC<ServiceTrackerProps> = ({
               notificationPermission={notificationPermission}
               onRequestNotificationPermission={onRequestNotificationPermission}
               performanceMode={performanceMode}
+              isSimpleMode={isSimpleMode}
+              themeMode={themeMode}
             />
           )}
         </div>

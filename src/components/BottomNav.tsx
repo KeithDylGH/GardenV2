@@ -4,7 +4,7 @@ import { CalendarIcon } from "./icons/CalendarIcon";
 import { HomeIcon } from "./icons/HomeIcon";
 import { ListBulletIcon } from "./icons/ListBulletIcon";
 import { ClockIcon } from "./icons/ClockIcon";
-import { ThemeColor } from "../types";
+import { ThemeColor, ThemeMode } from "../types";
 import { THEMES } from "../constants";
 
 type ActiveView =
@@ -20,6 +20,7 @@ interface BottomNavProps {
   themeColor: ThemeColor;
   performanceMode?: boolean;
   isSimpleMode?: boolean;
+  themeMode?: ThemeMode;
 }
 
 const BottomNav: React.FC<BottomNavProps> = ({
@@ -28,8 +29,12 @@ const BottomNav: React.FC<BottomNavProps> = ({
   themeColor,
   performanceMode = false,
   isSimpleMode = false,
+  themeMode = "dark",
 }) => {
   const theme = THEMES[themeColor] || THEMES.blue;
+
+  const dynamicTextColor =
+    isSimpleMode && themeMode === "light" ? "text-slate-900" : theme.text;
 
   const allNavItems = [
     { view: "tracker", hash: "#/", Icon: HomeIcon, label: "Informe" },
@@ -68,9 +73,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
                 <button
                   id="add-hours-button"
                   onClick={onAddClick}
-                  className={`w-16 h-16 rounded-full flex items-center justify-center bg-gray-50 dark:bg-slate-900 shadow-lg transition-transform z-20 ${
-                    theme.text
-                  } ${
+                  className={`w-16 h-16 rounded-full flex items-center justify-center bg-gray-50 dark:bg-slate-900 shadow-lg transition-transform z-20 ${dynamicTextColor} ${
                     !performanceMode &&
                     "transform hover:scale-105 active:scale-100"
                   }`}
@@ -99,7 +102,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
                 onClick={() => (window.location.hash = item.hash)}
                 className={`flex flex-col items-center justify-center space-y-1 w-full h-full z-10 ${
                   isActive
-                    ? theme.text
+                    ? dynamicTextColor
                     : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100"
                 }`}
                 aria-label={item.label}

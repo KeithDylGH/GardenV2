@@ -9,7 +9,7 @@ import {
 import { THEMES } from "../constants";
 import { hoursToHHMM, formatDateKey } from "../utils";
 import { BookOpenIcon } from "./icons/BookOpenIcon";
-import { BuildingOfficeIcon } from "./icons/BuildingOfficeIcon";
+import { VestIcon } from "./icons/VestIcon";
 import { ClipboardDocumentListIcon } from "./icons/ClipboardDocumentListIcon";
 
 interface CalendarGridProps {
@@ -205,7 +205,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             meetingDays.includes(date.getDay());
 
           const dayClasses = [
-            "relative h-16 flex flex-col items-center justify-center rounded-lg",
+            "relative h-16 flex flex-col items-center justify-center rounded-lg p-1",
           ];
 
           if (isCurrentMonth && !isSummaryMonth)
@@ -264,9 +264,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
               {hasRecurringActivity && !isSummaryMonth && !isPrivacyMode && (
                 <BookOpenIcon className="absolute top-1.5 left-1.5 w-4 h-4 text-slate-500 dark:text-slate-400" />
               )}
-              {ldcHours > 0 && !isSummaryMonth && !isPrivacyMode && (
-                <BuildingOfficeIcon className="absolute bottom-1.5 right-1.5 w-4 h-4 text-slate-500 dark:text-slate-400" />
-              )}
 
               <span
                 className={`text-sm font-semibold flex items-center justify-center ${
@@ -297,14 +294,19 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                     {isPrivacyMode ? "0:00" : hoursToHHMM(hours)}
                   </span>
                 )}
-                {ldcHours > 0 && isCurrentMonth && !isSummaryMonth && (
-                  <span
-                    className={`text-xs font-bold leading-tight ${theme.text}`}
-                  >
-                    {isPrivacyMode ? "0:00" : hoursToHHMM(ldcHours)}
-                  </span>
-                )}
               </div>
+              {ldcHours > 0 && isCurrentMonth && !isSummaryMonth && (
+                <div
+                  className={`absolute bottom-1 right-1 flex items-center gap-0.5 ${privacyBlur}`}
+                >
+                  <VestIcon className={`w-3 h-3 ${theme.text}`} />
+                  <span
+                    className={`text-[10px] font-bold leading-tight ${theme.text}`}
+                  >
+                    {isPrivacyMode ? "0" : ldcHours}
+                  </span>
+                </div>
+              )}
             </button>
           );
         })}

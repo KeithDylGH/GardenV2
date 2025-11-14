@@ -1,6 +1,6 @@
 import React from "react";
 import { GardenIcon } from "./icons/GardenIcon";
-import { ThemeColor } from "../types";
+import { ThemeColor, ThemeMode } from "../types";
 import { THEMES } from "../constants";
 import { Bars3Icon } from "./icons/Bars3Icon";
 
@@ -12,6 +12,7 @@ interface HeaderProps {
   onMenuClick: () => void;
   onTitleClick: () => void;
   isSimpleMode: boolean;
+  themeMode: ThemeMode;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -22,12 +23,16 @@ const Header: React.FC<HeaderProps> = ({
   onMenuClick,
   onTitleClick,
   isSimpleMode,
+  themeMode,
 }) => {
   const theme = THEMES[themeColor] || THEMES.blue;
   const useCustomFont = title.toLowerCase() === "garden";
   const isTitleClickable = useCustomFont && !isSimpleMode;
 
   const TitleComponent = isTitleClickable ? "button" : "h1";
+
+  const dynamicTextColor =
+    isSimpleMode && themeMode === "light" ? "text-slate-900" : theme.text;
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-gray-100/80 dark:bg-slate-900/80 backdrop-blur-lg z-30 border-b border-slate-200/80 dark:border-slate-700/80">
@@ -65,11 +70,13 @@ const Header: React.FC<HeaderProps> = ({
           aria-label="Ver detalles de la racha"
         >
           {streak > 0 && (
-            <span className={`text-2xl font-bold ${theme.text} animate-fadeIn`}>
+            <span
+              className={`text-2xl font-bold ${dynamicTextColor} animate-fadeIn`}
+            >
               {streak}
             </span>
           )}
-          <GardenIcon className={`w-8 h-8 ${theme.text}`} />
+          <GardenIcon className={`w-8 h-8 ${dynamicTextColor}`} />
         </button>
       </div>
     </header>

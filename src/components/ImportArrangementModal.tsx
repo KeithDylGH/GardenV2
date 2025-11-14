@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { GoogleGenAI, Type } from "@google/genai";
 import { ThemeColor, GroupArrangement } from "../types";
 import { THEMES } from "../constants";
@@ -31,14 +31,15 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
     GroupArrangement[] | null
   >(null);
   const theme = THEMES[themeColor] || THEMES.blue;
+  const processingCancelledRef = useRef(false);
 
-  // This effect will reset the entire modal state when it's closed,
-  // making it clean for the next time it's opened.
   useEffect(() => {
     if (isOpen) {
       setHasBeenOpened(true);
     } else {
-      // Use a timeout to allow the closing animation to finish before resetting state.
+      if (isLoading) {
+        processingCancelledRef.current = true;
+      }
       setTimeout(() => {
         setText("");
         setProcessedArrangements(null);
@@ -46,7 +47,7 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
         setIsLoading(false);
       }, 300);
     }
-  }, [isOpen]);
+  }, [isOpen, isLoading]);
 
   const handleProcess = async () => {
     if (!isOnline) {
@@ -59,80 +60,101 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
     }
     setIsLoading(true);
     setError(null);
-    setProcessedArrangements(null); // Clear previous results
+    setProcessedArrangements(null);
+    processingCancelledRef.current = false;
 
-    try {
-      const ai = new GoogleGenAI({
-        apiKey: import.meta.env.VITE_GEMINI_API_KEY as string,
-      });
+    while (!processingCancelledRef.current) {
+      try {
+        const ai = new GoogleGenAI({
+          apiKey: import.meta.env.VITE_GEMINI_API_KEY as string,
+        });
 
-      const responseSchema = {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            groupNumber: {
-              type: Type.STRING,
-              description:
-                'El número o nombre del grupo. Ej: "Grupo 1", "Grupo del Martes".',
-            },
-            conductor: {
-              type: Type.STRING,
-              description:
-                'El nombre del conductor del grupo. Ej: "Hno. Pérez".',
-            },
-            time: {
-              type: Type.STRING,
-              description: 'La hora de la reunión. Ej: "9:00 AM".',
-            },
-            location: {
-              type: Type.STRING,
-              description:
-                'El lugar de encuentro. Ej: "Salón del Reino", "Casa de la Familia Smith".',
-            },
-            territory: {
-              type: Type.STRING,
-              description:
-                'El territorio o área asignada para predicar. Ej: "Centro", "Calles 5 y 6".',
+        const responseSchema = {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              groupNumber: {
+                type: Type.STRING,
+                description:
+                  'El número o nombre del grupo. Ej: "Grupo 1", "Grupo del Martes".',
+              },
+              conductor: {
+                type: Type.STRING,
+                description:
+                  'El nombre del conductor del grupo. Ej: "Hno. Pérez".',
+              },
+              time: {
+                type: Type.STRING,
+                description: 'La hora de la reunión. Ej: "9:00 AM".',
+              },
+              location: {
+                type: Type.STRING,
+                description:
+                  'El lugar de encuentro. Ej: "Salón del Reino", "Casa de la Familia Smith".',
+              },
+              territory: {
+                type: Type.STRING,
+                description:
+                  'El territorio o área asignada para predicar. Ej: "Centro", "Calles 5 y 6".',
+              },
             },
           },
-        },
-      };
+        };
 
-      const prompt = `
-        Eres un asistente experto en organizar información para Testigos de Jehová.
-        Analiza el siguiente texto que contiene los arreglos de predicación de una congregación.
-        Extrae la información para cada grupo y devuélvela estrictamente en el formato JSON solicitado.
-        Si alguna información (conductor, hora, lugar, territorio) no está presente para un grupo, simplemente omite esa clave en el JSON.
-        El texto a analizar es:
-        ---
-        ${text}
-        ---
-      `;
+        const prompt = `
+          Eres un asistente experto en organizar información para Testigos de Jehová.
+          Analiza el siguiente texto que contiene los arreglos de predicación de una congregación.
+          Extrae la información para cada grupo y devuélvela estrictamente en el formato JSON solicitado.
+          Si alguna información (conductor, hora, lugar, territorio) no está presente para un grupo, simplemente omite esa clave en el JSON.
+          El texto a analizar es:
+          ---
+          ${text}
+          ---
+        `;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema,
-        },
-      });
+        const response = await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema,
+          },
+        });
 
-      const jsonString = response.text;
-      const parsedData = JSON.parse(jsonString);
+        if (processingCancelledRef.current) {
+          break;
+        }
 
-      if (Array.isArray(parsedData)) {
-        setProcessedArrangements(parsedData);
-      } else {
-        throw new Error("La respuesta de la IA no fue un arreglo de grupos.");
+        let jsonString = response.text.trim();
+
+        if (jsonString.startsWith("```json") && jsonString.endsWith("```")) {
+          jsonString = jsonString.slice(7, -3).trim();
+        } else if (jsonString.startsWith("```") && jsonString.endsWith("```")) {
+          jsonString = jsonString.slice(3, -3).trim();
+        }
+
+        const parsedData = JSON.parse(jsonString);
+
+        if (Array.isArray(parsedData)) {
+          setProcessedArrangements(parsedData);
+          setIsLoading(false);
+          return; // Success
+        } else {
+          throw new Error("La respuesta de la IA no fue un arreglo de grupos.");
+        }
+      } catch (e) {
+        console.error(`Processing attempt failed:`, e);
+        if (processingCancelledRef.current) {
+          break;
+        }
+        // Wait 1 second before retrying
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
-    } catch (e) {
-      console.error("Error processing text with Gemini API", e);
-      setError("No se pudo procesar el texto. Por favor, inténtalo de nuevo.");
-    } finally {
-      setIsLoading(false);
     }
+
+    // Reached only on cancellation
+    setIsLoading(false);
   };
 
   const handleConfirmAndClose = () => {
@@ -145,6 +167,11 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
     setProcessedArrangements(null);
     setText("");
     setError(null);
+  };
+
+  const handleCancelProcessing = () => {
+    processingCancelledRef.current = true;
+    setIsLoading(false);
   };
 
   return (
@@ -283,7 +310,15 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
                     </>
                   )}
                 </button>
-                {!isLoading && (
+                {isLoading ? (
+                  <button
+                    type="button"
+                    onClick={handleCancelProcessing}
+                    className="w-full px-6 py-2 rounded-lg text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors animate-fadeIn"
+                  >
+                    Cancelar
+                  </button>
+                ) : (
                   <button
                     type="button"
                     onClick={onClose}

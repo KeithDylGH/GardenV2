@@ -1,5 +1,10 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { ActivityItem, ThemeColor, GroupArrangement } from "../types";
+import {
+  ActivityItem,
+  ThemeColor,
+  GroupArrangement,
+  ThemeMode,
+} from "../types";
 import { THEMES } from "../constants";
 import ActivityCard from "./ActivityCard";
 import ImportArrangementModal from "./ImportArrangementModal";
@@ -22,6 +27,8 @@ interface ActivityViewProps {
   isPrivacyMode: boolean;
   notes: string;
   onSaveNotes: (notes: string) => void;
+  isSimpleMode: boolean;
+  themeMode: ThemeMode;
 }
 
 type ActivityTab = "groups" | "visits" | "studies" | "notes";
@@ -39,6 +46,8 @@ const ActivityView: React.FC<ActivityViewProps> = ({
   isPrivacyMode,
   notes,
   onSaveNotes,
+  isSimpleMode,
+  themeMode,
 }) => {
   const [activeTab, setActiveTab] = useState<ActivityTab>("groups");
   const [isImportModalOpen, setImportModalOpen] = useState(false);
@@ -85,6 +94,9 @@ const ActivityView: React.FC<ActivityViewProps> = ({
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [activities, activeTab]);
 
+  const dynamicTextColor =
+    isSimpleMode && themeMode === "light" ? "text-slate-900" : theme.text;
+
   const tabs: { id: ActivityTab; label: string }[] = [
     { id: "groups", label: "Grupos" },
     { id: "visits", label: "Revisitas" },
@@ -113,7 +125,7 @@ const ActivityView: React.FC<ActivityViewProps> = ({
               <button
                 id="import-groups-button"
                 onClick={() => setImportModalOpen(true)}
-                className={`flex items-center gap-2 text-sm font-semibold px-3 py-1 rounded-lg ${theme.text} ${theme.bg} bg-opacity-10 hover:bg-opacity-20`}
+                className={`flex items-center gap-2 text-sm font-semibold px-3 py-1 rounded-lg ${dynamicTextColor} ${theme.bg} bg-opacity-10 hover:bg-opacity-20`}
               >
                 <ClipboardPasteIcon className="w-4 h-4" />
                 Importar Nuevo
@@ -214,7 +226,7 @@ const ActivityView: React.FC<ActivityViewProps> = ({
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 py-2 text-sm font-semibold rounded-md ${
                 activeTab === tab.id
-                  ? `bg-white dark:bg-slate-700 ${theme.text} dark:${theme.accentText} shadow`
+                  ? `bg-white dark:bg-slate-700 ${dynamicTextColor} dark:${theme.accentText} shadow`
                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
               }`}
             >
@@ -229,7 +241,7 @@ const ActivityView: React.FC<ActivityViewProps> = ({
           <div
             className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${theme.bg} bg-opacity-10`}
           >
-            <ArrowUturnLeftIcon className={`w-6 h-6 ${theme.text}`} />
+            <ArrowUturnLeftIcon className={`w-6 h-6 ${dynamicTextColor}`} />
           </div>
           <div>
             <p className="text-3xl font-bold text-slate-800 dark:text-slate-100">
@@ -244,7 +256,7 @@ const ActivityView: React.FC<ActivityViewProps> = ({
           <div
             className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${theme.bg} bg-opacity-10`}
           >
-            <AcademicCapIcon className={`w-6 h-6 ${theme.text}`} />
+            <AcademicCapIcon className={`w-6 h-6 ${dynamicTextColor}`} />
           </div>
           <div>
             <p className="text-3xl font-bold text-slate-800 dark:text-slate-100">

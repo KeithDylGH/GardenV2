@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ThemeColor, Shape, ThemeMode } from "../types";
 import { THEME_LIST, THEMES } from "../constants";
-import { UserIcon } from "./icons/UserIcon";
 import { FlowerIcon } from "./icons/FlowerIcon";
 import { CircleIcon } from "./icons/CircleIcon";
 import { HeartIcon } from "./icons/HeartIcon";
@@ -16,18 +15,8 @@ import { HexagonIcon } from "./icons/HexagonIcon";
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (
-    name: string,
-    goal: number,
-    date: Date,
-    shape: Shape,
-    color: ThemeColor,
-    mode: ThemeMode
-  ) => void;
+  onSave: (shape: Shape, color: ThemeColor, mode: ThemeMode) => void;
   onModeChange: (mode: ThemeMode) => void;
-  currentName: string;
-  currentGoal: number;
-  currentDate: Date;
   currentShape: Shape;
   currentColor: ThemeColor;
   currentThemeMode: ThemeMode;
@@ -39,17 +28,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
   onSave,
   onModeChange,
-  currentName,
-  currentGoal,
-  currentDate,
   currentShape,
   currentColor,
   currentThemeMode,
   performanceMode,
 }) => {
-  const [name, setName] = useState("");
-  const [goal, setGoal] = useState("");
-  const [date, setDate] = useState("");
   const [shape, setShape] = useState<Shape>("flower");
   const [color, setColor] = useState<ThemeColor>("blue");
   const [mode, setMode] = useState<ThemeMode>("light");
@@ -64,36 +47,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setName(currentName);
-      setGoal(String(currentGoal));
-      setDate(currentDate.toISOString().split("T")[0]);
       setShape(currentShape);
       setColor(currentColor);
       setMode(currentThemeMode);
     }
-  }, [
-    isOpen,
-    currentName,
-    currentGoal,
-    currentDate,
-    currentShape,
-    currentColor,
-    currentThemeMode,
-  ]);
+  }, [isOpen, currentShape, currentColor, currentThemeMode]);
 
   const handleSave = () => {
-    const goalValue = parseInt(goal, 10);
-    const dateParts = date.split("-").map(Number);
-    const dateValue = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-
-    if (
-      !isNaN(goalValue) &&
-      goalValue > 0 &&
-      date &&
-      !isNaN(dateValue.getTime())
-    ) {
-      onSave(name, goalValue, dateValue, shape, color, mode);
-    }
+    onSave(shape, color, mode);
   };
 
   const handleColorSelect = (selectedColor: ThemeColor) => {
@@ -151,75 +112,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             id="settings-title"
             className="text-xl font-bold text-slate-900 dark:text-slate-100 mx-auto"
           >
-            Configuración
+            Configuración de Apariencia
           </h2>
         </header>
 
         <main className="flex-grow p-4 overflow-y-auto">
           <div className="space-y-6 bg-white dark:bg-slate-800 p-4 rounded-xl">
-            {/* Name */}
-            <div>
-              <label
-                htmlFor="name-input"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-              >
-                Tu Nombre
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                  <UserIcon className="h-5 w-5 text-slate-400" />
-                </span>
-                <input
-                  id="name-input"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Ej: Precursor"
-                  className={`w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${theme.ring} outline-none`}
-                />
-              </div>
-            </div>
-
-            {/* Goal and Date */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="goal-input"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-                >
-                  Meta (hrs)
-                </label>
-                <input
-                  id="goal-input"
-                  type="number"
-                  min="1"
-                  value={goal}
-                  onChange={(e) => setGoal(e.target.value)}
-                  placeholder="Ej: 50"
-                  className={`w-full px-4 py-2 bg-gray-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${theme.ring} outline-none`}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="date-input"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-                >
-                  Mes
-                </label>
-                <input
-                  id="date-input"
-                  type="date"
-                  value={date}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      setDate(e.target.value);
-                    }
-                  }}
-                  className={`w-full px-4 py-2 bg-gray-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${theme.ring} outline-none`}
-                />
-              </div>
-            </div>
-
             {/* Theme Mode */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">

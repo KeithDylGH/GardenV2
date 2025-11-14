@@ -158,6 +158,7 @@ export type AppState = {
   planningData?: PlanningData;
   notes?: string;
   unlockedAchievements?: UnlockedAchievements;
+  profilePicture?: string | null;
 };
 
 export type PlanningBlock = {

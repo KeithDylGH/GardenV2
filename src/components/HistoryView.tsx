@@ -21,7 +21,7 @@ import { SunIcon } from "./icons/SunIcon";
 import { CloudIcon } from "./icons/CloudIcon";
 import { RainIcon } from "./icons/RainIcon";
 import { InformationCircleIcon } from "./icons/InformationCircleIcon";
-import { BuildingOfficeIcon } from "./icons/BuildingOfficeIcon";
+import { VestIcon } from "./icons/VestIcon";
 
 interface HistoryViewProps {
   archives: Record<string, HistoryLog>;
@@ -266,7 +266,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
           />
           {totalLdcHours > 0 && (
             <Stat
-              Icon={BuildingOfficeIcon}
+              Icon={VestIcon}
               count={hoursToHHMM(totalLdcHours)}
               label="LDC"
               colorClass={theme.text}

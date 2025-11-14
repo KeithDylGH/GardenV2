@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from "react";
 import ToggleSwitch from "./ToggleSwitch";
-import { ThemeColor, UserRole } from "../types";
+import { ThemeColor, UserRole, ThemeMode } from "../types";
 import { THEMES } from "../constants";
 import { HeartIcon } from "./icons/HeartIcon";
 import { ChatBubbleBottomCenterTextIcon } from "./icons/ChatBubbleBottomCenterTextIcon";
 import { BoltIcon } from "./icons/BoltIcon";
-import { GardenIcon } from "./icons/GardenIcon";
 import { ArrowDownTrayIcon } from "./icons/ArrowDownTrayIcon";
 import { ArrowUpTrayIcon } from "./icons/ArrowUpTrayIcon";
 import { SettingsIcon } from "./icons/SettingsIcon";
 import { StarIcon } from "./icons/StarIcon";
 import { TrophyIcon } from "./icons/TrophyIcon";
 import { FaceSmileIcon } from "./icons/FaceSmileIcon";
+import { UserIcon } from "./icons/UserIcon";
+import { GardenIcon } from "./icons/GardenIcon";
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  userName: string;
+  profilePicture: string | null;
+  onProfileClick: () => void;
   performanceMode: boolean;
   onSetPerformanceMode: (enabled: boolean) => void;
   onExport: () => void;
@@ -27,11 +31,15 @@ interface SidebarProps {
   onAchievementsClick: () => void;
   isSimpleMode: boolean;
   onSetSimpleMode: (enabled: boolean) => void;
+  themeMode: ThemeMode;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   isOpen,
   onClose,
+  userName,
+  profilePicture,
+  onProfileClick,
   performanceMode,
   onSetPerformanceMode,
   onExport,
@@ -43,6 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onAchievementsClick,
   isSimpleMode,
   onSetSimpleMode,
+  themeMode,
 }) => {
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
   const theme = THEMES[themeColor] || THEMES.blue;
@@ -53,17 +62,43 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [isOpen]);
 
+  const iconAndTextColorClass =
+    isSimpleMode && themeMode === "light" ? "text-slate-900" : theme.text;
+
   const sidebarContent = (
     <>
-      <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-baseline space-x-2">
-        <GardenIcon className={`w-7 h-7 -ml-1 ${theme.text}`} />
-        <h2 className="text-2xl font-logotype font-bold lowercase text-slate-800 dark:text-slate-100">
-          garden
-        </h2>
-        <p className="text-sm font-semibold text-slate-400 dark:text-slate-500 pt-1">
-          v1.2
-        </p>
-      </div>
+      <button
+        onClick={onProfileClick}
+        className="w-full text-left p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors"
+      >
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
+            {profilePicture ? (
+              <img
+                src={profilePicture}
+                alt="Foto de perfil"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <UserIcon className="w-7 h-7 text-slate-500 dark:text-slate-400" />
+            )}
+          </div>
+          <div>
+            <p className="font-bold text-lg text-slate-800 dark:text-slate-100">
+              {userName}
+            </p>
+            <p className={`text-sm font-semibold ${iconAndTextColorClass}`}>
+              Ver Perfil
+            </p>
+          </div>
+        </div>
+        <div className="text-right">
+          <GardenIcon className={`w-8 h-8 ${iconAndTextColorClass}`} />
+          <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-1">
+            V1.2
+          </p>
+        </div>
+      </button>
 
       <div className="p-4 flex-grow overflow-y-auto">
         {/* Data Management */}
@@ -76,7 +111,9 @@ const Sidebar: React.FC<SidebarProps> = ({
               onClick={onExport}
               className="w-full text-left p-3 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50"
             >
-              <ArrowDownTrayIcon className={`w-6 h-6 mr-3 ${theme.text}`} />
+              <ArrowUpTrayIcon
+                className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`}
+              />
               <p className="font-semibold text-slate-700 dark:text-slate-200">
                 Exportar Datos
               </p>
@@ -85,7 +122,9 @@ const Sidebar: React.FC<SidebarProps> = ({
               onClick={onImport}
               className="w-full text-left p-3 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50"
             >
-              <ArrowUpTrayIcon className={`w-6 h-6 mr-3 ${theme.text}`} />
+              <ArrowDownTrayIcon
+                className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`}
+              />
               <p className="font-semibold text-slate-700 dark:text-slate-200">
                 Importar Datos
               </p>
@@ -101,7 +140,9 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="bg-white dark:bg-slate-800 rounded-lg divide-y divide-slate-200 dark:divide-slate-700">
             <div className="p-3 flex items-center justify-between">
               <div className="flex items-center">
-                <FaceSmileIcon className={`w-6 h-6 mr-3 ${theme.text}`} />
+                <FaceSmileIcon
+                  className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`}
+                />
                 <div>
                   <p className="font-semibold text-slate-700 dark:text-slate-200">
                     Modo Simplificado
@@ -120,7 +161,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             {!isSimpleMode && (
               <div className="p-3 flex items-center justify-between">
                 <div className="flex items-center">
-                  <BoltIcon className={`w-6 h-6 mr-3 ${theme.text}`} />
+                  <BoltIcon
+                    className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`}
+                  />
                   <div>
                     <p className="font-semibold text-slate-700 dark:text-slate-200">
                       Modo Rendimiento
@@ -151,7 +194,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onClick={onPioneerUpgradeClick}
                 className="w-full text-left p-3 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50"
               >
-                <StarIcon className={`w-6 h-6 mr-3 ${theme.text}`} />
+                <StarIcon className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`} />
                 <p className="font-semibold text-slate-700 dark:text-slate-200">
                   Precursorado
                 </p>
@@ -162,7 +205,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onClick={onAchievementsClick}
                 className="w-full text-left p-3 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50"
               >
-                <TrophyIcon className={`w-6 h-6 mr-3 ${theme.text}`} />
+                <TrophyIcon
+                  className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`}
+                />
                 <p className="font-semibold text-slate-700 dark:text-slate-200">
                   Logros
                 </p>
@@ -172,9 +217,11 @@ const Sidebar: React.FC<SidebarProps> = ({
               onClick={onSettingsClick}
               className="w-full text-left p-3 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50"
             >
-              <SettingsIcon className={`w-6 h-6 mr-3 ${theme.text}`} />
+              <SettingsIcon
+                className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`}
+              />
               <p className="font-semibold text-slate-700 dark:text-slate-200">
-                Configuración
+                Apariencia
               </p>
             </button>
           </div>
@@ -186,7 +233,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             Créditos
           </h3>
           <div className="flex items-center p-3 bg-white dark:bg-slate-800 rounded-lg">
-            <HeartIcon className={`w-6 h-6 mr-3 ${theme.text}`} />
+            <HeartIcon className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`} />
             <p className="font-semibold text-slate-700 dark:text-slate-200">
               Desarrollado con amor
             </p>
@@ -203,7 +250,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             className="w-full text-left p-3 flex items-center bg-white dark:bg-slate-800 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50"
           >
             <ChatBubbleBottomCenterTextIcon
-              className={`w-6 h-6 mr-3 ${theme.text}`}
+              className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`}
             />
             <div>
               <p className="font-semibold text-slate-700 dark:text-slate-200">

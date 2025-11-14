@@ -14,6 +14,7 @@ interface StreakModalProps {
   protectedDay: number | null;
   onSaveProtectedDay: (day: number | null) => void;
   protectedDaySetDate: string | null;
+  meetingDays: number[];
   performanceMode: boolean;
 }
 
@@ -33,6 +34,7 @@ const StreakModal: React.FC<StreakModalProps> = ({
   protectedDay,
   onSaveProtectedDay,
   protectedDaySetDate,
+  meetingDays,
   performanceMode,
 }) => {
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
@@ -66,7 +68,7 @@ const StreakModal: React.FC<StreakModalProps> = ({
   }, [protectedDaySetDate]);
 
   const handleDayClick = (dayValue: number) => {
-    if (isLocked) return;
+    if (isLocked || meetingDays.includes(dayValue)) return;
     if (protectedDay === dayValue) {
       onSaveProtectedDay(null); // Deseleccionar
     } else {
@@ -134,20 +136,35 @@ const StreakModal: React.FC<StreakModalProps> = ({
                   Elige un día para proteger tu racha, además del fin de semana.
                 </p>
                 <div className="flex justify-center gap-2">
-                  {weekDays.map((day) => (
-                    <button
-                      key={day.value}
-                      onClick={() => handleDayClick(day.value)}
-                      disabled={isLocked}
-                      className={`w-10 h-10 rounded-full font-bold text-sm flex items-center justify-center border-2 transition-all ${
-                        protectedDay === day.value
-                          ? `${theme.bg} text-white border-transparent shadow-md`
-                          : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-transparent hover:border-slate-400"
-                      } ${isLocked ? "cursor-not-allowed opacity-60" : ""}`}
-                    >
-                      {day.label}
-                    </button>
-                  ))}
+                  {weekDays.map((day) => {
+                    const isMeetingDay = meetingDays.includes(day.value);
+                    const isSelected = protectedDay === day.value;
+
+                    let buttonClass =
+                      "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-transparent hover:border-slate-400";
+                    if (isMeetingDay) {
+                      buttonClass =
+                        "bg-slate-300/50 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 cursor-not-allowed";
+                    } else if (isSelected) {
+                      buttonClass = `${theme.bg} text-white border-transparent shadow-md`;
+                    }
+
+                    return (
+                      <button
+                        key={day.value}
+                        onClick={() => handleDayClick(day.value)}
+                        disabled={isLocked || isMeetingDay}
+                        title={isMeetingDay ? "Este es un día de reunión" : ""}
+                        className={`w-10 h-10 rounded-full font-bold text-sm flex items-center justify-center border-2 transition-all ${buttonClass} ${
+                          isLocked && !isMeetingDay
+                            ? "cursor-not-allowed opacity-60"
+                            : ""
+                        }`}
+                      >
+                        {day.label}
+                      </button>
+                    );
+                  })}
                 </div>
                 {isLocked && canChangeUntil && (
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">

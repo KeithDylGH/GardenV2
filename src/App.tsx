@@ -13,6 +13,7 @@ import ActivityView from "./components/ActivityView";
 import PlanningView from "./components/PlanningView";
 import AddHoursModal from "./components/AddHoursModal";
 import SettingsModal from "./components/SettingsModal";
+import ProfileModal from "./components/ProfileModal";
 import HelpModal from "./components/HelpModal";
 import OfflineToast from "./components/OfflineToast";
 import Welcome from "./components/Welcome";
@@ -350,6 +351,7 @@ const getInitialState = (): AppState | null => {
     if (!parsed.meetingDays) parsed.meetingDays = [];
     if (!parsed.protectedDaySetDate) parsed.protectedDaySetDate = null;
     if (!parsed.unlockedAchievements) parsed.unlockedAchievements = {};
+    if (!parsed.profilePicture) parsed.profilePicture = null;
 
     // Remove legacy streak restore fields
     delete parsed.streakRestores;
@@ -424,6 +426,9 @@ const App: React.FC = () => {
   );
   const [userName, setUserName] = useState(
     initialState?.userName ?? "Precursor"
+  );
+  const [profilePicture, setProfilePicture] = useState<string | null>(
+    initialState?.profilePicture ?? null
   );
   const [goal, setGoal] = useState(initialState?.goal ?? 50);
   const [userRole, setUserRole] = useState<UserRole>(
@@ -505,6 +510,7 @@ const App: React.FC = () => {
     null
   );
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isHelpModalOpen, setHelpModalOpen] = useState(false);
   const [isOfflineReady, setIsOfflineReady] = useState(false);
   const [notificationPermission, setNotificationPermission] =
@@ -737,6 +743,7 @@ const App: React.FC = () => {
       currentHours,
       currentLdcHours,
       userName,
+      profilePicture,
       goal,
       userRole,
       currentDate: currentDate.toISOString(),
@@ -760,6 +767,7 @@ const App: React.FC = () => {
       currentHours,
       currentLdcHours,
       userName,
+      profilePicture,
       goal,
       userRole,
       currentDate,
@@ -1404,20 +1412,34 @@ const App: React.FC = () => {
   };
 
   const handleSaveSettings = (
-    newName: string,
-    newGoal: number,
-    newDate: Date,
     newShape: Shape,
     newColor: ThemeColor,
     newMode: ThemeMode
   ) => {
-    setUserName(newName);
-    setGoal(newGoal);
-    setCurrentDate(newDate);
     setProgressShape(newShape);
     setThemeColor(newColor);
     setThemeMode(newMode);
     setIsSettingsOpen(false);
+  };
+
+  const handleSaveProfile = (
+    newName: string,
+    newGoal: number,
+    newProfilePic: string | null,
+    newMeetingDays: number[]
+  ) => {
+    setUserName(newName);
+    setGoal(newGoal);
+    setProfilePicture(newProfilePic);
+    setMeetingDays(newMeetingDays);
+
+    // If the currently protected day is now a meeting day, unset it.
+    if (protectedDay !== null && newMeetingDays.includes(protectedDay)) {
+      setProtectedDay(null);
+      setProtectedDaySetDate(null);
+    }
+
+    setIsProfileModalOpen(false);
   };
 
   const handleOpenShareModal = () => {
@@ -1575,6 +1597,7 @@ const App: React.FC = () => {
       setPlanningData(importedState.planningData || {});
       setNotes(importedState.notes || "");
       setUnlockedAchievements(importedState.unlockedAchievements || {});
+      setProfilePicture(importedState.profilePicture || null);
     }
     setImportConfirmModalOpen(false);
     setImportedState(null);
@@ -1707,6 +1730,7 @@ const App: React.FC = () => {
               archives={archives}
               currentServiceYear={currentServiceYear}
               activities={activities}
+              themeMode={themeMode}
               isSimpleMode={isSimpleMode}
             />
           </>
@@ -1726,6 +1750,8 @@ const App: React.FC = () => {
             isPrivacyMode={isPrivacyMode}
             notes={notes}
             onSaveNotes={handleSaveNotes}
+            isSimpleMode={isSimpleMode}
+            themeMode={themeMode}
           />
         );
       case "history":
@@ -1789,11 +1815,18 @@ const App: React.FC = () => {
         onMenuClick={() => setSidebarOpen(true)}
         onTitleClick={() => !isSimpleMode && setIsStatsMode((s) => !s)}
         isSimpleMode={isSimpleMode}
+        themeMode={themeMode}
       />
 
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        userName={userName}
+        profilePicture={profilePicture}
+        onProfileClick={() => {
+          setSidebarOpen(false);
+          setIsProfileModalOpen(true);
+        }}
         performanceMode={performanceMode}
         onSetPerformanceMode={setPerformanceMode}
         onExport={handleExportData}
@@ -1814,6 +1847,7 @@ const App: React.FC = () => {
         }}
         isSimpleMode={isSimpleMode}
         onSetSimpleMode={setIsSimpleMode}
+        themeMode={themeMode}
       />
       <input
         type="file"
@@ -1833,6 +1867,7 @@ const App: React.FC = () => {
         themeColor={displayThemeColor}
         performanceMode={performanceMode}
         isSimpleMode={isSimpleMode}
+        themeMode={themeMode}
       />
 
       <AddHoursModal
@@ -1874,14 +1909,23 @@ const App: React.FC = () => {
         performanceMode={performanceMode}
       />
 
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        onSave={handleSaveProfile}
+        currentName={userName}
+        currentGoal={goal}
+        currentProfilePicture={profilePicture}
+        currentMeetingDays={meetingDays}
+        themeColor={themeColor}
+        performanceMode={performanceMode}
+      />
+
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onSave={handleSaveSettings}
         onModeChange={setThemeMode}
-        currentName={userName}
-        currentGoal={goal}
-        currentDate={currentDate}
         currentShape={progressShape}
         currentColor={themeColor}
         currentThemeMode={themeMode}
@@ -1904,6 +1948,7 @@ const App: React.FC = () => {
         protectedDay={protectedDay}
         onSaveProtectedDay={handleSaveProtectedDay}
         protectedDaySetDate={protectedDaySetDate}
+        meetingDays={meetingDays}
         performanceMode={performanceMode}
       />
 
