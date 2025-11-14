@@ -15,7 +15,7 @@ interface NotificationAction {
 }
 
 interface TimerProps {
-  onFinish: (hours: number) => void;
+  onFinishAndOpenModal: (hours: number) => void;
   themeColor: ThemeColor;
   notificationPermission: NotificationPermission;
   onRequestNotificationPermission: () => Promise<void>;
@@ -30,7 +30,7 @@ const TIMER_STORAGE = {
 const NOTIFICATION_TAG = "garden-timer";
 
 const Timer: React.FC<TimerProps> = ({
-  onFinish,
+  onFinishAndOpenModal,
   themeColor,
   notificationPermission,
   onRequestNotificationPermission,
@@ -112,7 +112,7 @@ const Timer: React.FC<TimerProps> = ({
       if (newIsActive) {
         // Starting
         localStorage.setItem(TIMER_STORAGE.START_TIME, String(Date.now()));
-        showNotification("El temporizador ha comenzado.", true, [
+        showNotification("El cronómetro está en curso.", true, [
           { action: "pause", title: "Pausar" },
           { action: "finish", title: "Finalizar" },
         ]);
@@ -143,9 +143,11 @@ const Timer: React.FC<TimerProps> = ({
 
     if (hoursToAdd > 0.01) {
       // minimum of ~36 seconds
-      onFinish(hoursToAdd);
+      onFinishAndOpenModal(hoursToAdd);
       showNotification(
-        `Se agregaron ${hoursToHHMM(hoursToAdd)} horas a tu informe.`
+        `Temporizador finalizado. Añade ${hoursToHHMM(
+          hoursToAdd
+        )} a tu informe.`
       );
     }
 

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { ActivityItem, ThemeColor, GroupArrangement } from "../types";
-import ActivityCard from "./ActivityCard";
 import { THEMES } from "../constants";
+import ActivityCard from "./ActivityCard";
 import ImportArrangementModal from "./ImportArrangementModal";
 import GroupArrangementCard from "./GroupArrangementCard";
 import { ClipboardPasteIcon } from "./icons/ClipboardPasteIcon";

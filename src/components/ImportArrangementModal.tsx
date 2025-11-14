@@ -46,7 +46,9 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
     setError(null);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+      const ai = new GoogleGenAI({
+        apiKey: import.meta.env.VITE_GEMINI_API_KEY as string,
+      });
 
       const responseSchema = {
         type: Type.ARRAY,

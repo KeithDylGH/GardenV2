@@ -9,6 +9,9 @@ import { CheckIcon } from "./icons/CheckIcon";
 import { SunIcon } from "./icons/SunIcon";
 import { MoonIcon } from "./icons/MoonIcon";
 import { SolidCircleIcon } from "./icons/SolidCircleIcon";
+import { DiamondIcon } from "./icons/DiamondIcon";
+import { TriangleIcon } from "./icons/TriangleIcon";
+import { HexagonIcon } from "./icons/HexagonIcon";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -21,6 +24,7 @@ interface SettingsModalProps {
     color: ThemeColor,
     mode: ThemeMode
   ) => void;
+  onModeChange: (mode: ThemeMode) => void;
   currentName: string;
   currentGoal: number;
   currentDate: Date;
@@ -34,6 +38,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onClose,
   onSave,
+  onModeChange,
   currentName,
   currentGoal,
   currentDate,
@@ -94,8 +99,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleColorSelect = (selectedColor: ThemeColor) => {
     setColor(selectedColor);
     if (selectedColor === "bw") {
-      setMode("black");
+      const newMode = "black";
+      setMode(newMode);
+      onModeChange(newMode);
     }
+  };
+
+  const handleModeChange = (newMode: ThemeMode) => {
+    setMode(newMode);
+    onModeChange(newMode);
   };
 
   const shapeOptions: {
@@ -105,6 +117,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     { name: "flower", Icon: FlowerIcon },
     { name: "circle", Icon: CircleIcon },
     { name: "heart", Icon: HeartIcon },
+    { name: "diamond", Icon: DiamondIcon },
+    { name: "triangle", Icon: TriangleIcon },
+    { name: "hexagon", Icon: HexagonIcon },
   ];
 
   const isBwTheme = color === "bw";
@@ -216,7 +231,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 }`}
               >
                 <button
-                  onClick={() => setMode("light")}
+                  onClick={() => handleModeChange("light")}
                   disabled={isBwTheme}
                   className={`flex-1 flex items-center justify-center space-x-2 py-2 rounded-md text-sm font-semibold ${
                     mode === "light"
@@ -229,7 +244,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   <span>Claro</span>
                 </button>
                 <button
-                  onClick={() => setMode("dark")}
+                  onClick={() => handleModeChange("dark")}
                   disabled={isBwTheme}
                   className={`flex-1 flex items-center justify-center space-x-2 py-2 rounded-md text-sm font-semibold ${
                     mode === "dark"
@@ -242,7 +257,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   <span>Oscuro</span>
                 </button>
                 <button
-                  onClick={() => setMode("black")}
+                  onClick={() => handleModeChange("black")}
                   disabled={isBwTheme}
                   className={`flex-1 flex items-center justify-center space-x-2 py-2 rounded-md text-sm font-semibold ${
                     mode === "black"
@@ -267,7 +282,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Forma
               </label>
-              <div className="flex justify-around space-x-2">
+              <div className="grid grid-cols-3 gap-3">
                 {shapeOptions.map(({ name: shapeName, Icon }) => (
                   <button
                     key={shapeName}

@@ -1,12 +1,15 @@
-import React, { useEffect } from 'react';
-import { CheckIcon } from './icons/CheckIcon';
+import React, { useEffect } from "react";
+import { CheckIcon } from "./icons/CheckIcon";
 
 interface OfflineToastProps {
   isVisible: boolean;
   onDismiss: () => void;
 }
 
-const OfflineToast: React.FC<OfflineToastProps> = ({ isVisible, onDismiss }) => {
+const OfflineToast: React.FC<OfflineToastProps> = ({
+  isVisible,
+  onDismiss,
+}) => {
   useEffect(() => {
     if (isVisible) {
       const timer = setTimeout(() => {
@@ -19,7 +22,7 @@ const OfflineToast: React.FC<OfflineToastProps> = ({ isVisible, onDismiss }) => 
   return (
     <div
       className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 ease-in-out ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       }`}
       role="status"
       aria-live="polite"

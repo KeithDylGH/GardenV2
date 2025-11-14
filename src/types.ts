@@ -1,5 +1,4 @@
 import React from "react";
-import { THEMES } from "./constants";
 
 export type ThemeColor =
   | "blue"
@@ -34,7 +33,13 @@ export type ThemeConfig = {
 
 export type ThemeMode = "light" | "dark" | "black";
 
-export type Shape = "flower" | "circle" | "heart";
+export type Shape =
+  | "flower"
+  | "circle"
+  | "heart"
+  | "diamond"
+  | "triangle"
+  | "hexagon";
 
 export type DayStatus = "sick";
 export type WeatherCondition = "sunny" | "cloudy" | "bad";
@@ -46,6 +51,7 @@ export type DayEntry = {
   weather?: WeatherCondition;
   isSummary?: boolean;
   isCampaign?: boolean;
+  notes?: string;
 };
 
 export type HistoryLog = {

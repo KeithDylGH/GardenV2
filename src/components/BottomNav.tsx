@@ -4,11 +4,18 @@ import { CalendarIcon } from "./icons/CalendarIcon";
 import { HomeIcon } from "./icons/HomeIcon";
 import { ListBulletIcon } from "./icons/ListBulletIcon";
 import { ClockIcon } from "./icons/ClockIcon";
-import { ThemeColor, AppView } from "../types";
+import { ThemeColor } from "../types";
 import { THEMES } from "../constants";
 
+type ActiveView =
+  | "tracker"
+  | "activity"
+  | "history"
+  | "planning"
+  | "achievements";
+
 interface BottomNavProps {
-  activeView: AppView;
+  activeView: ActiveView;
   onAddClick: () => void;
   themeColor: ThemeColor;
   performanceMode?: boolean;
@@ -25,27 +32,17 @@ const BottomNav: React.FC<BottomNavProps> = ({
   const theme = THEMES[themeColor] || THEMES.blue;
 
   const allNavItems = [
+    { view: "tracker", hash: "#/", Icon: HomeIcon, label: "Informe" },
+    { view: "planning", hash: "#/planning", Icon: ClockIcon, label: "Plan" },
+    { view: "add", hash: "", Icon: PlusIcon, label: "Agregar" },
     {
-      view: "tracker" as AppView,
-      hash: "#/",
-      Icon: HomeIcon,
-      label: "Informe",
-    },
-    {
-      view: "planning" as AppView,
-      hash: "#/planning",
-      Icon: ClockIcon,
-      label: "Plan",
-    },
-    { view: "add" as const, hash: "", Icon: PlusIcon, label: "Agregar" },
-    {
-      view: "activity" as AppView,
+      view: "activity",
       hash: "#/activity",
       Icon: ListBulletIcon,
       label: "Actividad",
     },
     {
-      view: "history" as AppView,
+      view: "history",
       hash: "#/history",
       Icon: CalendarIcon,
       label: "Historial",

@@ -30,12 +30,14 @@ import { AcademicCapIcon } from "./icons/AcademicCapIcon";
 import { XCircleIcon } from "./icons/XCircleIcon";
 import ToggleSwitch from "./ToggleSwitch";
 import { TrashIcon } from "./icons/TrashIcon";
+import { MinusIcon } from "./icons/MinusIcon";
+import { PlusIcon } from "./icons/PlusIcon";
 
 interface AddHoursModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddHours: (hours: number, weather?: WeatherCondition) => void;
-  onAddLdcHours: (hours: number) => void;
+  onAddLdcHours: (hours: number, notes?: string) => void;
   onSetHours: (hours: number) => void;
   onSetLdcHours?: (hours: number) => void;
   onDeleteLdcHours?: () => void;
@@ -56,12 +58,13 @@ interface AddHoursModalProps {
     weather?: WeatherCondition,
     isCampaign?: boolean
   ) => void;
-  onSetLdcHoursForDate: (hours: number, date: Date) => void;
+  onSetLdcHoursForDate: (hours: number, date: Date, notes?: string) => void;
   onMarkDayStatus: (date: Date, status: DayStatus | null) => void;
   archives: Record<string, HistoryLog>;
   activities: ActivityItem[];
   planningData: PlanningData;
   userRole: UserRole;
+  initialHours?: number | null;
 }
 
 type ModalTab = "hours" | "ldc" | "visit" | "study";
@@ -95,14 +98,6 @@ const weatherOptions: {
   },
 ];
 
-const quickAddHours = [
-  { label: "1h", value: 1 },
-  { label: "1:30h", value: 1.5 },
-  { label: "2h", value: 2 },
-  { label: "3h", value: 3 },
-  { label: "4h", value: 4 },
-];
-
 const AddHoursModal: React.FC<AddHoursModalProps> = ({
   isOpen,
   onClose,
@@ -127,11 +122,13 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
   activities,
   planningData,
   userRole,
+  initialHours,
 }) => {
   const [activeTab, setActiveTab] = useState<ModalTab>("hours");
 
   const [hoursInput, setHoursInput] = useState("");
   const [ldcHoursInput, setLdcHoursInput] = useState("");
+  const [notesInput, setNotesInput] = useState("");
   const [isHoursValid, setIsHoursValid] = useState(true);
   const [isLdcHoursValid, setIsLdcHoursValid] = useState(true);
   const [selectedWeather, setSelectedWeather] = useState<
@@ -186,17 +183,31 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      if (activityToEdit) {
+      // Reset all non-input fields first
+      setName("");
+      setLocation("");
+      setComments("");
+      setIsHoursValid(true);
+      setIsLdcHoursValid(true);
+      setSelectedWeather(undefined);
+      setIsRecurringActivity(false);
+      setIsCampaignDay(false);
+      setNotesInput("");
+
+      if (initialHours && initialHours > 0) {
+        setActiveTab("hours");
+        setHoursInput(hoursToHHMM(initialHours));
+        setLdcHoursInput("");
+      } else if (activityToEdit) {
         setActiveTab(activityToEdit.type);
         setName(activityToEdit.name);
         setLocation(activityToEdit.location || "");
         setComments(activityToEdit.comments || "");
+        setIsRecurringActivity(activityToEdit.recurring || false);
         setHoursInput("");
         setLdcHoursInput("");
-        setSelectedWeather(undefined);
-        setIsRecurringActivity(activityToEdit.recurring || false);
-        setIsCampaignDay(false);
       } else if (dateForEntry) {
+        setActiveTab("hours");
         setHoursInput(
           dayEntryForDate && dayEntryForDate.hours > 0
             ? hoursToHHMM(dayEntryForDate.hours)
@@ -211,50 +222,32 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
         );
         setSelectedWeather(dayEntryForDate?.weather);
         setIsCampaignDay(dayEntryForDate?.isCampaign || false);
-        setActiveTab("hours");
-        setName("");
-        setLocation("");
-        setComments("");
-        setIsRecurringActivity(false);
+        setNotesInput(dayEntryForDate?.notes || "");
       } else if (isEditLdcMode) {
         setActiveTab("ldc");
         setLdcHoursInput(hoursToHHMM(currentLdcHours));
         setHoursInput("");
-        setIsHoursValid(true);
-        setIsLdcHoursValid(true);
-        setName("");
-        setLocation("");
-        setComments("");
-        setSelectedWeather(undefined);
-        setIsRecurringActivity(false);
-        setIsCampaignDay(false);
       } else {
+        // Default add or edit total
+        setActiveTab("hours");
         if (isEditMode) {
           setHoursInput(hoursToHHMM(currentHours));
         } else {
           setHoursInput("");
         }
         setLdcHoursInput("");
-        setIsHoursValid(true);
-        setIsLdcHoursValid(true);
-        setName("");
-        setLocation("");
-        setComments("");
-        setActiveTab("hours");
-        setSelectedWeather(undefined);
-        setIsRecurringActivity(false);
-        setIsCampaignDay(false);
       }
     }
   }, [
     isOpen,
+    initialHours,
     activityToEdit,
-    currentHours,
-    currentLdcHours,
+    dateForEntry,
     isEditMode,
     isEditLdcMode,
-    dateForEntry,
     dayEntryForDate,
+    currentHours,
+    currentLdcHours,
   ]);
 
   const handleHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -279,6 +272,28 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
     setIsLdcHoursValid(!isNaN(decimalHours) && decimalHours >= 0);
   };
 
+  const handleHourStep = (step: number) => {
+    const currentDecimal = flexibleInputToHours(hoursInput);
+    const currentValue = isNaN(currentDecimal) ? 0 : currentDecimal;
+    const newValue = Math.max(0, currentValue + step);
+    setHoursInput(hoursToHHMM(newValue));
+    setIsHoursValid(true);
+  };
+
+  const handleIncrementHour = () => handleHourStep(1);
+  const handleDecrementHour = () => handleHourStep(-1);
+
+  const handleLdcHourStep = (step: number) => {
+    const currentDecimal = flexibleInputToHours(ldcHoursInput);
+    const currentValue = isNaN(currentDecimal) ? 0 : currentDecimal;
+    const newValue = Math.max(0, currentValue + step);
+    setLdcHoursInput(hoursToHHMM(newValue));
+    setIsLdcHoursValid(true);
+  };
+
+  const handleIncrementLdcHour = () => handleLdcHourStep(1);
+  const handleDecrementLdcHour = () => handleLdcHourStep(-1);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (activeTab === "hours") {
@@ -302,11 +317,11 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
       const finalLdcHours =
         isNaN(ldcHoursValue) || ldcHoursValue < 0 ? 0 : ldcHoursValue;
       if (isEditingForDate) {
-        onSetLdcHoursForDate(finalLdcHours, dateForEntry!);
+        onSetLdcHoursForDate(finalLdcHours, dateForEntry!, notesInput);
       } else if (isEditLdcMode) {
         onSetLdcHours?.(finalLdcHours);
       } else {
-        onAddLdcHours(finalLdcHours);
+        onAddLdcHours(finalLdcHours, notesInput);
       }
     } else {
       // visit or study
@@ -326,7 +341,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
       return `Editar ${
         activityToEdit.type === "study" ? "Estudio" : "Revisita"
       }`;
-    if (isEditLdcMode) return "Editar Horas LDC";
+    if (isEditLdcMode) return "Editar Horas Acreditadas";
     if (dateForEntry) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -345,6 +360,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
       })}`;
     }
     if (isEditMode) return "Editar Total de Horas";
+    if (activeTab === "ldc") return "Añadir Horas Acreditadas";
     return "Añadir Actividad";
   };
 
@@ -352,7 +368,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
     if (isEditingActivity || isEditMode || isEditLdcMode || isEditingForDate)
       return "Guardar Cambios";
     if (activeTab === "hours") return "Añadir";
-    if (activeTab === "ldc") return "Guardar Horas LDC";
+    if (activeTab === "ldc") return "Guardar Horas Acreditadas";
     return "Guardar Actividad";
   };
 
@@ -524,43 +540,52 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                   <label htmlFor="hours-input" className="sr-only">
                     Horas
                   </label>
-                  <input
-                    id="hours-input"
-                    type="text"
-                    value={hoursInput}
-                    onChange={handleHoursChange}
-                    placeholder="1:30"
-                    className={`w-full px-4 py-3 text-center text-2xl font-bold bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${
-                      theme.ring
-                    } outline-none transition dark:text-white ${
-                      isHoursValid
-                        ? "border-slate-300 dark:border-slate-600"
-                        : "border-red-500 ring-2 ring-red-300"
-                    }`}
-                    onFocus={(e) => e.target.select()}
-                    autoFocus={isOpen}
-                    disabled={isDaySick}
-                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleDecrementHour}
+                      className={`p-3 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors ${
+                        isDaySick ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                      disabled={isDaySick}
+                      aria-label="Restar una hora"
+                    >
+                      <MinusIcon className="w-6 h-6" />
+                    </button>
+                    <input
+                      id="hours-input"
+                      type="text"
+                      value={hoursInput}
+                      onChange={handleHoursChange}
+                      placeholder="1:30"
+                      className={`w-full px-4 py-3 text-center text-2xl font-bold bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${
+                        theme.ring
+                      } outline-none transition dark:text-white ${
+                        isHoursValid
+                          ? "border-slate-300 dark:border-slate-600"
+                          : "border-red-500 ring-2 ring-red-300"
+                      }`}
+                      onFocus={(e) => e.target.select()}
+                      autoFocus={isOpen && !initialHours}
+                      disabled={isDaySick}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleIncrementHour}
+                      className={`p-3 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors ${
+                        isDaySick ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                      disabled={isDaySick}
+                      aria-label="Añadir una hora"
+                    >
+                      <PlusIcon className="w-6 h-6" />
+                    </button>
+                  </div>
                 </div>
                 {!isHoursValid && (
                   <p className="text-red-600 text-sm text-center -mt-2 mb-2">
                     Formato inválido. Usa H:MM, H.MM o solo horas.
                   </p>
-                )}
-
-                {!isEditMode && !isEditingForDate && (
-                  <div className="flex justify-center gap-2 flex-wrap">
-                    {quickAddHours.map(({ label, value }) => (
-                      <button
-                        key={label}
-                        type="button"
-                        onClick={() => onAddHours(value, selectedWeather)}
-                        className={`px-4 py-2 text-sm font-semibold rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600`}
-                      >
-                        + {label}
-                      </button>
-                    ))}
-                  </div>
                 )}
 
                 {(!isEditMode || isEditingForDate) && (
@@ -602,7 +627,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                 )}
 
                 {isEditingForDate && (
-                  <div className="bg-white dark:bg-slate-800 p-3 rounded-lg space-y-3 border border-slate-200 dark:border-slate-700">
+                  <div className="mt-4 bg-white dark:bg-slate-800 p-3 rounded-lg space-y-3 border border-slate-200 dark:border-slate-700">
                     <div className="flex items-center justify-between">
                       <label
                         htmlFor="campaign-toggle"
@@ -636,29 +661,71 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                   <label htmlFor="ldc-hours-input" className="sr-only">
                     Horas LDC
                   </label>
-                  <input
-                    id="ldc-hours-input"
-                    type="text"
-                    value={ldcHoursInput}
-                    onChange={handleLdcHoursChange}
-                    placeholder="Ej: 8:00 o 6.5"
-                    className={`w-full px-4 py-3 text-center text-2xl font-bold bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${
-                      theme.ring
-                    } outline-none transition dark:text-white ${
-                      isLdcHoursValid
-                        ? "border-slate-300 dark:border-slate-600"
-                        : "border-red-500 ring-2 ring-red-300"
-                    }`}
-                    onFocus={(e) => e.target.select()}
-                    autoFocus={isOpen}
-                    disabled={isDaySick}
-                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleDecrementLdcHour}
+                      className={`p-3 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors ${
+                        isDaySick ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                      disabled={isDaySick}
+                      aria-label="Restar una hora"
+                    >
+                      <MinusIcon className="w-6 h-6" />
+                    </button>
+                    <input
+                      id="ldc-hours-input"
+                      type="text"
+                      value={ldcHoursInput}
+                      onChange={handleLdcHoursChange}
+                      placeholder="Ej: 8:00 o 6.5"
+                      className={`w-full px-4 py-3 text-center text-2xl font-bold bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${
+                        theme.ring
+                      } outline-none transition dark:text-white ${
+                        isLdcHoursValid
+                          ? "border-slate-300 dark:border-slate-600"
+                          : "border-red-500 ring-2 ring-red-300"
+                      }`}
+                      onFocus={(e) => e.target.select()}
+                      autoFocus={isOpen}
+                      disabled={isDaySick}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleIncrementLdcHour}
+                      className={`p-3 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors ${
+                        isDaySick ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                      disabled={isDaySick}
+                      aria-label="Añadir una hora"
+                    >
+                      <PlusIcon className="w-6 h-6" />
+                    </button>
+                  </div>
                 </div>
                 {!isLdcHoursValid && (
                   <p className="text-red-600 text-sm text-center -mt-2 mb-2">
                     Formato inválido. Usa H:MM, H.MM o solo horas.
                   </p>
                 )}
+
+                <div>
+                  <label
+                    htmlFor="notes-input"
+                    className="block text-center text-sm font-medium text-slate-600 dark:text-slate-400 mb-2"
+                  >
+                    Tus notas
+                  </label>
+                  <textarea
+                    id="notes-input"
+                    value={notesInput}
+                    onChange={(e) => setNotesInput(e.target.value)}
+                    placeholder="¿Qué actividad hiciste? ¿qué trabajaste?"
+                    rows={3}
+                    className={`w-full p-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${theme.ring} outline-none transition resize-none dark:text-white`}
+                    disabled={isDaySick}
+                  ></textarea>
+                </div>
               </div>
             )}
 
@@ -781,7 +848,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                   className="w-full flex items-center justify-center gap-2 px-6 py-2 rounded-lg font-semibold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-900/70"
                 >
                   <TrashIcon className="w-5 h-5" />
-                  Eliminar Horas LDC del Mes
+                  Eliminar Horas Acreditadas del Mes
                 </button>
               )}
               <button

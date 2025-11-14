@@ -63,8 +63,8 @@ import {
 } from "./utils";
 import ShareToast from "./components/ShareToast";
 import ShareReportModal from "./components/ShareReportModal";
-import { THEMES } from "./constants";
 import { ALL_ACHIEVEMENTS } from "./achievements";
+import { THEMES } from "./constants";
 
 const SolidStarIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg
@@ -168,7 +168,6 @@ const TUTORIALS_SEEN_KEY = "garden-tutorials-seen";
 const TUTORIAL_AGREEMENT_KEY = "garden-tutorial-agreement";
 const SETTINGS_KEY = "garden-settings";
 const PRIVACY_MODE_KEY = "garden-privacy-mode";
-const REMINDER_LAST_SENT_KEY = "garden-reminder-last-sent";
 const SIMPLE_MODE_KEY = "garden-simple-mode";
 
 const TUTORIALS: Record<AppView, TutorialStep[]> = {
@@ -184,7 +183,7 @@ const TUTORIALS: Record<AppView, TutorialStep[]> = {
       target: "#header-title",
       title: "Modo Estadístico",
       content:
-        'Toca el título "Garden" para cambiar a una vista de estadísticas detalladas, con proyecciones anuales y más datos sobre tu servicio.',
+        'Toca el título "garden" para cambiar a una vista de estadísticas detalladas, con proyecciones anuales y más datos sobre tu servicio.',
       position: "bottom",
     },
     {
@@ -366,25 +365,14 @@ const getInitialState = (): AppState | null => {
 const getSettings = () => {
   try {
     const saved = localStorage.getItem(SETTINGS_KEY);
-    if (!saved)
-      return {
-        performanceMode: false,
-        remindersEnabled: false,
-        reminderTime: "10:00",
-      };
+    if (!saved) return { performanceMode: false };
     const parsed = JSON.parse(saved);
     return {
       performanceMode: parsed.performanceMode ?? false,
-      remindersEnabled: parsed.remindersEnabled ?? false,
-      reminderTime: parsed.reminderTime ?? "10:00",
     };
   } catch (e) {
     console.error("Failed to load settings", e);
-    return {
-      performanceMode: false,
-      remindersEnabled: false,
-      reminderTime: "10:00",
-    };
+    return { performanceMode: false };
   }
 };
 
@@ -407,7 +395,14 @@ const App: React.FC = () => {
     initialState?.currentDate ? new Date(initialState.currentDate) : new Date()
   );
 
-  const validShapes: Shape[] = ["flower", "circle", "heart"];
+  const validShapes: Shape[] = [
+    "flower",
+    "circle",
+    "heart",
+    "diamond",
+    "triangle",
+    "hexagon",
+  ];
   const initialShape = initialState?.progressShape;
   const validatedShape =
     initialShape && validShapes.includes(initialShape)
@@ -485,6 +480,9 @@ const App: React.FC = () => {
     getViewFromHash(window.location.hash)
   );
   const [isAddHoursModalOpen, setAddHoursModalOpen] = useState(false);
+  const [initialHoursForModal, setInitialHoursForModal] = useState<
+    number | null
+  >(null);
   const [isStreakModalOpen, setIsStreakModalOpen] = useState(false);
   const [isEditTotalHoursMode, setIsEditTotalHoursMode] = useState(false);
   const [isEditLdcHoursMode, setIsEditLdcHoursMode] = useState(false);
@@ -509,7 +507,6 @@ const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHelpModalOpen, setHelpModalOpen] = useState(false);
   const [isOfflineReady, setIsOfflineReady] = useState(false);
-
   const [notificationPermission, setNotificationPermission] =
     useState<NotificationPermission>(() => {
       if (typeof window !== "undefined" && "Notification" in window) {
@@ -521,12 +518,6 @@ const App: React.FC = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [performanceMode, setPerformanceMode] = useState(
     initialSettings.performanceMode
-  );
-  const [remindersEnabled, setRemindersEnabled] = useState(
-    initialSettings.remindersEnabled
-  );
-  const [reminderTime, setReminderTime] = useState(
-    initialSettings.reminderTime
   );
 
   const [isPrivacyMode, setIsPrivacyMode] = useState(getInitialPrivacyMode());
@@ -592,9 +583,9 @@ const App: React.FC = () => {
   }, [currentServiceYear]);
 
   useEffect(() => {
-    const settings = { performanceMode, remindersEnabled, reminderTime };
+    const settings = { performanceMode };
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  }, [performanceMode, remindersEnabled, reminderTime]);
+  }, [performanceMode]);
 
   useEffect(() => {
     localStorage.setItem(SIMPLE_MODE_KEY, String(isSimpleMode));
@@ -658,44 +649,6 @@ const App: React.FC = () => {
     isSimpleMode,
   ]);
 
-  // Daily Reminder Logic
-  useEffect(() => {
-    if (
-      !remindersEnabled ||
-      notificationPermission !== "granted" ||
-      !reminderTime
-    ) {
-      return;
-    }
-
-    const intervalId = setInterval(() => {
-      const now = new Date();
-      const lastSentDateStr = localStorage.getItem(REMINDER_LAST_SENT_KEY);
-      const todayStr = now.toISOString().split("T")[0];
-
-      if (lastSentDateStr === todayStr) {
-        return; // Already sent today
-      }
-
-      const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
-        now.getMinutes()
-      ).padStart(2, "0")}`;
-
-      if (currentTime === reminderTime) {
-        navigator.serviceWorker.ready.then((registration) => {
-          registration.showNotification("Garden: ¡Hora de servir!", {
-            body: "Un recordatorio amigable para registrar tu actividad de hoy. 🌱",
-            icon: "/assets/icon-192x192.svg",
-            tag: "garden-daily-reminder",
-          });
-        });
-        localStorage.setItem(REMINDER_LAST_SENT_KEY, todayStr);
-      }
-    }, 60000); // Check every minute
-
-    return () => clearInterval(intervalId);
-  }, [remindersEnabled, reminderTime, notificationPermission]);
-
   const handleTutorialFinish = (view: AppView) => {
     const newTutorialsSeen = { ...tutorialsSeen, [view]: true };
     setTutorialsSeen(newTutorialsSeen);
@@ -752,13 +705,6 @@ const App: React.FC = () => {
       const permission = await Notification.requestPermission();
       setNotificationPermission(permission);
     }
-  };
-
-  const handleSetRemindersEnabled = (enabled: boolean) => {
-    if (enabled && notificationPermission !== "granted") {
-      requestNotificationPermission();
-    }
-    setRemindersEnabled(enabled);
   };
 
   useEffect(() => {
@@ -957,7 +903,8 @@ const App: React.FC = () => {
       const newArchives = { ...prev };
       const yearHistory = { ...(newArchives[serviceYear] || {}) };
 
-      const oldEntry = yearHistory[dateKey] || { hours: 0 };
+      const oldEntry: DayEntry = yearHistory[dateKey] || { hours: 0 };
+
       yearHistory[dateKey] = {
         ...oldEntry,
         hours: oldEntry.hours + hoursToAdd,
@@ -997,26 +944,40 @@ const App: React.FC = () => {
       return newArchives;
     });
 
-    updateStreak();
-    setAddHoursModalOpen(false);
+    if (hoursToAdd > 0) updateStreak();
+    handleCloseModal();
   };
 
-  const handleAddLdcHours = (ldcHoursToAdd: number) => {
-    if (ldcHoursToAdd <= 0) return;
-    const dateKey = formatDateKey(new Date());
+  const handleAddLdcHours = (ldcHoursToAdd: number, note?: string) => {
+    if (ldcHoursToAdd <= 0 && (!note || !note.trim())) return;
+
+    const today = new Date();
+    const serviceYear = getServiceYear(today);
+    const dateKey = formatDateKey(today);
+
     setArchives((prev) => {
       const newArchives = { ...prev };
       const yearHistory = { ...(newArchives[currentServiceYear] || {}) };
       const oldEntry: DayEntry = yearHistory[dateKey] || { hours: 0 };
+
+      let updatedNotes = oldEntry.notes;
+      if (note && note.trim()) {
+        const trimmedNote = `- ${note.trim()}`;
+        updatedNotes = oldEntry.notes
+          ? `${oldEntry.notes}\n${trimmedNote}`
+          : trimmedNote;
+      }
+
       yearHistory[dateKey] = {
         ...oldEntry,
         ldcHours: (oldEntry.ldcHours || 0) + ldcHoursToAdd,
+        notes: updatedNotes,
       };
       newArchives[currentServiceYear] = yearHistory;
       return newArchives;
     });
     setCurrentLdcHours((prev) => prev + ldcHoursToAdd);
-    setAddHoursModalOpen(false);
+    handleCloseModal();
   };
 
   const handleSetHours = (totalHours: number) => {
@@ -1110,7 +1071,7 @@ const App: React.FC = () => {
       const newEntry: DayEntry = {
         ...oldEntry,
         hours: newTotalHours,
-        weather: weather || oldEntry.weather, // Keep old weather if not specified
+        weather: weather || oldEntry.weather,
       };
 
       if (isCampaign) {
@@ -1126,7 +1087,8 @@ const App: React.FC = () => {
         newEntry.weather ||
         newEntry.status ||
         newEntry.isCampaign ||
-        (newEntry.ldcHours && newEntry.ldcHours > 0)
+        (newEntry.ldcHours && newEntry.ldcHours > 0) ||
+        (newEntry.notes && newEntry.notes.trim())
       ) {
         yearHistory[dateKey] = newEntry;
       } else {
@@ -1180,7 +1142,11 @@ const App: React.FC = () => {
     handleCloseModal();
   };
 
-  const handleSetLdcHoursForDate = (ldcHours: number, date: Date) => {
+  const handleSetLdcHoursForDate = (
+    ldcHours: number,
+    date: Date,
+    notes?: string
+  ) => {
     const dateKey = formatDateKey(date);
     const serviceYear = getServiceYear(date);
 
@@ -1190,14 +1156,19 @@ const App: React.FC = () => {
       const yearHistory = { ...newArchives[serviceYear] };
       const oldEntry = yearHistory[dateKey] || { hours: 0 };
 
-      const newEntry: DayEntry = { ...oldEntry, ldcHours: ldcHours };
+      const newEntry: DayEntry = {
+        ...oldEntry,
+        ldcHours: ldcHours,
+        notes: notes,
+      };
 
       if (
         newEntry.hours > 0 ||
         newEntry.weather ||
         newEntry.status ||
         newEntry.isCampaign ||
-        (newEntry.ldcHours && newEntry.ldcHours > 0)
+        (newEntry.ldcHours && newEntry.ldcHours > 0) ||
+        (newEntry.notes && newEntry.notes.trim())
       ) {
         yearHistory[dateKey] = newEntry;
       } else {
@@ -1263,11 +1234,12 @@ const App: React.FC = () => {
         newEntry.weather ||
         newEntry.status ||
         newEntry.isCampaign ||
-        (newEntry.ldcHours && newEntry.ldcHours > 0)
+        (newEntry.ldcHours && newEntry.ldcHours > 0) ||
+        (newEntry.notes && newEntry.notes.trim())
       ) {
         yearHistory[dateKey] = newEntry;
       } else {
-        delete newEntry.status;
+        delete yearHistory[dateKey];
       }
 
       newArchives[serviceYear] = yearHistory;
@@ -1320,6 +1292,7 @@ const App: React.FC = () => {
     setIsPlanningModalOpen(false);
     setDateForPlanning(null);
     setPlanningBlockToEdit(null);
+    setInitialHoursForModal(null);
   };
 
   const handleSaveActivity = (
@@ -1512,12 +1485,6 @@ const App: React.FC = () => {
     setNotes(newNotes);
   };
 
-  const handleShowWelcome = () => {
-    localStorage.removeItem(WELCOME_SHOWN_KEY);
-    setShowWelcome(true);
-    setSidebarOpen(false);
-  };
-
   const handleArchiveAndStartNewYear = () => {
     const today = new Date();
     const newServiceYear = getServiceYear(today);
@@ -1666,8 +1633,13 @@ const App: React.FC = () => {
     setIsPioneerUpgradeModalOpen(false);
   };
 
+  const handleTimerFinish = (hoursFromTimer: number) => {
+    setInitialHoursForModal(hoursFromTimer);
+    setAddHoursModalOpen(true);
+  };
+
   const viewTitleMap: Record<AppView, string> = {
-    tracker: "Garden",
+    tracker: "garden",
     activity: "Actividad",
     history: "Historial",
     planning: "Planificación",
@@ -1718,7 +1690,7 @@ const App: React.FC = () => {
               currentDate={currentDate}
               onEditClick={openEditModal}
               onEditLdcClick={openEditLdcModal}
-              onAddHours={handleAddHours}
+              onTimerFinish={handleTimerFinish}
               progressShape={progressShape}
               themeColor={displayThemeColor}
               onHelpClick={() => setHelpModalOpen(true)}
@@ -1827,10 +1799,6 @@ const App: React.FC = () => {
         onExport={handleExportData}
         onImport={handleImportClick}
         themeColor={displayThemeColor}
-        remindersEnabled={remindersEnabled}
-        onSetRemindersEnabled={handleSetRemindersEnabled}
-        reminderTime={reminderTime}
-        onSetReminderTime={setReminderTime}
         onSettingsClick={() => {
           setSidebarOpen(false);
           setIsSettingsOpen(true);
@@ -1891,6 +1859,7 @@ const App: React.FC = () => {
         activities={activities}
         planningData={planningData}
         userRole={userRole}
+        initialHours={initialHoursForModal}
       />
 
       <PlanningModal
@@ -1909,6 +1878,7 @@ const App: React.FC = () => {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onSave={handleSaveSettings}
+        onModeChange={setThemeMode}
         currentName={userName}
         currentGoal={goal}
         currentDate={currentDate}

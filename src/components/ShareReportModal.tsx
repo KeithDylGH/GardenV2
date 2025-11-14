@@ -58,7 +58,7 @@ const ShareReportModal: React.FC<ShareReportModalProps> = ({
     }\n\n`;
     report += `Horas: ${hoursToHHMM(currentHours)}\n`;
     if (currentLdcHours > 0) {
-      report += `LDC: ${hoursToHHMM(currentLdcHours)}\n`;
+      report += `Horas LDC: ${hoursToHHMM(currentLdcHours)}\n`;
     }
     report += `Revisitas: ${visits}\n`;
     report += `Estudios: ${studies}`;

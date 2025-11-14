@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { THEMES } from "../constants";
 import { ThemeColor } from "../types";
+import { THEMES } from "../constants";
 import { LightBulbIcon } from "./icons/LightBulbIcon";
 
 interface HelpModalProps {

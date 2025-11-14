@@ -58,6 +58,7 @@ const URLS_TO_CACHE = [
   // Icons
   "/components/icons/FlowerIcon.tsx",
   "/components/icons/PlusIcon.tsx",
+  "/components/icons/MinusIcon.tsx",
   "/components/icons/SettingsIcon.tsx",
   "/components/icons/UserIcon.tsx",
   "/components/icons/XIcon.tsx",
@@ -121,6 +122,10 @@ const URLS_TO_CACHE = [
   "/components/icons/MegaphoneIcon.tsx",
   "/components/icons/ChartBarIcon.tsx",
   "/components/icons/FaceSmileIcon.tsx",
+  "/components/icons/DiamondIcon.tsx",
+  "/components/icons/TriangleIcon.tsx",
+  "/components/icons/HexagonIcon.tsx",
+  "/components/icons/LightBulbIcon.tsx",
 
   // CDN de Tailwind
   "https://cdn.tailwindcss.com",
@@ -141,7 +146,6 @@ const TIMER_STORAGE = {
   BASE_TIME: "timer_baseTime",
 };
 const NOTIFICATION_TAG = "garden-timer";
-const REMINDER_NOTIFICATION_TAG = "garden-daily-reminder";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -216,8 +220,8 @@ self.addEventListener("notificationclick", (event) => {
   const notification = event.notification;
   notification.close();
 
-  // Handle reminder notifications
-  if (notification.tag === REMINDER_NOTIFICATION_TAG) {
+  // Open the app on notification click if it's not the timer
+  const openApp = () => {
     event.waitUntil(
       clients
         .matchAll({ type: "window", includeUncontrolled: true })
@@ -232,6 +236,10 @@ self.addEventListener("notificationclick", (event) => {
           }
         })
     );
+  };
+
+  if (notification.tag !== NOTIFICATION_TAG) {
+    openApp();
     return;
   }
 
@@ -304,6 +312,7 @@ self.addEventListener("notificationclick", (event) => {
       }
     };
     event.waitUntil(handleAction(event.action));
+    openApp(); // Also open the app when an action is clicked
     return;
   }
 });

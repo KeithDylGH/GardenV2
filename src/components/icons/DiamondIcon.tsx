@@ -1,14 +1,12 @@
 import React from "react";
 
-export const SolidCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
-  props
-) => (
+export const DiamondIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
     fill="currentColor"
     {...props}
   >
-    <circle cx="12" cy="12" r="10" />
+    <path d="M12 2.5l9.5 9.5-9.5 9.5-9.5-9.5L12 2.5z" />
   </svg>
 );

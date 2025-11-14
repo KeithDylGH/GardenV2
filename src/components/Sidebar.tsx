@@ -5,11 +5,9 @@ import { THEMES } from "../constants";
 import { HeartIcon } from "./icons/HeartIcon";
 import { ChatBubbleBottomCenterTextIcon } from "./icons/ChatBubbleBottomCenterTextIcon";
 import { BoltIcon } from "./icons/BoltIcon";
-import { HomeModernIcon } from "./icons/HomeModernIcon";
 import { GardenIcon } from "./icons/GardenIcon";
 import { ArrowDownTrayIcon } from "./icons/ArrowDownTrayIcon";
 import { ArrowUpTrayIcon } from "./icons/ArrowUpTrayIcon";
-import { BellIcon } from "./icons/BellIcon";
 import { SettingsIcon } from "./icons/SettingsIcon";
 import { StarIcon } from "./icons/StarIcon";
 import { TrophyIcon } from "./icons/TrophyIcon";
@@ -23,10 +21,6 @@ interface SidebarProps {
   onExport: () => void;
   onImport: () => void;
   themeColor: ThemeColor;
-  remindersEnabled: boolean;
-  onSetRemindersEnabled: (enabled: boolean) => void;
-  reminderTime: string;
-  onSetReminderTime: (time: string) => void;
   onSettingsClick: () => void;
   userRole: UserRole;
   onPioneerUpgradeClick: () => void;
@@ -43,10 +37,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   onExport,
   onImport,
   themeColor,
-  remindersEnabled,
-  onSetRemindersEnabled,
-  reminderTime,
-  onSetReminderTime,
   onSettingsClick,
   userRole,
   onPioneerUpgradeClick,
@@ -67,11 +57,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     <>
       <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-baseline space-x-2">
         <GardenIcon className={`w-7 h-7 -ml-1 ${theme.text}`} />
-        <h2 className="text-2xl font-logotype text-slate-800 dark:text-slate-100">
+        <h2 className="text-2xl font-logotype font-bold lowercase text-slate-800 dark:text-slate-100">
           garden
         </h2>
         <p className="text-sm font-semibold text-slate-400 dark:text-slate-500 pt-1">
-          v1.1.2
+          v1.2
         </p>
       </div>
 
@@ -147,43 +137,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                 />
               </div>
             )}
-            <div className="p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <BellIcon className={`w-6 h-6 mr-3 ${theme.text}`} />
-                  <div>
-                    <p className="font-semibold text-slate-700 dark:text-slate-200">
-                      Recordatorio Diario
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Recibe una notificación.
-                    </p>
-                  </div>
-                </div>
-                <ToggleSwitch
-                  checked={remindersEnabled}
-                  onChange={onSetRemindersEnabled}
-                  themeColor={themeColor}
-                />
-              </div>
-              {remindersEnabled && (
-                <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700/80">
-                  <label
-                    htmlFor="reminder-time"
-                    className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-                  >
-                    Hora del recordatorio
-                  </label>
-                  <input
-                    id="reminder-time"
-                    type="time"
-                    value={reminderTime}
-                    onChange={(e) => onSetReminderTime(e.target.value)}
-                    className={`w-full px-3 py-1.5 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${theme.ring} outline-none transition text-center`}
-                  />
-                </div>
-              )}
-            </div>
           </div>
         </div>
 

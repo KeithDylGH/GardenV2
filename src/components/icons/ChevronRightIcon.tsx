@@ -1,6 +1,8 @@
-import React from 'react';
+import React from "react";
 
-export const ChevronRightIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+export const ChevronRightIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
+  props
+) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     fill="none"

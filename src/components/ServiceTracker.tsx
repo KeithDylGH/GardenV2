@@ -29,7 +29,7 @@ interface ServiceTrackerProps {
   currentDate: Date;
   onEditClick: () => void;
   onEditLdcClick: () => void;
-  onAddHours: (hours: number) => void;
+  onTimerFinish: (hours: number) => void;
   progressShape: Shape;
   themeColor: ThemeColor;
   onHelpClick: () => void;
@@ -57,7 +57,7 @@ const ServiceTracker: React.FC<ServiceTrackerProps> = ({
   currentDate,
   onEditClick,
   onEditLdcClick,
-  onAddHours,
+  onTimerFinish,
   progressShape,
   themeColor,
   onHelpClick,
@@ -295,7 +295,7 @@ const ServiceTracker: React.FC<ServiceTrackerProps> = ({
             />
           ) : (
             <Timer
-              onFinish={onAddHours}
+              onFinishAndOpenModal={onTimerFinish}
               themeColor={themeColor}
               notificationPermission={notificationPermission}
               onRequestNotificationPermission={onRequestNotificationPermission}

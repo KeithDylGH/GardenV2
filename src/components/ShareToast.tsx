@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { ClipboardDocumentCheckIcon } from './icons/ClipboardDocumentCheckIcon';
+import React, { useEffect } from "react";
+import { ClipboardDocumentCheckIcon } from "./icons/ClipboardDocumentCheckIcon";
 
 interface ShareToastProps {
   isVisible: boolean;
@@ -19,7 +19,7 @@ const ShareToast: React.FC<ShareToastProps> = ({ isVisible, onDismiss }) => {
   return (
     <div
       className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 ease-in-out ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       }`}
       role="status"
       aria-live="polite"

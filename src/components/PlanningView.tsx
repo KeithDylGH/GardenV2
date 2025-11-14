@@ -1,3 +1,4 @@
+// FIX: Implemented the full component and added a default export to fix the error "Module has no default export".
 import React, { useState, useMemo } from "react";
 import {
   PlanningData,
@@ -12,7 +13,6 @@ import { ChevronLeftIcon } from "./icons/ChevronLeftIcon";
 import { ChevronRightIcon } from "./icons/ChevronRightIcon";
 import { AcademicCapIcon } from "./icons/AcademicCapIcon";
 import { ArrowUturnLeftIcon } from "./icons/ArrowUturnLeftIcon";
-import { PencilIcon } from "./icons/PencilIcon";
 
 interface PlanningViewProps {
   planningData: PlanningData;
@@ -31,26 +31,24 @@ const PlanningView: React.FC<PlanningViewProps> = ({
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const weekDays = useMemo(() => {
-    const today = currentDate;
-    const dayOfWeek = (today.getDay() + 6) % 7; // Lunes=0, Domingo=6
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - dayOfWeek);
+    const week = [];
+    const date = new Date(currentDate);
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(date.setDate(diff));
 
-    return Array.from({ length: 7 }).map((_, i) => {
-      const date = new Date(weekStart);
-      date.setDate(weekStart.getDate() + i);
-      return date;
-    });
+    for (let i = 0; i < 7; i++) {
+      const dayDate = new Date(monday);
+      dayDate.setDate(monday.getDate() + i);
+      week.push(dayDate);
+    }
+    return week;
   }, [currentDate]);
-
-  const activitiesById = useMemo(() => {
-    return new Map(activities.map((act) => [act.id, act]));
-  }, [activities]);
 
   const handlePrevWeek = () => {
     setCurrentDate((prev) => {
       const newDate = new Date(prev);
-      newDate.setDate(prev.getDate() - 7);
+      newDate.setDate(newDate.getDate() - 7);
       return newDate;
     });
   };
@@ -58,24 +56,34 @@ const PlanningView: React.FC<PlanningViewProps> = ({
   const handleNextWeek = () => {
     setCurrentDate((prev) => {
       const newDate = new Date(prev);
-      newDate.setDate(prev.getDate() + 7);
+      newDate.setDate(newDate.getDate() + 7);
       return newDate;
     });
   };
 
-  const startOfWeek = weekDays[0];
-  const endOfWeek = weekDays[6];
-  const weekRangeString = `${startOfWeek.toLocaleDateString("es-ES", {
-    month: "short",
-    day: "numeric",
-  })} - ${endOfWeek.toLocaleDateString("es-ES", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  })}`;
+  const firstDay = weekDays[0];
+  const lastDay = weekDays[6];
+
+  const monthFormatOptions: Intl.DateTimeFormatOptions = { month: "short" };
+  const firstMonth = firstDay.toLocaleDateString("es-ES", monthFormatOptions);
+  const lastMonth = lastDay.toLocaleDateString("es-ES", monthFormatOptions);
+
+  const rangeString =
+    firstMonth === lastMonth
+      ? `${firstDay.getDate()} - ${lastDay.getDate()} de ${firstMonth}`
+      : `${firstDay.getDate()} de ${firstMonth} - ${lastDay.getDate()} de ${lastMonth}`;
+
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return (
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear()
+    );
+  };
 
   return (
-    <div id="planning-week-view" className="w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={handlePrevWeek}
@@ -83,8 +91,8 @@ const PlanningView: React.FC<PlanningViewProps> = ({
         >
           <ChevronLeftIcon className="w-6 h-6 text-slate-500" />
         </button>
-        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 text-center">
-          {weekRangeString}
+        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 capitalize">
+          {rangeString}
         </h2>
         <button
           onClick={handleNextWeek}
@@ -93,99 +101,90 @@ const PlanningView: React.FC<PlanningViewProps> = ({
           <ChevronRightIcon className="w-6 h-6 text-slate-500" />
         </button>
       </div>
-      <div className="space-y-4">
-        {weekDays.map((date) => {
-          const dateKey = formatDateKey(date);
+
+      <div id="planning-week-view" className="space-y-4">
+        {weekDays.map((day, index) => {
+          const dateKey = formatDateKey(day);
           const blocks = planningData[dateKey] || [];
-          const isToday = new Date().toDateString() === date.toDateString();
+          const today = isToday(day);
 
           return (
             <div
-              key={dateKey}
-              className={`p-4 rounded-2xl ${
-                isToday
-                  ? `bg-white dark:bg-slate-800 shadow-sm border border-slate-200/50 dark:border-slate-700/50`
-                  : "bg-slate-50 dark:bg-slate-800/50"
+              key={day.toISOString()}
+              className={`bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm border ${
+                today
+                  ? `border-2 ${theme.text}`
+                  : "border-slate-200/50 dark:border-slate-700/50"
               }`}
             >
-              <div className="flex justify-between items-center mb-3">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-baseline space-x-2">
-                  <h3
-                    className={`font-bold text-lg ${
-                      isToday
-                        ? theme.text
-                        : "text-slate-700 dark:text-slate-200"
+                  <p
+                    className={`text-sm font-bold ${
+                      today ? theme.text : "text-slate-500 dark:text-slate-400"
+                    } capitalize`}
+                  >
+                    {day.toLocaleDateString("es-ES", { weekday: "long" })}
+                  </p>
+                  <p
+                    className={`text-2xl font-bold ${
+                      today ? theme.text : "text-slate-800 dark:text-slate-100"
                     }`}
                   >
-                    {date.toLocaleDateString("es-ES", { weekday: "long" })}
-                  </h3>
-                  <p className="text-sm font-semibold text-slate-400 dark:text-slate-500">
-                    {date.getDate()}
+                    {day.getDate()}
                   </p>
                 </div>
                 <button
-                  id={isToday ? "add-plan-block-button" : undefined}
-                  onClick={() => onOpenModal(date, null)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600`}
+                  id={index === 0 ? "add-plan-block-button" : undefined}
+                  onClick={() => onOpenModal(day, null)}
+                  className={`w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 ${theme.text} hover:bg-slate-200 dark:hover:bg-slate-600`}
                 >
-                  <PlusIcon className="w-5 h-5" />
+                  <PlusIcon className="w-6 h-6" />
                 </button>
               </div>
 
               {blocks.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {blocks.map((block) => (
-                    <div
+                    <button
                       key={block.id}
-                      className="bg-slate-100/50 dark:bg-slate-900/50 p-3 rounded-lg"
+                      onClick={() => onOpenModal(day, block)}
+                      className="w-full text-left bg-slate-100 dark:bg-slate-700/50 p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700"
                     >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-semibold text-slate-800 dark:text-slate-100">
-                            {block.title}
-                          </p>
-                          {block.timeRange && (
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                              {block.timeRange}
-                            </p>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => onOpenModal(date, block)}
-                          className="p-1 -mr-1 -mt-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                        >
-                          <PencilIcon className="w-4 h-4" />
-                        </button>
-                      </div>
+                      <p className="font-semibold text-slate-800 dark:text-slate-100">
+                        {block.title}
+                      </p>
+                      {block.timeRange && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {block.timeRange}
+                        </p>
+                      )}
                       {block.activityIds.length > 0 && (
-                        <div
-                          id="link-activities-section"
-                          className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700 space-y-1"
-                        >
+                        <div className="mt-2 flex flex-wrap gap-2">
                           {block.activityIds.map((id) => {
-                            const activity = activitiesById.get(id);
+                            const activity = activities.find(
+                              (a) => a.id === id
+                            );
                             if (!activity) return null;
                             return (
                               <div
                                 key={id}
-                                className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-300"
+                                className="flex items-center gap-1.5 bg-white dark:bg-slate-800 px-2 py-1 rounded-full text-xs"
                               >
                                 {activity.type === "study" ? (
-                                  <AcademicCapIcon
-                                    className={`w-4 h-4 ${theme.text}`}
-                                  />
+                                  <AcademicCapIcon className="w-3.5 h-3.5 text-slate-500" />
                                 ) : (
-                                  <ArrowUturnLeftIcon
-                                    className={`w-4 h-4 ${theme.text}`}
-                                  />
+                                  <ArrowUturnLeftIcon className="w-3.5 h-3.5 text-slate-500" />
                                 )}
-                                <span>{activity.name}</span>
+                                <span className="text-slate-600 dark:text-slate-300">
+                                  {activity.name}
+                                </span>
                               </div>
                             );
                           })}
                         </div>
                       )}
-                    </div>
+                    </button>
                   ))}
                 </div>
               ) : (

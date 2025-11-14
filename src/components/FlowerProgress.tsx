@@ -14,6 +14,9 @@ const SHAPE_PATHS: Record<Shape, string> = {
     "M 75 25 Q 65 5, 50 5 Q 35 5, 25 25 Q 5 35, 5 50 Q 5 65, 25 75 Q 35 95, 50 95 Q 65 95, 75 75 Q 95 65, 95 50 Q 95 35, 75 25 Z",
   circle: "M 50, 95 A 45,45 0 1,1 50, 5 A 45,45 0 1,1 50, 95",
   heart: "M 50,90 L 10,50 A 20,20 0 1,1 50,30 A 20,20 0 1,1 90,50 Z",
+  diamond: "M 50 5 L 95 50 L 50 95 L 5 50 Z",
+  triangle: "M 10 10 H 90 V 90 H 10 Z",
+  hexagon: "M 50 5 L 89 27.5 L 89 72.5 L 50 95 L 11 72.5 L 11 27.5 Z",
 };
 
 const ShapeProgress: React.FC<ShapeProgressProps> = ({

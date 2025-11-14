@@ -1,6 +1,6 @@
 import React from "react";
 
-export const SolidCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
+export const TriangleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
   props
 ) => (
   <svg
@@ -9,6 +9,6 @@ export const SolidCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
     fill="currentColor"
     {...props}
   >
-    <circle cx="12" cy="12" r="10" />
+    <path d="M3 3h18v18H3z" />
   </svg>
 );
