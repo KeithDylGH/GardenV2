@@ -3,6 +3,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { ThemeColor, GroupArrangement } from "../types";
 import { THEMES } from "../constants";
 import { SparklesIcon } from "./icons/SparklesIcon";
+import GroupArrangementCard from "./GroupArrangementCard";
+import { RefreshIcon } from "./icons/RefreshIcon";
 
 interface ImportArrangementModalProps {
   isOpen: boolean;
@@ -25,11 +27,24 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
+  const [processedArrangements, setProcessedArrangements] = useState<
+    GroupArrangement[] | null
+  >(null);
   const theme = THEMES[themeColor] || THEMES.blue;
 
+  // This effect will reset the entire modal state when it's closed,
+  // making it clean for the next time it's opened.
   useEffect(() => {
     if (isOpen) {
       setHasBeenOpened(true);
+    } else {
+      // Use a timeout to allow the closing animation to finish before resetting state.
+      setTimeout(() => {
+        setText("");
+        setProcessedArrangements(null);
+        setError(null);
+        setIsLoading(false);
+      }, 300);
     }
   }, [isOpen]);
 
@@ -44,6 +59,7 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
     }
     setIsLoading(true);
     setError(null);
+    setProcessedArrangements(null); // Clear previous results
 
     try {
       const ai = new GoogleGenAI({
@@ -107,15 +123,28 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
       const parsedData = JSON.parse(jsonString);
 
       if (Array.isArray(parsedData)) {
-        onProcessComplete(parsedData);
+        setProcessedArrangements(parsedData);
       } else {
         throw new Error("La respuesta de la IA no fue un arreglo de grupos.");
       }
     } catch (e) {
       console.error("Error processing text with Gemini API", e);
       setError("No se pudo procesar el texto. Por favor, inténtalo de nuevo.");
+    } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleConfirmAndClose = () => {
+    if (processedArrangements) {
+      onProcessComplete(processedArrangements);
+    }
+  };
+
+  const handleRetry = () => {
+    setProcessedArrangements(null);
+    setText("");
+    setError(null);
   };
 
   return (
@@ -139,83 +168,133 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-4" />
-        <div className="p-6 pt-0">
-          <h2
-            id="import-title"
-            className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2 text-center"
-          >
-            Importar Grupos
-          </h2>
-          <p className="text-slate-600 dark:text-slate-400 text-center mb-6">
-            Pega aquí el texto con los arreglos de la semana.
-          </p>
-
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Ej: Grupo 1 - Conductor: Hno. Ejemplo, Hora: 9:00, Lugar: Salón del Reino..."
-            rows={8}
-            className={`w-full p-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${theme.ring} outline-none transition resize-none dark:text-white`}
-            disabled={isLoading}
-          />
-
-          {!isOnline && (
-            <div className="text-center bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 p-3 rounded-lg text-sm my-4">
-              Se requiere conexión a internet para usar esta función.
-            </div>
-          )}
-
-          {error && (
-            <p className="text-red-600 text-sm text-center mt-2">{error}</p>
-          )}
-
-          <div className="flex flex-col space-y-3 mt-6">
-            <button
-              onClick={handleProcess}
-              className={`w-full px-6 py-3 rounded-lg ${theme.bg} text-white font-bold text-lg shadow-lg transform hover:scale-105 transition-transform flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
-              disabled={isLoading || !isOnline}
-            >
-              {isLoading ? (
-                <>
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Procesando...
-                </>
-              ) : (
-                <>
-                  <SparklesIcon className="w-6 h-6" />
-                  Procesar con IA
-                </>
-              )}
-            </button>
-            {!isLoading && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-full px-6 py-2 rounded-lg text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+        <div className="p-6 pt-0 max-h-[85vh] overflow-y-auto">
+          {processedArrangements ? (
+            <div className="animate-fadeIn">
+              <h2
+                id="import-title-result"
+                className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2 text-center"
               >
-                Cancelar
-              </button>
-            )}
-          </div>
+                Resultados de la Importación
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400 text-center mb-6">
+                Revisa los grupos que se encontraron. Si todo está bien,
+                acéptalos.
+              </p>
+
+              <div className="space-y-3 max-h-64 overflow-y-auto pr-2 mb-6 bg-slate-200/50 dark:bg-slate-800/50 p-3 rounded-lg">
+                {processedArrangements.length > 0 ? (
+                  processedArrangements.map((arrangement, index) => (
+                    <GroupArrangementCard
+                      key={index}
+                      arrangement={arrangement}
+                      themeColor={themeColor}
+                    />
+                  ))
+                ) : (
+                  <p className="text-center text-sm text-slate-500 dark:text-slate-400 py-8">
+                    No se encontraron grupos en el texto.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-col space-y-3">
+                <button
+                  onClick={handleConfirmAndClose}
+                  className={`w-full px-6 py-3 rounded-lg ${theme.bg} text-white font-bold text-lg shadow-lg transform hover:scale-105 transition-transform flex items-center justify-center gap-2`}
+                >
+                  Aceptar y Guardar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRetry}
+                  className="w-full px-6 py-2 rounded-lg text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <RefreshIcon className="w-5 h-5" />
+                  Importar de Nuevo
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <h2
+                id="import-title"
+                className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2 text-center"
+              >
+                Importar Grupos
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400 text-center mb-6">
+                Pega aquí el texto con los arreglos de la semana.
+              </p>
+
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Ej: Grupo 1 - Conductor: Hno. Ejemplo, Hora: 9:00, Lugar: Salón del Reino..."
+                rows={8}
+                className={`w-full p-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${theme.ring} outline-none transition resize-none dark:text-white`}
+                disabled={isLoading}
+              />
+
+              {!isOnline && (
+                <div className="text-center bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 p-3 rounded-lg text-sm my-4">
+                  Se requiere conexión a internet para usar esta función.
+                </div>
+              )}
+
+              {error && (
+                <p className="text-red-600 text-sm text-center mt-2">{error}</p>
+              )}
+
+              <div className="flex flex-col space-y-3 mt-6">
+                <button
+                  onClick={handleProcess}
+                  className={`w-full px-6 py-3 rounded-lg ${theme.bg} text-white font-bold text-lg shadow-lg transform hover:scale-105 transition-transform flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  disabled={isLoading || !isOnline}
+                >
+                  {isLoading ? (
+                    <>
+                      <svg
+                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Procesando...
+                    </>
+                  ) : (
+                    <>
+                      <SparklesIcon className="w-6 h-6" />
+                      Procesar con IA
+                    </>
+                  )}
+                </button>
+                {!isLoading && (
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="w-full px-6 py-2 rounded-lg text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
