@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { ThemeColor, PlanningBlock, ActivityItem } from "../types";
 import { THEMES } from "../constants";
 import { TrashIcon } from "./icons/TrashIcon";
-import { AcademicCapIcon } from "./icons/AcademicCapIcon";
+import { BookOpenIcon } from "./icons/BookOpenIcon";
 import { ArrowUturnLeftIcon } from "./icons/ArrowUturnLeftIcon";
 
 interface PlanningModalProps {
@@ -189,7 +189,7 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
                           )}
                         </div>
                         {act.type === "study" ? (
-                          <AcademicCapIcon className="w-5 h-5 text-slate-500" />
+                          <BookOpenIcon className="w-5 h-5 text-slate-500" />
                         ) : (
                           <ArrowUturnLeftIcon className="w-5 h-5 text-slate-500" />
                         )}

@@ -12,7 +12,7 @@ import GroupArrangementCard from "./GroupArrangementCard";
 import { ClipboardPasteIcon } from "./icons/ClipboardPasteIcon";
 import { TrashIcon } from "./icons/TrashIcon";
 import { ArrowUturnLeftIcon } from "./icons/ArrowUturnLeftIcon";
-import { AcademicCapIcon } from "./icons/AcademicCapIcon";
+import { BookOpenIcon } from "./icons/BookOpenIcon";
 
 interface ActivityViewProps {
   activities: ActivityItem[];
@@ -256,7 +256,7 @@ const ActivityView: React.FC<ActivityViewProps> = ({
           <div
             className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${theme.bg} bg-opacity-10`}
           >
-            <AcademicCapIcon className={`w-6 h-6 ${dynamicTextColor}`} />
+            <BookOpenIcon className={`w-6 h-6 ${dynamicTextColor}`} />
           </div>
           <div>
             <p className="text-3xl font-bold text-slate-800 dark:text-slate-100">

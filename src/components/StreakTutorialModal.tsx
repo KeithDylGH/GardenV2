@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { THEMES } from "../constants";
 import { ThemeColor } from "../types";
-import { GardenIcon } from "./icons/GardenIcon";
+import { FlameIcon } from "./icons/FlameIcon";
 
 interface StreakTutorialModalProps {
   isOpen: boolean;
@@ -57,7 +57,7 @@ const StreakTutorialModal: React.FC<StreakTutorialModalProps> = ({
           <div
             className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br ${theme.gradientFrom} ${theme.gradientTo} mb-4`}
           >
-            <GardenIcon className="w-9 h-9 text-white" />
+            <FlameIcon className="w-9 h-9 text-white" />
           </div>
           <h2
             id="streak-tutorial-title"

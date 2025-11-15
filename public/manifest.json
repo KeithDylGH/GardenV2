@@ -3,7 +3,7 @@
   "short_name": "Garden",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f8fafc",
+  "background_color": "#000C0F",
   "theme_color": "#3b82f6",
   "description": "Una aplicación para registrar horas de servicio, establecer metas y planificar tu ministerio.",
   "icons": [

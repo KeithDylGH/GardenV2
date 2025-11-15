@@ -35,8 +35,6 @@ interface ServiceTrackerProps {
   themeColor: ThemeColor;
   onHelpClick: () => void;
   onShareReport: () => void;
-  notificationPermission: NotificationPermission;
-  onRequestNotificationPermission: () => Promise<void>;
   performanceMode: boolean;
   isPrivacyMode: boolean;
   onTogglePrivacyMode: () => void;
@@ -64,8 +62,6 @@ const ServiceTracker: React.FC<ServiceTrackerProps> = ({
   themeColor,
   onHelpClick,
   onShareReport,
-  notificationPermission,
-  onRequestNotificationPermission,
   performanceMode,
   isPrivacyMode,
   onTogglePrivacyMode,
@@ -300,8 +296,6 @@ const ServiceTracker: React.FC<ServiceTrackerProps> = ({
             <Timer
               onFinishAndOpenModal={onTimerFinish}
               themeColor={themeColor}
-              notificationPermission={notificationPermission}
-              onRequestNotificationPermission={onRequestNotificationPermission}
               performanceMode={performanceMode}
               isSimpleMode={isSimpleMode}
               themeMode={themeMode}

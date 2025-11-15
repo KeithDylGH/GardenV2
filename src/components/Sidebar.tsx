@@ -12,7 +12,7 @@ import { StarIcon } from "./icons/StarIcon";
 import { TrophyIcon } from "./icons/TrophyIcon";
 import { FaceSmileIcon } from "./icons/FaceSmileIcon";
 import { UserIcon } from "./icons/UserIcon";
-import { GardenIcon } from "./icons/GardenIcon";
+import { LeafIcon } from "./icons/LeafIcon";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -93,7 +93,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
         <div className="text-right">
-          <GardenIcon className={`w-8 h-8 ${iconAndTextColorClass}`} />
+          <LeafIcon className={`w-10 h-10 ${iconAndTextColorClass}`} />
           <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-1">
             V1.2
           </p>

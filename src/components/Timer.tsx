@@ -1,4 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
+import {
+  LocalNotifications,
+  PermissionStatus,
+} from "@capacitor/local-notifications";
 import { ThemeColor, ThemeMode } from "../types";
 import { THEMES } from "../constants";
 import { hoursToHHMM } from "../utils";
@@ -6,22 +10,15 @@ import { PlayIcon } from "./icons/PlayIcon";
 import { PauseIcon } from "./icons/PauseIcon";
 import { CheckIcon } from "./icons/CheckIcon";
 import { XIcon } from "./icons/XIcon";
-
-// The built-in type might not be available in the current environment.
-interface NotificationAction {
-  action: string;
-  title: string;
-  icon?: string;
-}
+import { BellIcon } from "./icons/BellIcon";
+import { BellSlashIcon } from "./icons/BellSlashIcon";
 
 interface TimerProps {
   onFinishAndOpenModal: (hours: number) => void;
   themeColor: ThemeColor;
-  notificationPermission: NotificationPermission;
-  onRequestNotificationPermission: () => Promise<void>;
   performanceMode: boolean;
-  isSimpleMode: boolean;
-  themeMode: ThemeMode;
+  isSimpleMode?: boolean;
+  themeMode?: ThemeMode;
 }
 
 const TIMER_STORAGE = {
@@ -29,13 +26,11 @@ const TIMER_STORAGE = {
   BASE_TIME: "timer_baseTime",
 };
 
-const NOTIFICATION_TAG = "garden-timer";
+const NOTIFICATION_ID = 1;
 
 const Timer: React.FC<TimerProps> = ({
   onFinishAndOpenModal,
   themeColor,
-  notificationPermission,
-  onRequestNotificationPermission,
   performanceMode,
   isSimpleMode = false,
   themeMode = "dark",
@@ -44,8 +39,17 @@ const Timer: React.FC<TimerProps> = ({
   const [isActive, setIsActive] = useState(false);
   const intervalRef = useRef<number | null>(null);
   const theme = THEMES[themeColor] || THEMES.blue;
+  const [permissionStatus, setPermissionStatus] =
+    useState<PermissionStatus | null>(null);
+
+  const isCapacitor =
+    typeof window !== "undefined" &&
+    (window as any).Capacitor?.isPluginAvailable("LocalNotifications");
 
   useEffect(() => {
+    if (isCapacitor) {
+      LocalNotifications.checkPermissions().then(setPermissionStatus);
+    }
     const startTime = localStorage.getItem(TIMER_STORAGE.START_TIME);
     const baseTime = parseFloat(
       localStorage.getItem(TIMER_STORAGE.BASE_TIME) || "0"
@@ -59,7 +63,7 @@ const Timer: React.FC<TimerProps> = ({
       setTime(baseTime);
       setIsActive(false);
     }
-  }, []);
+  }, [isCapacitor]);
 
   useEffect(() => {
     if (isActive) {
@@ -87,28 +91,19 @@ const Timer: React.FC<TimerProps> = ({
     };
   }, [isActive]);
 
-  const showNotification = (
-    body: string,
-    requireInteraction = false,
-    actions: NotificationAction[] = []
-  ) => {
-    if (notificationPermission !== "granted") return;
-    navigator.serviceWorker.ready.then((registration) => {
-      // Cast notification options to 'any' to allow the 'actions' property,
-      // which might not be present in the environment's NotificationOptions type definition.
-      registration.showNotification("Garden Service Tracker", {
-        body,
-        icon: "/assets/icon-192x192.svg",
-        tag: NOTIFICATION_TAG,
-        requireInteraction,
-        actions,
-      } as any);
-    });
+  const requestCapacitorPermissions = async () => {
+    if (isCapacitor) {
+      const status = await LocalNotifications.requestPermissions();
+      setPermissionStatus(status);
+      return status;
+    }
+    return { display: "denied" } as PermissionStatus;
   };
 
   const handleToggle = async () => {
-    if (notificationPermission === "default") {
-      await onRequestNotificationPermission();
+    let permStatus: PermissionStatus | null = permissionStatus;
+    if (isCapacitor && (!permStatus || permStatus.display === "prompt")) {
+      permStatus = await requestCapacitorPermissions();
     }
 
     setIsActive((prev) => {
@@ -116,10 +111,19 @@ const Timer: React.FC<TimerProps> = ({
       if (newIsActive) {
         // Starting
         localStorage.setItem(TIMER_STORAGE.START_TIME, String(Date.now()));
-        showNotification("El cronómetro está en curso.", true, [
-          { action: "pause", title: "Pausar" },
-          { action: "finish", title: "Finalizar" },
-        ]);
+        if (permStatus?.display === "granted") {
+          LocalNotifications.schedule({
+            notifications: [
+              {
+                id: NOTIFICATION_ID,
+                title: "Temporizador en curso",
+                body: "Tu sesión de servicio está siendo cronometrada.",
+                ongoing: true,
+                autoCancel: false,
+              },
+            ],
+          });
+        }
       } else {
         // Pausing
         const startTime = localStorage.getItem(TIMER_STORAGE.START_TIME);
@@ -133,7 +137,11 @@ const Timer: React.FC<TimerProps> = ({
           localStorage.removeItem(TIMER_STORAGE.START_TIME);
           setTime(newBaseTime);
         }
-        showNotification("El temporizador está en pausa.");
+        if (isCapacitor) {
+          LocalNotifications.cancel({
+            notifications: [{ id: NOTIFICATION_ID }],
+          });
+        }
       }
       return newIsActive;
     });
@@ -148,24 +156,15 @@ const Timer: React.FC<TimerProps> = ({
     if (hoursToAdd > 0.01) {
       // minimum of ~36 seconds
       onFinishAndOpenModal(hoursToAdd);
-      showNotification(
-        `Temporizador finalizado. Añade ${hoursToHHMM(
-          hoursToAdd
-        )} a tu informe.`
-      );
     }
 
     // Reset
     setTime(0);
     localStorage.removeItem(TIMER_STORAGE.START_TIME);
     localStorage.removeItem(TIMER_STORAGE.BASE_TIME);
-    navigator.serviceWorker.ready.then((registration) => {
-      registration
-        .getNotifications({ tag: NOTIFICATION_TAG })
-        .then((notifications) => {
-          notifications.forEach((notification) => notification.close());
-        });
-    });
+    if (isCapacitor) {
+      LocalNotifications.cancel({ notifications: [{ id: NOTIFICATION_ID }] });
+    }
   };
 
   const handleReset = () => {
@@ -174,13 +173,9 @@ const Timer: React.FC<TimerProps> = ({
     setTime(0);
     localStorage.removeItem(TIMER_STORAGE.START_TIME);
     localStorage.removeItem(TIMER_STORAGE.BASE_TIME);
-    navigator.serviceWorker.ready.then((registration) => {
-      registration
-        .getNotifications({ tag: NOTIFICATION_TAG })
-        .then((notifications) => {
-          notifications.forEach((notification) => notification.close());
-        });
-    });
+    if (isCapacitor) {
+      LocalNotifications.cancel({ notifications: [{ id: NOTIFICATION_ID }] });
+    }
   };
 
   const formatTime = (totalSeconds: number) => {
@@ -196,9 +191,58 @@ const Timer: React.FC<TimerProps> = ({
   const checkIconColorClass =
     isSimpleMode && themeMode === "light" ? "text-slate-900" : "";
 
+  const renderNotificationButton = () => {
+    if (!isCapacitor) return null;
+
+    const commonButtonClasses =
+      "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-colors";
+    const commonIconClasses = "w-4 h-4";
+
+    switch (permissionStatus?.display) {
+      case "granted":
+        return (
+          <div
+            className={`${commonButtonClasses} bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-300 cursor-default`}
+            title="Las notificaciones del temporizador están activadas."
+          >
+            <BellIcon className={commonIconClasses} />
+            Notificaciones activas
+          </div>
+        );
+      case "denied":
+        return (
+          <div
+            className={`${commonButtonClasses} bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-300 cursor-default`}
+            title="Notificaciones bloqueadas. Habilítalas en la configuración de tu navegador."
+          >
+            <BellSlashIcon className={commonIconClasses} />
+            Notificaciones bloqueadas
+          </div>
+        );
+      case "prompt":
+      default:
+        return (
+          <button
+            onClick={requestCapacitorPermissions}
+            className={`${commonButtonClasses} bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600`}
+            title="Haz clic para activar las notificaciones del temporizador"
+          >
+            <BellIcon className={commonIconClasses} />
+            Activar notificaciones
+          </button>
+        );
+    }
+  };
+
   return (
     <div className="flex flex-col items-center w-full">
-      <p className="text-4xl font-mono font-bold text-slate-800 dark:text-slate-100 tracking-tight mb-4">
+      <div className="h-8 mb-2 flex items-center">
+        {renderNotificationButton()}
+      </div>
+      <p
+        className="text-4xl font-mono font-bold text-slate-800 dark:text-slate-100 tracking-tight mb-4"
+        aria-live="off"
+      >
         {formatTime(time)}
       </p>
       <div className="flex items-center justify-center space-x-4 w-full h-16">

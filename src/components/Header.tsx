@@ -1,5 +1,5 @@
 import React from "react";
-import { GardenIcon } from "./icons/GardenIcon";
+import { FlameIcon } from "./icons/FlameIcon";
 import { ThemeColor, ThemeMode } from "../types";
 import { THEMES } from "../constants";
 import { Bars3Icon } from "./icons/Bars3Icon";
@@ -76,7 +76,7 @@ const Header: React.FC<HeaderProps> = ({
               {streak}
             </span>
           )}
-          <GardenIcon className={`w-8 h-8 ${dynamicTextColor}`} />
+          <FlameIcon className={`w-8 h-8 ${dynamicTextColor}`} />
         </button>
       </div>
     </header>

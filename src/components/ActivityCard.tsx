@@ -4,7 +4,7 @@ import { THEMES } from "../constants";
 import { UserIcon } from "./icons/UserIcon";
 import { LocationMarkerIcon } from "./icons/LocationMarkerIcon";
 import { DocumentTextIcon } from "./icons/DocumentTextIcon";
-import { AcademicCapIcon } from "./icons/AcademicCapIcon"; // for study
+import { BookOpenIcon } from "./icons/BookOpenIcon"; // for study
 import { ArrowUturnLeftIcon } from "./icons/ArrowUturnLeftIcon"; // for visit
 import { PencilIcon } from "./icons/PencilIcon";
 import { TrashIcon } from "./icons/TrashIcon";
@@ -62,7 +62,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
           className={`flex items-center space-x-2 text-sm font-semibold px-3 py-1 rounded-full ${theme.bg} bg-opacity-10 ${theme.text}`}
         >
           {isStudy ? (
-            <AcademicCapIcon className="w-4 h-4" />
+            <BookOpenIcon className="w-4 h-4" />
           ) : (
             <ArrowUturnLeftIcon className="w-4 h-4" />
           )}

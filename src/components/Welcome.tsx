@@ -11,7 +11,8 @@ import {
 import { ListBulletIcon } from "./icons/ListBulletIcon";
 import { HeartIcon } from "./icons/HeartIcon";
 import { HomeIcon } from "./icons/HomeIcon";
-import { GardenIcon } from "./icons/GardenIcon";
+import { FlameIcon } from "./icons/FlameIcon";
+import { LeafIcon } from "./icons/LeafIcon";
 import { UserIcon } from "./icons/UserIcon";
 import ShapeProgress from "./FlowerProgress";
 import { FlowerIcon } from "./icons/FlowerIcon";
@@ -28,6 +29,9 @@ import { CalendarIcon } from "./icons/CalendarIcon";
 import { ClockIcon } from "./icons/ClockIcon";
 import { PauseIcon } from "./icons/PauseIcon";
 import { TrophyIcon } from "./icons/TrophyIcon";
+import { DiamondIcon } from "./icons/DiamondIcon";
+import { TriangleIcon } from "./icons/TriangleIcon";
+import { HexagonIcon } from "./icons/HexagonIcon";
 
 interface WelcomeProps {
   onFinish: (data: SetupData) => void;
@@ -277,7 +281,7 @@ const slideData: Slide[] = [
     icon: (theme: Theme, isActive?: boolean) => (
       <div className="flex items-center justify-center space-x-4">
         <StreakCounterAnimation isActive={isActive ?? false} theme={theme} />
-        <GardenIcon className="w-16 h-16 text-white" />
+        <FlameIcon className="w-16 h-16 text-white" />
       </div>
     ),
     title: "Mantén tu racha",
@@ -375,7 +379,7 @@ const RoleButton: React.FC<{
     className={`w-full p-3 rounded-lg text-sm font-semibold transition-colors border-2 ${
       current === value
         ? `${theme.bg} text-white border-transparent`
-        : "bg-slate-800 text-white border-slate-600"
+        : "bg-white dark:bg-slate-700/50 border-slate-300 dark:border-slate-600 text-slate-800 dark:text-white"
     }`}
   >
     {label}
@@ -488,7 +492,7 @@ const Welcome: React.FC<WelcomeProps> = ({
   }, []);
 
   const customizeSlideIndex = useMemo(
-    () => slides.findIndex((s) => s.title === "Dale tu toque personal"),
+    () => slides.findIndex((s) => s.type === "customize" || s.type === "setup"),
     [slides]
   );
 
@@ -511,10 +515,7 @@ const Welcome: React.FC<WelcomeProps> = ({
   const isOnOrAfterCustomize = currentSlide >= customizeSlideIndex;
 
   let backgroundClasses = "bg-black";
-  if (
-    currentSlideData.title === "Dale tu toque personal" ||
-    currentSlideData.type === "setup"
-  ) {
+  if (isOnOrAfterCustomize) {
     switch (themeMode) {
       case "light":
         backgroundClasses = "bg-gray-100";
@@ -532,32 +533,20 @@ const Welcome: React.FC<WelcomeProps> = ({
   }
 
   useEffect(() => {
-    const isDark =
-      currentSlideData.title === "Dale tu toque personal" ||
-      currentSlideData.type === "setup"
-        ? themeMode !== "light"
-        : true;
-    const isBlack =
-      currentSlideData.title === "Dale tu toque personal" ||
-      currentSlideData.type === "setup"
-        ? themeMode === "black"
-        : true;
+    const isOnOrAfterCustomize = currentSlide >= customizeSlideIndex;
+    const isDark = isOnOrAfterCustomize ? themeMode !== "light" : true;
+    const isBlack = isOnOrAfterCustomize ? themeMode === "black" : true;
 
     document.documentElement.classList.toggle("dark", isDark);
     document.documentElement.classList.toggle("theme-black", isBlack);
-  }, [currentSlide, themeMode, currentSlideData]);
+  }, [currentSlide, themeMode, customizeSlideIndex]);
 
-  const isEffectiveLight =
-    currentSlideData.title === "Dale tu toque personal" ||
-    currentSlideData.type === "setup"
-      ? themeMode === "light"
-      : false;
+  const isEffectiveLight = isOnOrAfterCustomize ? themeMode === "light" : false;
 
   const mainTextColor = isEffectiveLight ? "text-slate-900" : "text-white";
   const subTextColor = isEffectiveLight ? "text-slate-600" : "text-slate-400";
   const cardBgColor = isEffectiveLight ? "bg-white/60" : "bg-slate-900/60";
-  // Option C: force dark inputs with white text
-  const inputBgColor = "bg-slate-800";
+  const inputBgColor = isEffectiveLight ? "bg-white/80" : "bg-slate-800";
   const inputBorderColor = isEffectiveLight
     ? "border-slate-300"
     : "border-slate-600";
@@ -748,7 +737,7 @@ const Welcome: React.FC<WelcomeProps> = ({
                 >
                   {slide.type === "title" && (
                     <div className="flex flex-col items-center justify-center text-center animate-fadeIn z-10 h-full w-full px-4">
-                      <GardenIcon className="w-24 h-24 text-white mb-8" />
+                      <LeafIcon className="w-28 h-28 text-white mb-8" />
                       <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">
                         Garden te ayuda a
                       </h1>
@@ -765,9 +754,7 @@ const Welcome: React.FC<WelcomeProps> = ({
                   {slide.type === "feature" &&
                     (slide.title === "FinalSlide" ? (
                       <div className="flex flex-col items-center justify-center animate-fadeIn">
-                        <h2
-                          className={`text-8xl font-logotype ${mainTextColor}`}
-                        >
+                        <h2 className="text-8xl font-logotype font-bold lowercase text-white">
                           garden
                         </h2>
                       </div>
@@ -819,7 +806,7 @@ const Welcome: React.FC<WelcomeProps> = ({
                                   type="text"
                                   value={name}
                                   onChange={(e) => setName(e.target.value)}
-                                  className={`w-full pl-10 pr-4 py-2 ${inputBgColor} border ${inputBorderColor} rounded-lg focus:ring-2 ${displayTheme.ring} outline-none transition text-white`}
+                                  className={`w-full pl-10 pr-4 py-2 ${inputBgColor} border ${inputBorderColor} rounded-lg focus:ring-2 ${displayTheme.ring} outline-none transition ${mainTextColor}`}
                                 />
                               </div>
                             </div>
@@ -879,7 +866,7 @@ const Welcome: React.FC<WelcomeProps> = ({
                               onChange={(e) =>
                                 setGoal(parseInt(e.target.value, 10))
                               }
-                              className={`w-full mt-2 p-3 text-center text-2xl font-bold ${inputBgColor} border ${inputBorderColor} rounded-lg focus:ring-2 ${displayTheme.ring} outline-none transition text-white`}
+                              className={`w-full mt-2 p-3 text-center text-2xl font-bold ${inputBgColor} border ${inputBorderColor} rounded-lg focus:ring-2 ${displayTheme.ring} outline-none transition ${mainTextColor}`}
                               inputMode="numeric"
                             />
                           </div>
@@ -902,7 +889,7 @@ const Welcome: React.FC<WelcomeProps> = ({
                                   setCurrentMonthHours(e.target.value)
                                 }
                                 placeholder="0:00"
-                                className={`w-full mt-2 p-3 text-center text-xl ${inputBgColor} border ${inputBorderColor} rounded-lg focus:ring-2 ${displayTheme.ring} outline-none transition text-white`}
+                                className={`w-full mt-2 p-3 text-center text-xl ${inputBgColor} border ${inputBorderColor} rounded-lg focus:ring-2 ${displayTheme.ring} outline-none transition ${mainTextColor}`}
                                 inputMode="decimal"
                               />
                             </div>
@@ -954,7 +941,13 @@ const Welcome: React.FC<WelcomeProps> = ({
                                             [dateKey]: e.target.value,
                                           }))
                                         }
-                                        className={`w-24 px-2 py-1 ${inputBgColor} border ${inputBorderColor} rounded-lg text-right focus:ring-2 ${displayTheme.ring} outline-none transition text-white`}
+                                        className={`w-24 px-2 py-1 ${
+                                          isEffectiveLight
+                                            ? "bg-slate-200"
+                                            : "bg-slate-700/80"
+                                        } border ${inputBorderColor} rounded-lg text-right focus:ring-2 ${
+                                          displayTheme.ring
+                                        } outline-none transition ${mainTextColor}`}
                                         inputMode="decimal"
                                       />
                                     </div>
@@ -1055,7 +1048,7 @@ const Welcome: React.FC<WelcomeProps> = ({
                               >
                                 Forma
                               </label>
-                              <div className="flex justify-center space-x-2">
+                              <div className="grid grid-cols-3 gap-3">
                                 {shapeOptions.map(
                                   ({ name: shapeName, Icon }) => (
                                     <button
@@ -1074,7 +1067,7 @@ const Welcome: React.FC<WelcomeProps> = ({
                                       }`}
                                     >
                                       <Icon
-                                        className={`w-7 h-7 ${
+                                        className={`w-8 h-8 ${
                                           progressShape === shapeName
                                             ? "text-current"
                                             : "text-slate-400"
@@ -1121,7 +1114,7 @@ const Welcome: React.FC<WelcomeProps> = ({
                                 Color
                               </label>
                               <div className="grid grid-cols-8 gap-2">
-                                {THEME_LIST.slice(0, 8).map((themeOption) => (
+                                {THEME_LIST.map((themeOption) => (
                                   <button
                                     key={themeOption.name}
                                     onClick={() =>

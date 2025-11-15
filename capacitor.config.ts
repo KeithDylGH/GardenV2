@@ -4,17 +4,20 @@ const config: CapacitorConfig = {
   appId: "com.garden.app",
   appName: "Garden",
   webDir: "dist",
+  server: {
+    androidScheme: "https",
+  },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 3000, // Duración de la visualización (en ms)
-      launchAutoHide: false, // Ocultar automáticamente
-      backgroundColor: "#000F11", // Color de fondo (ej: blanco)
-      androidSplashResourceName: "splash", // Nombre del recurso generado (por defecto)
-      androidScaleType: "CENTER_CROP", // Tipo de escalado de imagen
-      showSpinner: true, // Mostrar spinner de carga
-      androidSpinnerStyle: "large",
+      launchShowDuration: 1000,
+      launchAutoHide: true,
+      // El color de fondo del nuevo sistema de splash de Android 12
+      backgroundColor: "#000F11",
+      // Le decimos explícitamente a Android 12 que no ponga un ícono encima del nuestro
+      androidSplashResourceName: "splash",
+      androidScaleType: "CENTER_CROP",
+      showSpinner: false,
     },
   },
 };
-
 export default config;

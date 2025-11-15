@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { ThemeColor } from "../types";
 import { THEMES } from "../constants";
-import { GardenIcon } from "./icons/GardenIcon";
+import { FlameIcon } from "./icons/FlameIcon";
 import { InformationCircleIcon } from "./icons/InformationCircleIcon";
 import { ShieldCheckIcon } from "./icons/ShieldCheckIcon";
 import { isWeekend } from "../utils";
@@ -115,7 +115,7 @@ const StreakModal: React.FC<StreakModalProps> = ({
               className={`flex items-center space-x-4 my-6 text-7xl font-bold ${theme.text} animate-fadeInUp`}
             >
               <span className="tracking-tighter">{streak}</span>
-              <GardenIcon className="w-16 h-16" />
+              <FlameIcon className="w-16 h-16" />
             </div>
 
             {isProtectedToday && (

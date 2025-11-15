@@ -26,7 +26,7 @@ import { CloudIcon } from "./icons/CloudIcon";
 import { RainIcon } from "./icons/RainIcon";
 import { MedicalIcon } from "./icons/MedicalIcon";
 import { ArrowUturnLeftIcon } from "./icons/ArrowUturnLeftIcon";
-import { AcademicCapIcon } from "./icons/AcademicCapIcon";
+import { BookOpenIcon } from "./icons/BookOpenIcon";
 import { XCircleIcon } from "./icons/XCircleIcon";
 import ToggleSwitch from "./ToggleSwitch";
 import { TrashIcon } from "./icons/TrashIcon";
@@ -491,7 +491,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                                       className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400"
                                     >
                                       {activity.type === "study" ? (
-                                        <AcademicCapIcon className="w-3.5 h-3.5" />
+                                        <BookOpenIcon className="w-3.5 h-3.5" />
                                       ) : (
                                         <ArrowUturnLeftIcon className="w-3.5 h-3.5" />
                                       )}
@@ -523,7 +523,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                               className={`w-5 h-5 mr-2 ${theme.text}`}
                             />
                           ) : (
-                            <AcademicCapIcon
+                            <BookOpenIcon
                               className={`w-5 h-5 mr-2 ${theme.text}`}
                             />
                           )}

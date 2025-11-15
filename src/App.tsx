@@ -513,13 +513,6 @@ const App: React.FC = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isHelpModalOpen, setHelpModalOpen] = useState(false);
   const [isOfflineReady, setIsOfflineReady] = useState(false);
-  const [notificationPermission, setNotificationPermission] =
-    useState<NotificationPermission>(() => {
-      if (typeof window !== "undefined" && "Notification" in window) {
-        return Notification.permission;
-      }
-      return "default";
-    });
 
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [performanceMode, setPerformanceMode] = useState(
@@ -705,13 +698,6 @@ const App: React.FC = () => {
       document.body.style.overflow = "auto";
     };
   }, [activeView]);
-
-  const requestNotificationPermission = async () => {
-    if ("Notification" in window) {
-      const permission = await Notification.requestPermission();
-      setNotificationPermission(permission);
-    }
-  };
 
   useEffect(() => {
     if ("serviceWorker" in navigator) {
@@ -1718,8 +1704,6 @@ const App: React.FC = () => {
               themeColor={displayThemeColor}
               onHelpClick={() => setHelpModalOpen(true)}
               onShareReport={handleOpenShareModal}
-              notificationPermission={notificationPermission}
-              onRequestNotificationPermission={requestNotificationPermission}
               performanceMode={performanceMode}
               isPrivacyMode={isPrivacyMode}
               onTogglePrivacyMode={() => setIsPrivacyMode((p) => !p)}
