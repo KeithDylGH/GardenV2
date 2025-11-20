@@ -34,9 +34,17 @@ const Header: React.FC<HeaderProps> = ({
   const dynamicTextColor =
     isSimpleMode && themeMode === "light" ? "text-slate-900" : theme.text;
 
+  // Explicit background logic to ensure Black theme is truly black
+  const headerBgClass =
+    themeMode === "black"
+      ? "bg-black/85 border-neutral-800"
+      : "bg-white/80 dark:bg-slate-900/80 border-slate-200/80 dark:border-slate-700/80";
+
   return (
-    <header className="fixed top-0 left-0 right-0 bg-gray-100/80 dark:bg-slate-900/80 backdrop-blur-lg z-30 border-b border-slate-200/80 dark:border-slate-700/80">
-      <div className="relative flex items-center justify-between h-20 px-4">
+    <header
+      className={`fixed top-0 left-0 right-0 backdrop-blur-lg z-30 border-b pt-[env(safe-area-inset-top)] ${headerBgClass}`}
+    >
+      <div className="relative flex items-center justify-between h-16 px-4">
         <div className="flex items-center -ml-2">
           <button
             onClick={onMenuClick}

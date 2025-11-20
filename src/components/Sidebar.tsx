@@ -276,7 +276,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       aria-modal="true"
     >
       <aside
-        className={`fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-gray-100 dark:bg-slate-900 shadow-2xl flex flex-col ${
+        className={`fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-gray-100 dark:bg-slate-900 shadow-2xl flex flex-col pt-[calc(env(safe-area-inset-top)+0.25rem)] pb-[env(safe-area-inset-bottom)] ${
           hasBeenOpened
             ? `transition-transform ${
                 performanceMode ? "duration-0" : "duration-300"

@@ -59,7 +59,6 @@ import {
   getServiceYear,
   getServiceYearMonths,
   hoursToHHMM,
-  getCommemorationDate,
   formatDateKey,
 } from "./utils";
 import ShareToast from "./components/ShareToast";
@@ -67,101 +66,20 @@ import ShareReportModal from "./components/ShareReportModal";
 import { ALL_ACHIEVEMENTS } from "./achievements";
 import { THEMES } from "./constants";
 
-const SolidStarIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    {...props}
-  >
-    <path
-      fillRule="evenodd"
-      d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.386l-4.05 3.528 1.176 5.27c.286 1.282-1.034 2.288-2.14 1.623l-4.65-2.844-4.65 2.844c-1.106.665-2.426-.34-2.14-1.623l1.176-5.27-4.05-3.528c-.887-.84-.415-2.293.749-2.386l5.404-.433 2.082-5.007z"
-      clipRule="evenodd"
-    />
-  </svg>
-);
-
-interface CommemorationModalProps {
-  isOpen: boolean;
-  onConfirm: () => void;
-  onDecline: () => void;
-  themeColor: ThemeColor;
-  performanceMode: boolean;
+// HACK: Definir `window.Capacitor` para que TypeScript no se queje.
+declare global {
+  interface Window {
+    Capacitor?: {
+      isNativePlatform: () => boolean;
+      Plugins?: {
+        SplashScreen?: {
+          hide: () => Promise<void>;
+        };
+      };
+      getPlatform: () => string;
+    };
+  }
 }
-
-const CommemorationModal: React.FC<CommemorationModalProps> = ({
-  isOpen,
-  onConfirm,
-  onDecline,
-  themeColor,
-  performanceMode,
-}) => {
-  const theme = THEMES[themeColor] || THEMES.blue;
-  const [hasBeenOpened, setHasBeenOpened] = React.useState(false);
-
-  React.useEffect(() => {
-    if (isOpen) {
-      setHasBeenOpened(true);
-    }
-  }, [isOpen]);
-
-  if (!hasBeenOpened) return null;
-
-  return (
-    <div
-      className={`fixed inset-0 z-50 transition-colors duration-300 ${
-        isOpen ? "bg-black/60" : "bg-transparent pointer-events-none"
-      }`}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="commemoration-title"
-      onClick={onDecline}
-    >
-      <div
-        className={`fixed inset-0 flex items-center justify-center p-4 transition-opacity ${
-          performanceMode ? "duration-0" : "duration-300"
-        } ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-      >
-        <div
-          className={`bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-sm p-6 text-center transform transition-all ${
-            performanceMode ? "duration-0" : "duration-300"
-          }`}
-          style={{ transform: isOpen ? "scale(1)" : "scale(0.95)" }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-red-800 to-rose-900 mb-4">
-            <SolidStarIcon className="w-9 h-9 text-yellow-300" />
-          </div>
-          <h2
-            id="commemoration-title"
-            className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2"
-          >
-            Mes de la Conmemoración
-          </h2>
-          <p className="text-slate-600 dark:text-slate-300 mb-6">
-            Ha comenzado un mes muy especial. ¿Te gustaría cambiar el color del
-            tema a vinotinto para la ocasión?
-          </p>
-          <div className="flex flex-col space-y-3">
-            <button
-              onClick={onConfirm}
-              className="w-full px-6 py-3 rounded-lg bg-red-800 hover:bg-red-700 text-white font-bold text-lg shadow-lg transition-transform"
-            >
-              Sí, cambiar color
-            </button>
-            <button
-              onClick={onDecline}
-              className="w-full px-6 py-2 rounded-lg text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-200 dark:hover:bg-slate-700"
-            >
-              No, gracias
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const APP_STORAGE_key = "garden-service-tracker";
 const WELCOME_SHOWN_KEY = "garden-welcome-shown";
@@ -496,8 +414,6 @@ const App: React.FC = () => {
   const [isEndOfYearModalOpen, setEndOfYearModalOpen] = useState(false);
   const [isImportConfirmModalOpen, setImportConfirmModalOpen] = useState(false);
   const [importedState, setImportedState] = useState<AppState | null>(null);
-  const [isCommemorationModalOpen, setIsCommemorationModalOpen] =
-    useState(false);
   const [isPioneerUpgradeModalOpen, setIsPioneerUpgradeModalOpen] =
     useState(false);
 
@@ -555,6 +471,84 @@ const App: React.FC = () => {
   const displayThemeMode =
     isSimpleMode && themeMode === "black" ? "dark" : themeMode;
 
+  useEffect(() => {
+    // Oculta la pantalla de bienvenida de Capacitor una vez que el componente principal se monta.
+    if (window.Capacitor?.Plugins?.SplashScreen) {
+      window.Capacitor.Plugins.SplashScreen.hide();
+    }
+    // Configura la barra de estado para que sea transparente y superpuesta
+    if (window.Capacitor?.isNativePlatform()) {
+      // Use dynamic import for StatusBar
+      import("@capacitor/status-bar")
+        .then(({ StatusBar }) => {
+          StatusBar.setOverlaysWebView({ overlay: true });
+        })
+        .catch((err) => console.error("Error loading StatusBar plugin", err));
+    }
+  }, []);
+
+  useEffect(() => {
+    const setSystemTheme = async () => {
+      if (window.Capacitor?.isNativePlatform()) {
+        try {
+          const { StatusBar, Style } = await import("@capacitor/status-bar");
+
+          const style = displayThemeMode === "light" ? Style.Light : Style.Dark;
+
+          // Status Bar: Transparent and Overlay (extends header)
+          // Note: We set the style here, visibility is handled by the other useEffect
+          await StatusBar.setStyle({ style });
+          await StatusBar.setOverlaysWebView({ overlay: true });
+          await StatusBar.setBackgroundColor({ color: "#00000000" });
+
+          // Navigation Bar: Specific Colors based on theme
+          try {
+            const navBarModule = await import(
+              "@capgo/capacitor-navigation-bar"
+            );
+            const NavigationBar =
+              navBarModule.NavigationBar || navBarModule.default;
+
+            if (NavigationBar) {
+              let navColor = "#ffffff"; // Default white for Light mode
+              let darkButtons = true;
+
+              if (displayThemeMode === "light") {
+                navColor = "#ffffff";
+                darkButtons = true;
+              } else if (displayThemeMode === "dark") {
+                navColor = "#0f172a"; // Slate 900 for Dark mode
+                darkButtons = false;
+              } else if (displayThemeMode === "black") {
+                navColor = "#000000"; // True Black for Black mode
+                darkButtons = false;
+              }
+
+              // Use setNavigationBarColor as requested
+              if (
+                typeof (NavigationBar as any).setNavigationBarColor ===
+                "function"
+              ) {
+                await (NavigationBar as any).setNavigationBarColor({
+                  color: navColor,
+                  darkButtons: darkButtons,
+                });
+              }
+            }
+          } catch (navErr) {
+            console.warn(
+              "NavigationBar plugin could not be loaded or configured:",
+              navErr
+            );
+          }
+        } catch (e) {
+          console.error("Error setting system theme:", e);
+        }
+      }
+    };
+    setSystemTheme();
+  }, [displayThemeMode]);
+
   // Check for new service year on app load
   useEffect(() => {
     const today = new Date();
@@ -563,21 +557,6 @@ const App: React.FC = () => {
     // Check for new service year
     if (serviceYearOfToday !== currentServiceYear) {
       setEndOfYearModalOpen(true);
-    }
-
-    // Check for Commemoration month
-    const commemorationDate = getCommemorationDate(serviceYearOfToday);
-    if (
-      commemorationDate &&
-      today.getMonth() === commemorationDate.getUTCMonth() &&
-      today.getFullYear() === commemorationDate.getUTCFullYear()
-    ) {
-      const alertShownKey = `garden-commemoration-alert-shown-${serviceYearOfToday}`;
-      const hasBeenShown = localStorage.getItem(alertShownKey);
-
-      if (!hasBeenShown) {
-        setTimeout(() => setIsCommemorationModalOpen(true), 1500);
-      }
     }
   }, [currentServiceYear]);
 
@@ -1589,25 +1568,6 @@ const App: React.FC = () => {
     setImportedState(null);
   };
 
-  const handleConfirmCommemorationTheme = () => {
-    setThemeColor("wine");
-    const serviceYear = getServiceYear(new Date());
-    localStorage.setItem(
-      `garden-commemoration-alert-shown-${serviceYear}`,
-      "true"
-    );
-    setIsCommemorationModalOpen(false);
-  };
-
-  const handleDeclineCommemorationTheme = () => {
-    const serviceYear = getServiceYear(new Date());
-    localStorage.setItem(
-      `garden-commemoration-alert-shown-${serviceYear}`,
-      "true"
-    );
-    setIsCommemorationModalOpen(false);
-  };
-
   const handleStartFirstLog = () => {
     setStreakTutorialModalOpen(false);
     openAddModal();
@@ -1841,7 +1801,7 @@ const App: React.FC = () => {
         className="hidden"
       />
 
-      <main className="pt-24 pb-28">
+      <main className="pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(7rem+env(safe-area-inset-bottom))]">
         <div className="px-4 animate-fadeIn">{renderContent()}</div>
       </main>
 
@@ -1989,14 +1949,6 @@ const App: React.FC = () => {
         message="Esto reemplazará todos tus datos actuales con los del archivo. ¿Estás seguro de que quieres continuar?"
         confirmText="Sí, importar datos"
         themeColor={displayThemeColor}
-      />
-
-      <CommemorationModal
-        isOpen={isCommemorationModalOpen}
-        onConfirm={handleConfirmCommemorationTheme}
-        onDecline={handleDeclineCommemorationTheme}
-        themeColor={displayThemeColor}
-        performanceMode={performanceMode}
       />
 
       <PioneerUpgradeModal

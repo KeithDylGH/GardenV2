@@ -1,4 +1,4 @@
-const CACHE_NAME = "garden-cache-v4"; // Incrementamos la versión del caché
+const CACHE_NAME = "garden-cache-v5"; // Incrementamos la versión del caché
 // Lista completa de recursos necesarios para que la app funcione offline.
 const URLS_TO_CACHE = [
   "/",

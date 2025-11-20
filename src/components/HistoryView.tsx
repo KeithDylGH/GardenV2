@@ -9,12 +9,7 @@ import {
 } from "../types";
 import { THEMES } from "../constants";
 import CalendarGrid from "./CalendarGrid";
-import {
-  getServiceYear,
-  getServiceYearMonths,
-  hoursToHHMM,
-  getCommemorationDate,
-} from "../utils";
+import { getServiceYear, getServiceYearMonths, hoursToHHMM } from "../utils";
 import { ChevronLeftIcon } from "./icons/ChevronLeftIcon";
 import { ChevronRightIcon } from "./icons/ChevronRightIcon";
 import { SunIcon } from "./icons/SunIcon";
@@ -144,10 +139,6 @@ const HistoryView: React.FC<HistoryViewProps> = ({
     );
   };
 
-  const commemorationDate = useMemo(() => {
-    return getCommemorationDate(selectedYear);
-  }, [selectedYear]);
-
   return (
     <div className="w-full max-w-4xl mx-auto">
       <div className="mb-6">
@@ -235,7 +226,6 @@ const HistoryView: React.FC<HistoryViewProps> = ({
           isPrivacyMode={isPrivacyMode}
           activities={activities}
           isSummaryMonth={isSummaryMonth}
-          commemorationDate={commemorationDate}
           carryoverHours={carryoverHours}
           planningData={planningData}
           meetingDays={meetingDays}

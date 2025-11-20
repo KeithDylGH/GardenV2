@@ -60,8 +60,16 @@ const BottomNav: React.FC<BottomNavProps> = ({
       )
     : allNavItems;
 
+  // Explicit background logic to ensure Black theme is truly black and matches system bar
+  const navBackgroundClass =
+    themeMode === "black"
+      ? "bg-black/90 border-neutral-800"
+      : "bg-gray-50/70 dark:bg-slate-900/70 border-slate-200/60 dark:border-slate-700/60";
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-gray-50/70 dark:bg-slate-900/70 backdrop-blur-lg border-t border-slate-200/60 dark:border-slate-700/60 z-10">
+    <nav
+      className={`fixed bottom-0 left-0 right-0 backdrop-blur-lg border-t z-10 pb-[env(safe-area-inset-bottom)] ${navBackgroundClass}`}
+    >
       <div className="flex items-center justify-around h-20 max-w-lg mx-auto">
         {navItems.map((item) => {
           if (item.view === "add") {
@@ -73,7 +81,11 @@ const BottomNav: React.FC<BottomNavProps> = ({
                 <button
                   id="add-hours-button"
                   onClick={onAddClick}
-                  className={`w-16 h-16 rounded-full flex items-center justify-center bg-gray-50 dark:bg-slate-900 shadow-lg transition-transform z-20 ${dynamicTextColor} ${
+                  className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform z-20 ${dynamicTextColor} ${
+                    themeMode === "black"
+                      ? "bg-neutral-800"
+                      : "bg-gray-50 dark:bg-slate-900"
+                  } ${
                     !performanceMode &&
                     "transform hover:scale-105 active:scale-100"
                   }`}

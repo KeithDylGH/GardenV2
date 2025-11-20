@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  LocalNotifications,
-  PermissionStatus,
-} from "@capacitor/local-notifications";
+// Dynamic import used instead of static to prevent crash on load
+// import { LocalNotifications, PermissionStatus } from '@capacitor/local-notifications';
 import { ThemeColor, ThemeMode } from "../types";
 import { THEMES } from "../constants";
 import { hoursToHHMM } from "../utils";
@@ -19,6 +17,11 @@ interface TimerProps {
   performanceMode: boolean;
   isSimpleMode?: boolean;
   themeMode?: ThemeMode;
+}
+
+// Define local type to avoid static import
+interface PermissionStatus {
+  display: "granted" | "denied" | "prompt" | "prompt-with-rationale";
 }
 
 const TIMER_STORAGE = {
@@ -48,7 +51,15 @@ const Timer: React.FC<TimerProps> = ({
 
   useEffect(() => {
     if (isCapacitor) {
-      LocalNotifications.checkPermissions().then(setPermissionStatus);
+      import("@capacitor/local-notifications")
+        .then(({ LocalNotifications }) => {
+          LocalNotifications.checkPermissions().then((status: any) =>
+            setPermissionStatus(status)
+          );
+        })
+        .catch((err) =>
+          console.error("Failed to load LocalNotifications", err)
+        );
     }
     const startTime = localStorage.getItem(TIMER_STORAGE.START_TIME);
     const baseTime = parseFloat(
@@ -93,16 +104,28 @@ const Timer: React.FC<TimerProps> = ({
 
   const requestCapacitorPermissions = async () => {
     if (isCapacitor) {
-      const status = await LocalNotifications.requestPermissions();
-      setPermissionStatus(status);
-      return status;
+      try {
+        const { LocalNotifications } = await import(
+          "@capacitor/local-notifications"
+        );
+        const status = await LocalNotifications.requestPermissions();
+        setPermissionStatus(status as PermissionStatus);
+        return status;
+      } catch (e) {
+        console.error(e);
+      }
     }
     return { display: "denied" } as PermissionStatus;
   };
 
   const handleToggle = async () => {
     let permStatus: PermissionStatus | null = permissionStatus;
-    if (isCapacitor && (!permStatus || permStatus.display === "prompt")) {
+    if (
+      isCapacitor &&
+      (!permStatus ||
+        permStatus.display === "prompt" ||
+        permStatus.display === "prompt-with-rationale")
+    ) {
       permStatus = await requestCapacitorPermissions();
     }
 
@@ -111,18 +134,22 @@ const Timer: React.FC<TimerProps> = ({
       if (newIsActive) {
         // Starting
         localStorage.setItem(TIMER_STORAGE.START_TIME, String(Date.now()));
-        if (permStatus?.display === "granted") {
-          LocalNotifications.schedule({
-            notifications: [
-              {
-                id: NOTIFICATION_ID,
-                title: "Temporizador en curso",
-                body: "Tu sesión de servicio está siendo cronometrada.",
-                ongoing: true,
-                autoCancel: false,
-              },
-            ],
-          });
+        if (permStatus?.display === "granted" && isCapacitor) {
+          import("@capacitor/local-notifications")
+            .then(({ LocalNotifications }) => {
+              LocalNotifications.schedule({
+                notifications: [
+                  {
+                    id: NOTIFICATION_ID,
+                    title: "Temporizador en curso",
+                    body: "Tu sesión de servicio está siendo cronometrada.",
+                    ongoing: true,
+                    autoCancel: false,
+                  },
+                ],
+              });
+            })
+            .catch(console.error);
         }
       } else {
         // Pausing
@@ -138,9 +165,13 @@ const Timer: React.FC<TimerProps> = ({
           setTime(newBaseTime);
         }
         if (isCapacitor) {
-          LocalNotifications.cancel({
-            notifications: [{ id: NOTIFICATION_ID }],
-          });
+          import("@capacitor/local-notifications")
+            .then(({ LocalNotifications }) => {
+              LocalNotifications.cancel({
+                notifications: [{ id: NOTIFICATION_ID }],
+              });
+            })
+            .catch(console.error);
         }
       }
       return newIsActive;
@@ -163,7 +194,13 @@ const Timer: React.FC<TimerProps> = ({
     localStorage.removeItem(TIMER_STORAGE.START_TIME);
     localStorage.removeItem(TIMER_STORAGE.BASE_TIME);
     if (isCapacitor) {
-      LocalNotifications.cancel({ notifications: [{ id: NOTIFICATION_ID }] });
+      import("@capacitor/local-notifications")
+        .then(({ LocalNotifications }) => {
+          LocalNotifications.cancel({
+            notifications: [{ id: NOTIFICATION_ID }],
+          });
+        })
+        .catch(console.error);
     }
   };
 
@@ -174,7 +211,13 @@ const Timer: React.FC<TimerProps> = ({
     localStorage.removeItem(TIMER_STORAGE.START_TIME);
     localStorage.removeItem(TIMER_STORAGE.BASE_TIME);
     if (isCapacitor) {
-      LocalNotifications.cancel({ notifications: [{ id: NOTIFICATION_ID }] });
+      import("@capacitor/local-notifications")
+        .then(({ LocalNotifications }) => {
+          LocalNotifications.cancel({
+            notifications: [{ id: NOTIFICATION_ID }],
+          });
+        })
+        .catch(console.error);
     }
   };
 
@@ -220,6 +263,7 @@ const Timer: React.FC<TimerProps> = ({
           </div>
         );
       case "prompt":
+      case "prompt-with-rationale":
       default:
         return (
           <button

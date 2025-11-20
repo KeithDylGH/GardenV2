@@ -20,7 +20,6 @@ interface CalendarGridProps {
   isPrivacyMode: boolean;
   activities: ActivityItem[];
   isSummaryMonth: boolean;
-  commemorationDate: Date | null;
   carryoverHours: number;
   planningData: PlanningData;
   meetingDays: number[];
@@ -44,7 +43,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   isPrivacyMode,
   activities,
   isSummaryMonth,
-  commemorationDate,
   carryoverHours,
   planningData,
   meetingDays,
@@ -188,12 +186,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           const ldcHours = dayEntry?.ldcHours || 0;
           const status = dayEntry?.status;
 
-          const isCommemoration =
-            commemorationDate &&
-            date.getFullYear() === commemorationDate.getUTCFullYear() &&
-            date.getMonth() === commemorationDate.getUTCMonth() &&
-            date.getDate() === commemorationDate.getUTCDate();
-
           const isCampaign = dayEntry?.isCampaign;
           const hasRecurringActivity =
             !isSummaryMonth &&
@@ -220,11 +212,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
           if (isCurrentMonth && !isSummaryMonth) {
             dayClasses.push("hover:bg-slate-200 dark:hover:bg-slate-700");
-            if (isCommemoration) {
-              dayClasses.push(
-                "bg-red-800 dark:bg-red-900/70 text-white dark:text-red-100"
-              );
-            } else if (isCampaign) {
+            if (isCampaign) {
               dayClasses.push(theme.bg, "bg-opacity-20 dark:bg-opacity-20");
             } else if (status === "sick") {
               dayClasses.push("bg-red-200 dark:bg-red-800/50");
@@ -267,9 +255,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
               <span
                 className={`text-sm font-semibold flex items-center justify-center ${
-                  isCommemoration
-                    ? "text-white dark:text-red-100"
-                    : isCurrentMonth
+                  isCurrentMonth
                     ? "text-slate-700 dark:text-slate-200"
                     : "text-slate-400 dark:text-slate-500"
                 }`}

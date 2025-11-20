@@ -545,10 +545,23 @@ const Welcome: React.FC<WelcomeProps> = ({
 
   const mainTextColor = isEffectiveLight ? "text-slate-900" : "text-white";
   const subTextColor = isEffectiveLight ? "text-slate-600" : "text-slate-400";
-  const cardBgColor = isEffectiveLight ? "bg-white/60" : "bg-slate-900/60";
-  const inputBgColor = isEffectiveLight ? "bg-white/80" : "bg-slate-800";
+
+  const cardBgColor = isEffectiveLight
+    ? "bg-white/60"
+    : themeMode === "black"
+    ? "bg-neutral-900 border border-neutral-800"
+    : "bg-slate-900/60";
+
+  const inputBgColor = isEffectiveLight
+    ? "bg-white/80"
+    : themeMode === "black"
+    ? "bg-neutral-800"
+    : "bg-slate-800";
+
   const inputBorderColor = isEffectiveLight
     ? "border-slate-300"
+    : themeMode === "black"
+    ? "border-neutral-700"
     : "border-slate-600";
 
   const TOTAL_SETUP_STEPS = useMemo(
@@ -921,6 +934,8 @@ const Welcome: React.FC<WelcomeProps> = ({
                                       className={`flex items-center justify-between p-2 ${
                                         isEffectiveLight
                                           ? "bg-slate-500/10"
+                                          : themeMode === "black"
+                                          ? "bg-neutral-800/50"
                                           : "bg-slate-800/50"
                                       } rounded-lg`}
                                     >
@@ -944,6 +959,8 @@ const Welcome: React.FC<WelcomeProps> = ({
                                         className={`w-24 px-2 py-1 ${
                                           isEffectiveLight
                                             ? "bg-slate-200"
+                                            : themeMode === "black"
+                                            ? "bg-neutral-800"
                                             : "bg-slate-700/80"
                                         } border ${inputBorderColor} rounded-lg text-right focus:ring-2 ${
                                           displayTheme.ring
@@ -976,7 +993,11 @@ const Welcome: React.FC<WelcomeProps> = ({
                                     className={`w-9 h-9 rounded-full font-bold text-sm flex items-center justify-center border-2 transition-all ${
                                       meetingDays.has(day.value)
                                         ? `${displayTheme.bg} text-white border-transparent shadow-sm`
-                                        : `${inputBgColor} ${subTextColor} ${inputBorderColor} hover:border-slate-400 dark:hover:border-slate-400`
+                                        : `${inputBgColor} ${subTextColor} ${inputBorderColor} ${
+                                            themeMode === "black"
+                                              ? "hover:border-neutral-400"
+                                              : "hover:border-slate-400"
+                                          }`
                                     }`}
                                   >
                                     {day.label}
@@ -1016,7 +1037,11 @@ const Welcome: React.FC<WelcomeProps> = ({
                                       className={`w-10 h-10 rounded-full font-bold text-sm flex items-center justify-center border-2 transition-all ${
                                         protectedDay === day.value
                                           ? `${displayTheme.bg} text-white border-transparent shadow-sm`
-                                          : `${inputBgColor} ${subTextColor} ${inputBorderColor} hover:border-slate-400 dark:hover:border-slate-400`
+                                          : `${inputBgColor} ${subTextColor} ${inputBorderColor} ${
+                                              themeMode === "black"
+                                                ? "hover:border-neutral-400"
+                                                : "hover:border-slate-400"
+                                            }`
                                       } ${
                                         isMeetingDay
                                           ? "opacity-50 cursor-not-allowed"
@@ -1059,11 +1084,11 @@ const Welcome: React.FC<WelcomeProps> = ({
                                       className={`flex-1 p-2 border-2 rounded-lg flex items-center justify-center transition-all ${
                                         progressShape === shapeName
                                           ? `${userSelectedTheme.text} border-current ${userSelectedTheme.bg} bg-opacity-10`
-                                          : `${
-                                              isEffectiveLight
-                                                ? "border-slate-300"
-                                                : "border-slate-600"
-                                            } ${inputBgColor} hover:bg-slate-700`
+                                          : `${inputBorderColor} ${inputBgColor} ${
+                                              themeMode === "black"
+                                                ? "hover:bg-neutral-700"
+                                                : "hover:bg-slate-700"
+                                            }`
                                       }`}
                                     >
                                       <Icon
@@ -1088,6 +1113,8 @@ const Welcome: React.FC<WelcomeProps> = ({
                                 className={`flex gap-2 p-1 ${
                                   isEffectiveLight
                                     ? "bg-slate-200"
+                                    : themeMode === "black"
+                                    ? "bg-neutral-800"
                                     : "bg-slate-800"
                                 } rounded-lg`}
                               >
@@ -1098,7 +1125,11 @@ const Welcome: React.FC<WelcomeProps> = ({
                                     className={`flex-1 flex items-center justify-center space-x-2 py-1.5 rounded-md transition-colors text-sm font-semibold ${
                                       themeMode === option.name
                                         ? `${userSelectedTheme.bg} text-white shadow`
-                                        : `${subTextColor} hover:bg-slate-700`
+                                        : `${subTextColor} ${
+                                            themeMode === "black"
+                                              ? "hover:bg-neutral-700"
+                                              : "hover:bg-slate-700"
+                                          }`
                                     }`}
                                   >
                                     <option.Icon className="w-4 h-4" />

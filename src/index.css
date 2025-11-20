@@ -27,6 +27,9 @@ html.theme-black.dark {
 .theme-black.dark .dark\:bg-slate-900\/70 {
   background-color: rgba(0, 0, 0, 0.75);
 }
+.theme-black.dark .dark\:bg-slate-900\/60 {
+  background-color: rgba(0, 0, 0, 0.6);
+}
 .theme-black.dark .dark\:bg-slate-800 {
   background-color: var(--bg-card);
 }

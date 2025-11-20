@@ -91,9 +91,15 @@ const ServiceTracker: React.FC<ServiceTrackerProps> = ({
 
   const isPioneer = userRole !== "publisher";
 
+  // Dynamic card styling to ensure Black theme is neutral (not blue/slate)
+  const cardClasses =
+    themeMode === "black"
+      ? "bg-[#121212] border-neutral-800"
+      : "bg-white dark:bg-slate-800 border-slate-200/50 dark:border-slate-700/50";
+
   return (
     <div
-      className={`bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-700/50 w-full max-w-2xl mx-auto transition-[padding-bottom] duration-300 ${
+      className={`${cardClasses} mt-6 p-4 rounded-2xl shadow-sm border w-full max-w-2xl mx-auto transition-[padding-bottom] duration-300 ${
         isStatsMode ? "pb-6" : ""
       }`}
     >
@@ -193,7 +199,13 @@ const ServiceTracker: React.FC<ServiceTrackerProps> = ({
                 className={`flex flex-col items-center justify-center animate-fadeIn group`}
                 aria-label="Editar horas LDC"
               >
-                <div className="w-24 h-24 rounded-full bg-slate-100 dark:bg-slate-700/50 flex flex-col items-center justify-center text-center border border-slate-200 dark:border-slate-600 transition-transform group-hover:scale-105">
+                <div
+                  className={`w-24 h-24 rounded-full flex flex-col items-center justify-center text-center border transition-transform group-hover:scale-105 ${
+                    themeMode === "black"
+                      ? "bg-neutral-800 border-neutral-700"
+                      : "bg-slate-100 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600"
+                  }`}
+                >
                   <p
                     className={`text-3xl font-bold text-slate-800 dark:text-slate-100 tracking-tight transition-all ${privacyBlur}`}
                   >
@@ -280,7 +292,11 @@ const ServiceTracker: React.FC<ServiceTrackerProps> = ({
 
         <div
           id="timer-section"
-          className="w-full border-t border-slate-200/80 dark:border-slate-700/80 pt-4"
+          className={`w-full border-t pt-4 ${
+            themeMode === "black"
+              ? "border-neutral-800"
+              : "border-slate-200/80 dark:border-slate-700/80"
+          }`}
         >
           {isStatsMode && !isSimpleMode ? (
             <StatsView
