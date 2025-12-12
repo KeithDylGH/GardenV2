@@ -29,8 +29,6 @@ interface SidebarProps {
   userRole: UserRole;
   onPioneerUpgradeClick: () => void;
   onAchievementsClick: () => void;
-  isSimpleMode: boolean;
-  onSetSimpleMode: (enabled: boolean) => void;
   themeMode: ThemeMode;
 }
 
@@ -49,8 +47,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   userRole,
   onPioneerUpgradeClick,
   onAchievementsClick,
-  isSimpleMode,
-  onSetSimpleMode,
   themeMode,
 }) => {
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
@@ -62,8 +58,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [isOpen]);
 
-  const iconAndTextColorClass =
-    isSimpleMode && themeMode === "light" ? "text-slate-900" : theme.text;
+  const iconAndTextColorClass = theme.text;
 
   const sidebarContent = (
     <>
@@ -140,46 +135,24 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="bg-white dark:bg-slate-800 rounded-lg divide-y divide-slate-200 dark:divide-slate-700">
             <div className="p-3 flex items-center justify-between">
               <div className="flex items-center">
-                <FaceSmileIcon
+                <BoltIcon
                   className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`}
                 />
                 <div>
                   <p className="font-semibold text-slate-700 dark:text-slate-200">
-                    Modo Simplificado
+                    Modo Rendimiento
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Interfaz más sencilla.
+                    Desactiva animaciones.
                   </p>
                 </div>
               </div>
               <ToggleSwitch
-                checked={isSimpleMode}
-                onChange={onSetSimpleMode}
+                checked={performanceMode}
+                onChange={onSetPerformanceMode}
                 themeColor={themeColor}
               />
             </div>
-            {!isSimpleMode && (
-              <div className="p-3 flex items-center justify-between">
-                <div className="flex items-center">
-                  <BoltIcon
-                    className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`}
-                  />
-                  <div>
-                    <p className="font-semibold text-slate-700 dark:text-slate-200">
-                      Modo Rendimiento
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Desactiva animaciones.
-                    </p>
-                  </div>
-                </div>
-                <ToggleSwitch
-                  checked={performanceMode}
-                  onChange={onSetPerformanceMode}
-                  themeColor={themeColor}
-                />
-              </div>
-            )}
           </div>
         </div>
 
@@ -189,7 +162,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             Acciones
           </h3>
           <div className="bg-white dark:bg-slate-800 rounded-lg divide-y divide-slate-200 dark:divide-slate-700">
-            {!isSimpleMode && userRole === "publisher" && (
+            {userRole === "publisher" && (
               <button
                 onClick={onPioneerUpgradeClick}
                 className="w-full text-left p-3 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50"
@@ -200,19 +173,17 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </p>
               </button>
             )}
-            {!isSimpleMode && (
-              <button
-                onClick={onAchievementsClick}
-                className="w-full text-left p-3 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50"
-              >
-                <TrophyIcon
-                  className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`}
-                />
-                <p className="font-semibold text-slate-700 dark:text-slate-200">
-                  Logros
-                </p>
-              </button>
-            )}
+            <button
+              onClick={onAchievementsClick}
+              className="w-full text-left p-3 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50"
+            >
+              <TrophyIcon
+                className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`}
+              />
+              <p className="font-semibold text-slate-700 dark:text-slate-200">
+                Logros
+              </p>
+            </button>
             <button
               onClick={onSettingsClick}
               className="w-full text-left p-3 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50"
@@ -268,21 +239,18 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 z-40 ${
-        hasBeenOpened ? "transition-colors duration-300" : ""
-      } ${isOpen ? "bg-black/40" : "bg-transparent pointer-events-none"}`}
+      className={`fixed inset-0 z-40 ${hasBeenOpened ? "transition-colors duration-300" : ""
+        } ${isOpen ? "bg-black/40" : "bg-transparent pointer-events-none"}`}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
       <aside
-        className={`fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-gray-100 dark:bg-slate-900 shadow-2xl flex flex-col pt-[calc(env(safe-area-inset-top)+0.25rem)] pb-[env(safe-area-inset-bottom)] ${
-          hasBeenOpened
-            ? `transition-transform ${
-                performanceMode ? "duration-0" : "duration-300"
-              } ease-in-out`
+        className={`fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-gray-100 dark:bg-slate-900 shadow-2xl flex flex-col pt-[calc(env(safe-area-inset-top)+0.25rem)] pb-[env(safe-area-inset-bottom)] ${hasBeenOpened
+            ? `transition-transform ${performanceMode ? "duration-0" : "duration-300"
+            } ease-in-out`
             : ""
-        } ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+          } ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
         onClick={(e) => e.stopPropagation()}
       >
         {sidebarContent}

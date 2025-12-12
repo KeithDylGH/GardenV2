@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import {
   HistoryLog,
   ThemeColor,
-  WeatherCondition,
+  DayEvent,
   DayEntry,
   ActivityItem,
   PlanningData,
@@ -12,11 +12,14 @@ import CalendarGrid from "./CalendarGrid";
 import { getServiceYear, getServiceYearMonths, hoursToHHMM } from "../utils";
 import { ChevronLeftIcon } from "./icons/ChevronLeftIcon";
 import { ChevronRightIcon } from "./icons/ChevronRightIcon";
-import { SunIcon } from "./icons/SunIcon";
-import { CloudIcon } from "./icons/CloudIcon";
-import { RainIcon } from "./icons/RainIcon";
+// Removing weather icons imports as they are replaced by emojis/text
 import { InformationCircleIcon } from "./icons/InformationCircleIcon";
 import { VestIcon } from "./icons/VestIcon";
+import { SparklesIcon } from "./icons/SparklesIcon";
+import { HomeIcon } from "./icons/HomeIcon";
+import { BuildingOfficeIcon } from "./icons/BuildingOfficeIcon";
+import { MegaphoneIcon } from "./icons/MegaphoneIcon";
+import { MedicalIcon } from "./icons/MedicalIcon";
 
 interface HistoryViewProps {
   archives: Record<string, HistoryLog>;
@@ -30,17 +33,18 @@ interface HistoryViewProps {
 }
 
 const Stat: React.FC<{
-  Icon: React.FC<any>;
+  emoji?: string;
+  Icon?: React.FC<any>;
   count: number | string;
   label: string;
-  colorClass: string;
-}> = ({ Icon, count, label, colorClass }) => (
+  colorClass?: string;
+}> = ({ emoji, Icon, count, label, colorClass }) => (
   <div className="flex items-center space-x-2">
-    <Icon className={`w-5 h-5 ${colorClass}`} />
+    {Icon ? <Icon className={`w-5 h-5 ${colorClass}`} /> : <span className="text-lg">{emoji}</span>}
     <span className="font-semibold text-slate-700 dark:text-slate-200">
       {count}
     </span>
-    <span className="text-sm text-slate-500 dark:text-slate-400">{label}</span>
+    <span className="text-sm text-slate-500 dark:text-slate-400 capitalize">{label}</span>
   </div>
 );
 
@@ -99,15 +103,17 @@ const HistoryView: React.FC<HistoryViewProps> = ({
     };
   }, [historyForSelectedYear, selectedMonthDate]);
 
-  const { weatherCounts, totalLdcHours } = useMemo(() => {
-    const counts: Record<WeatherCondition, number> = {
-      sunny: 0,
-      cloudy: 0,
-      bad: 0,
+  const { eventCounts, totalLdcHours } = useMemo(() => {
+    const counts: Record<DayEvent, number> = {
+      circuit_assembly: 0,
+      regional_convention: 0,
+      campaign: 0,
+      cleaning: 0,
+      sick: 0,
     };
     let ldcHours = 0;
     if (isSummaryMonth)
-      return { weatherCounts: counts, totalLdcHours: ldcHours };
+      return { eventCounts: counts, totalLdcHours: ldcHours };
 
     const year = selectedMonthDate.getFullYear();
     const month = selectedMonthDate.getMonth();
@@ -119,12 +125,22 @@ const HistoryView: React.FC<HistoryViewProps> = ({
       const entryDate = new Date(dateKey);
       if (entryDate.getFullYear() === year && entryDate.getMonth() === month) {
         if (typeof entry === "object" && entry) {
-          if (entry.weather) counts[entry.weather]++;
+          // Count events
+          if (entry.event) {
+            counts[entry.event] = (counts[entry.event] || 0) + 1;
+          }
+          // Backward compatibility for 'status' being sick
+          // Note: In App.tsx we normalized status='sick' to event='sick' for new edits
+          // but old data might have status='sick' and no event.
+          if (!entry.event && entry.status === 'sick') {
+            counts.sick++;
+          }
+
           if (entry.ldcHours) ldcHours += entry.ldcHours;
         }
       }
     });
-    return { weatherCounts: counts, totalLdcHours: ldcHours };
+    return { eventCounts: counts, totalLdcHours: ldcHours };
   }, [historyForSelectedYear, selectedMonthDate, isSummaryMonth]);
 
   const handlePrevMonth = () => {
@@ -140,7 +156,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto mt-4">
       <div className="mb-6">
         <label htmlFor="history-year-selector" className="sr-only">
           Seleccionar año de servicio
@@ -236,24 +252,12 @@ const HistoryView: React.FC<HistoryViewProps> = ({
         className={`mt-4 bg-white/50 dark:bg-slate-800/50 p-3 rounded-xl transition-all ${privacyBlur}`}
       >
         <div className="flex justify-center items-center gap-x-4 gap-y-2 flex-wrap">
-          <Stat
-            Icon={SunIcon}
-            count={weatherCounts.sunny}
-            label="soleados"
-            colorClass="text-yellow-500"
-          />
-          <Stat
-            Icon={CloudIcon}
-            count={weatherCounts.cloudy}
-            label="nublados"
-            colorClass="text-slate-500"
-          />
-          <Stat
-            Icon={RainIcon}
-            count={weatherCounts.bad}
-            label="difíciles"
-            colorClass="text-blue-500"
-          />
+          {eventCounts.circuit_assembly > 0 && <Stat Icon={HomeIcon} count={eventCounts.circuit_assembly} label="Asamblea" colorClass="text-indigo-500" />}
+          {eventCounts.regional_convention > 0 && <Stat Icon={BuildingOfficeIcon} count={eventCounts.regional_convention} label="Regional" colorClass="text-purple-500" />}
+          {eventCounts.campaign > 0 && <Stat Icon={MegaphoneIcon} count={eventCounts.campaign} label="Campaña" colorClass="text-orange-500" />}
+          {eventCounts.cleaning > 0 && <Stat Icon={SparklesIcon} count={eventCounts.cleaning} label="Limpieza" colorClass="text-teal-500" />}
+          {eventCounts.sick > 0 && <Stat Icon={MedicalIcon} count={eventCounts.sick} label="Enfermo" colorClass="text-red-500" />}
+
           {totalLdcHours > 0 && (
             <Stat
               Icon={VestIcon}
@@ -262,6 +266,9 @@ const HistoryView: React.FC<HistoryViewProps> = ({
               colorClass={theme.text}
             />
           )}
+
+          {/* Fallback to show if no stats to avoid empty box? Or just hide box if empty? 
+              For now, if no events, it just shows nothing or LDC. */}
         </div>
       </div>
     </div>

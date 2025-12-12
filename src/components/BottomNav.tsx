@@ -19,7 +19,7 @@ interface BottomNavProps {
   onAddClick: () => void;
   themeColor: ThemeColor;
   performanceMode?: boolean;
-  isSimpleMode?: boolean;
+
   themeMode?: ThemeMode;
 }
 
@@ -28,13 +28,11 @@ const BottomNav: React.FC<BottomNavProps> = ({
   onAddClick,
   themeColor,
   performanceMode = false,
-  isSimpleMode = false,
   themeMode = "dark",
 }) => {
   const theme = THEMES[themeColor] || THEMES.blue;
 
-  const dynamicTextColor =
-    isSimpleMode && themeMode === "light" ? "text-slate-900" : theme.text;
+  const dynamicTextColor = theme.text;
 
   const allNavItems = [
     { view: "tracker", hash: "#/", Icon: HomeIcon, label: "Informe" },
@@ -54,11 +52,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
     },
   ];
 
-  const navItems = isSimpleMode
-    ? allNavItems.filter((item) =>
-        ["tracker", "add", "activity", "history"].includes(item.view)
-      )
-    : allNavItems;
+  const navItems = allNavItems;
 
   // Explicit background logic to ensure Black theme is truly black and matches system bar
   const navBackgroundClass =
@@ -81,14 +75,12 @@ const BottomNav: React.FC<BottomNavProps> = ({
                 <button
                   id="add-hours-button"
                   onClick={onAddClick}
-                  className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform z-20 ${dynamicTextColor} ${
-                    themeMode === "black"
-                      ? "bg-neutral-800"
-                      : "bg-gray-50 dark:bg-slate-900"
-                  } ${
-                    !performanceMode &&
+                  className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform z-20 ${dynamicTextColor} ${themeMode === "black"
+                    ? "bg-neutral-800"
+                    : "bg-gray-50 dark:bg-slate-900"
+                    } ${!performanceMode &&
                     "transform hover:scale-105 active:scale-100"
-                  }`}
+                    }`}
                   aria-label={item.label}
                 >
                   <PlusIcon className="w-10 h-10" />
@@ -112,11 +104,10 @@ const BottomNav: React.FC<BottomNavProps> = ({
               )}
               <button
                 onClick={() => (window.location.hash = item.hash)}
-                className={`flex flex-col items-center justify-center space-y-1 w-full h-full z-10 ${
-                  isActive
-                    ? dynamicTextColor
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100"
-                }`}
+                className={`flex flex-col items-center justify-center space-y-1 w-full h-full z-10 ${isActive
+                  ? dynamicTextColor
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100"
+                  }`}
                 aria-label={item.label}
                 aria-current={isActive ? "page" : undefined}
               >

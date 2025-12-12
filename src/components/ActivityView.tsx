@@ -27,7 +27,7 @@ interface ActivityViewProps {
   isPrivacyMode: boolean;
   notes: string;
   onSaveNotes: (notes: string) => void;
-  isSimpleMode: boolean;
+
   themeMode: ThemeMode;
 }
 
@@ -46,7 +46,7 @@ const ActivityView: React.FC<ActivityViewProps> = ({
   isPrivacyMode,
   notes,
   onSaveNotes,
-  isSimpleMode,
+
   themeMode,
 }) => {
   const [activeTab, setActiveTab] = useState<ActivityTab>("groups");
@@ -94,8 +94,7 @@ const ActivityView: React.FC<ActivityViewProps> = ({
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [activities, activeTab]);
 
-  const dynamicTextColor =
-    isSimpleMode && themeMode === "light" ? "text-slate-900" : theme.text;
+  const dynamicTextColor = theme.text;
 
   const tabs: { id: ActivityTab; label: string }[] = [
     { id: "groups", label: "Grupos" },
@@ -153,11 +152,9 @@ const ActivityView: React.FC<ActivityViewProps> = ({
           <button
             id="import-groups-button"
             onClick={() => setImportModalOpen(true)}
-            className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg ${
-              theme.bg
-            } text-white font-bold text-lg shadow-md transition-transform ${
-              !performanceMode && "transform hover:scale-105"
-            }`}
+            className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg ${theme.bg
+              } text-white font-bold text-lg shadow-md transition-transform ${!performanceMode && "transform hover:scale-105"
+              }`}
           >
             <ClipboardPasteIcon className="w-6 h-6" />
             Importar Grupos
@@ -214,21 +211,20 @@ const ActivityView: React.FC<ActivityViewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto mt-4">
       <div
         id="activity-tabs"
-        className="bg-white dark:bg-slate-800 rounded-2xl p-2 sticky top-24 z-10 mb-4"
+        className="bg-white dark:bg-slate-800 rounded-2xl p-2 sticky top-20 z-10 mb-4 shadow-sm"
       >
         <div className="flex bg-slate-100 dark:bg-slate-900 rounded-lg p-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-2 text-sm font-semibold rounded-md ${
-                activeTab === tab.id
-                  ? `bg-white dark:bg-slate-700 ${dynamicTextColor} dark:${theme.accentText} shadow`
-                  : "text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-              }`}
+              className={`flex-1 py-2 text-sm font-semibold rounded-md ${activeTab === tab.id
+                ? `bg-white dark:bg-slate-700 ${dynamicTextColor} dark:${theme.accentText} shadow`
+                : "text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                }`}
             >
               {tab.label}
             </button>

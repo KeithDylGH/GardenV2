@@ -11,7 +11,7 @@ interface HeaderProps {
   onStreakClick: () => void;
   onMenuClick: () => void;
   onTitleClick: () => void;
-  isSimpleMode: boolean;
+
   themeMode: ThemeMode;
 }
 
@@ -22,17 +22,16 @@ const Header: React.FC<HeaderProps> = ({
   onStreakClick,
   onMenuClick,
   onTitleClick,
-  isSimpleMode,
+
   themeMode,
 }) => {
   const theme = THEMES[themeColor] || THEMES.blue;
   const useCustomFont = title.toLowerCase() === "garden";
-  const isTitleClickable = useCustomFont && !isSimpleMode;
+  const isTitleClickable = useCustomFont;
 
   const TitleComponent = isTitleClickable ? "button" : "h1";
 
-  const dynamicTextColor =
-    isSimpleMode && themeMode === "light" ? "text-slate-900" : theme.text;
+  const dynamicTextColor = theme.text;
 
   // Explicit background logic to ensure Black theme is truly black
   const headerBgClass =
@@ -58,15 +57,13 @@ const Header: React.FC<HeaderProps> = ({
         <TitleComponent
           id="header-title"
           onClick={isTitleClickable ? onTitleClick : undefined}
-          className={`absolute left-1/2 -translate-x-1/2 text-3xl text-slate-900 dark:text-slate-100 ${
-            useCustomFont
-              ? "font-logotype font-bold lowercase pb-1"
-              : "font-bold tracking-tight"
-          } ${
-            isTitleClickable
+          className={`absolute left-1/2 -translate-x-1/2 text-3xl text-slate-900 dark:text-slate-100 ${useCustomFont
+            ? "font-logotype font-bold lowercase pb-1"
+            : "font-bold tracking-tight"
+            } ${isTitleClickable
               ? "cursor-pointer hover:opacity-80 transition-opacity active:opacity-75"
               : ""
-          }`}
+            }`}
         >
           {useCustomFont ? "garden" : title}
         </TitleComponent>

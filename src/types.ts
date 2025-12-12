@@ -42,13 +42,19 @@ export type Shape =
   | "hexagon";
 
 export type DayStatus = "sick";
-export type WeatherCondition = "sunny" | "cloudy" | "bad";
+export type DayEvent =
+  | "circuit_assembly"
+  | "regional_convention"
+  | "campaign"
+  | "cleaning"
+  | "sick";
 
 export type DayEntry = {
   hours: number;
   ldcHours?: number;
-  status?: DayStatus;
-  weather?: WeatherCondition;
+  status?: "sick"; // Keeping for backward compatibility or explicit sick status
+  event?: DayEvent;
+  weather?: string; // FLAGGED DEPRECATED in type, kept for legacy data reading if needed
   isSummary?: boolean;
   isCampaign?: boolean;
   notes?: string;
@@ -112,11 +118,11 @@ export type TutorialStep = {
 
 export type TutorialsSeen = {
   [key in
-    | "tracker"
-    | "activity"
-    | "history"
-    | "planning"
-    | "achievements"]?: boolean;
+  | "tracker"
+  | "activity"
+  | "history"
+  | "planning"
+  | "achievements"]?: boolean;
 };
 
 export type Achievement = {

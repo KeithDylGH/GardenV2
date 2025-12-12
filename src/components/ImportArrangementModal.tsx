@@ -24,6 +24,7 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
   performanceMode,
 }) => {
   const [text, setText] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
@@ -32,6 +33,7 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
   >(null);
   const theme = THEMES[themeColor] || THEMES.blue;
   const processingCancelledRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -42,6 +44,7 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
       }
       setTimeout(() => {
         setText("");
+        setSelectedImage(null);
         setProcessedArrangements(null);
         setError(null);
         setIsLoading(false);
@@ -49,13 +52,37 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
     }
   }, [isOpen, isLoading]);
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setError("La imagen es demasiado grande. Máximo 5MB.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImage(reader.result as string);
+        setError(null);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleProcess = async () => {
     if (!isOnline) {
       setError("Se requiere conexión a internet para usar esta función.");
       return;
     }
-    if (!text.trim()) {
-      setError("Por favor, pega el texto de los grupos.");
+    if (!text.trim() && !selectedImage) {
+      setError("Por favor, ingresa texto o sube una imagen.");
       return;
     }
     setIsLoading(true);
@@ -102,20 +129,43 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
           },
         };
 
-        const prompt = `
-          Eres un asistente experto en organizar información para Testigos de Jehová.
-          Analiza el siguiente texto que contiene los arreglos de predicación de una congregación.
-          Extrae la información para cada grupo y devuélvela estrictamente en el formato JSON solicitado.
-          Si alguna información (conductor, hora, lugar, territorio) no está presente para un grupo, simplemente omite esa clave en el JSON.
-          El texto a analizar es:
-          ---
+        const promptText = `
+          Actúa como un asistente inteligente para organizar arreglos de predicación.
+          Tu tarea es extraer información de grupos de predicación del texto o imagen proporcionada.
+          
+          Puede ser una foto de un Excel, una lista en WhatsApp o texto informal.
+          Si falta información explícita (como el número de grupo), infiérelo del contexto o usa un nombre genérico (ej: "Grupo Mañana").
+          
+          Extrae la información y devuélvela estrictamente como un ARRAY de objetos JSON.
+          No incluyas texto adicional, ni markdown, solo el JSON puro o dentro de un bloque de código json.
+
+          Texto adicional (si hay):
+          """
           ${text}
-          ---
+          """
         `;
+
+        const contentParts: any[] = [{ text: promptText }];
+
+        if (selectedImage) {
+          // Remove the Data URL prefix to get just the base64 string
+          const base64Data = selectedImage.split(',')[1];
+          contentParts.push({
+            inlineData: {
+              data: base64Data,
+              mimeType: "image/jpeg",
+            }
+          });
+        }
 
         const response = await ai.models.generateContent({
           model: "gemini-2.5-flash",
-          contents: prompt,
+          contents: [
+            {
+              role: "user",
+              parts: contentParts
+            }
+          ],
           config: {
             responseMimeType: "application/json",
             responseSchema,
@@ -128,10 +178,12 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
 
         let jsonString = response.text.trim();
 
-        if (jsonString.startsWith("```json") && jsonString.endsWith("```")) {
-          jsonString = jsonString.slice(7, -3).trim();
-        } else if (jsonString.startsWith("```") && jsonString.endsWith("```")) {
-          jsonString = jsonString.slice(3, -3).trim();
+        // Robust JSON extraction: Find the first '[' and last ']'
+        const firstBracket = jsonString.indexOf("[");
+        const lastBracket = jsonString.lastIndexOf("]");
+
+        if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+          jsonString = jsonString.substring(firstBracket, lastBracket + 1);
         }
 
         const parsedData = JSON.parse(jsonString);
@@ -141,7 +193,7 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
           setIsLoading(false);
           return; // Success
         } else {
-          throw new Error("La respuesta de la IA no fue un arreglo de grupos.");
+          throw new Error("La respuesta no contiene una lista de grupos válida.");
         }
       } catch (e) {
         console.error(`Processing attempt failed:`, e);
@@ -166,6 +218,7 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
   const handleRetry = () => {
     setProcessedArrangements(null);
     setText("");
+    setSelectedImage(null);
     setError(null);
   };
 
@@ -176,22 +229,19 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 z-50 ${
-        hasBeenOpened ? "transition-colors duration-300" : ""
-      } ${isOpen ? "bg-black/40" : "bg-transparent pointer-events-none"}`}
+      className={`fixed inset-0 z-50 ${hasBeenOpened ? "transition-colors duration-300" : ""
+        } ${isOpen ? "bg-black/40" : "bg-transparent pointer-events-none"}`}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="import-title"
     >
       <div
-        className={`fixed bottom-0 left-0 right-0 bg-gray-100 dark:bg-slate-900 rounded-t-2xl shadow-2xl ${
-          hasBeenOpened
-            ? `transition-transform ${
-                performanceMode ? "duration-0" : "duration-300"
-              } ease-in-out`
-            : ""
-        } ${isOpen ? "translate-y-0" : "translate-y-full"}`}
+        className={`fixed bottom-0 left-0 right-0 bg-gray-100 dark:bg-slate-900 rounded-t-2xl shadow-2xl ${hasBeenOpened
+          ? `transition-transform ${performanceMode ? "duration-0" : "duration-300"
+          } ease-in-out`
+          : ""
+          } ${isOpen ? "translate-y-0" : "translate-y-full"}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-4" />
@@ -251,17 +301,64 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
                 Importar Grupos
               </h2>
               <p className="text-slate-600 dark:text-slate-400 text-center mb-6">
-                Pega aquí el texto con los arreglos de la semana.
+                Sube una imagen o pega el texto con los arreglos.
               </p>
 
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Ej: Grupo 1 - Conductor: Hno. Ejemplo, Hora: 9:00, Lugar: Salón del Reino..."
-                rows={8}
-                className={`w-full p-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${theme.ring} outline-none transition resize-none dark:text-white`}
-                disabled={isLoading}
-              />
+              <div className="space-y-4">
+                <div
+                  className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${selectedImage ? 'border-green-500 bg-green-50 dark:bg-green-900/10' : 'border-slate-300 dark:border-slate-600 hover:border-blue-500'
+                    }`}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                  />
+                  {selectedImage ? (
+                    <div className="relative">
+                      <img src={selectedImage} alt="Preview" className="mx-auto max-h-40 rounded-lg shadow-sm" />
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleRemoveImage(); }}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-slate-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                        Toca para subir una foto
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        (Ej: Captura del Excel)
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="relative flex py-1 items-center">
+                  <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
+                  <span className="flex-shrink-0 mx-4 text-slate-400 text-xs uppercase font-bold">O también</span>
+                  <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
+                </div>
+
+                <textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Escribe o pega el texto aquí..."
+                  rows={4}
+                  className={`w-full p-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${theme.ring} outline-none transition resize-none dark:text-white`}
+                  disabled={isLoading}
+                />
+              </div>
 
               {!isOnline && (
                 <div className="text-center bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 p-3 rounded-lg text-sm my-4">
