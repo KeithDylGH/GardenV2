@@ -102,22 +102,19 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 z-50 ${
-        hasBeenOpened ? "transition-colors duration-300" : ""
-      } ${isOpen ? "bg-black/40" : "bg-transparent pointer-events-none"}`}
+      className={`fixed inset-0 z-50 ${hasBeenOpened ? "transition-colors duration-300" : ""
+        } ${isOpen ? "bg-black/40" : "bg-transparent pointer-events-none"}`}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="profile-title"
     >
       <div
-        className={`fixed bottom-0 left-0 right-0 flex flex-col max-h-[90vh] bg-gray-100 dark:bg-slate-900 rounded-t-2xl shadow-2xl ${
-          hasBeenOpened
-            ? `transition-transform ${
-                performanceMode ? "duration-0" : "duration-300"
-              } ease-in-out`
+        className={`fixed bottom-0 left-0 right-0 flex flex-col max-h-[90vh] bg-gray-100 dark:bg-slate-900 rounded-t-2xl shadow-2xl ${hasBeenOpened
+            ? `transition-transform ${performanceMode ? "duration-0" : "duration-300"
+            } ease-in-out`
             : ""
-        } ${isOpen ? "translate-y-0" : "translate-y-full"}`}
+          } ${isOpen ? "translate-y-0" : "translate-y-full"}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3" />
@@ -215,11 +212,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                   <button
                     key={`meeting-${day.value}`}
                     onClick={() => handleMeetingDayToggle(day.value)}
-                    className={`w-9 h-9 rounded-full font-bold text-sm flex items-center justify-center border-2 transition-all ${
-                      meetingDays.has(day.value)
+                    className={`w-9 h-9 rounded-full font-bold text-sm flex items-center justify-center border-2 transition-all ${meetingDays.has(day.value)
                         ? `${theme.bg} text-white border-transparent shadow-sm`
                         : `bg-gray-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-400`
-                    }`}
+                      }`}
                   >
                     {day.label}
                   </button>
@@ -229,15 +225,13 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
           </div>
         </main>
 
-        <footer className="flex-shrink-0 p-4 border-t border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50">
+        <footer className="flex-shrink-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50">
           <button
             onClick={handleSave}
-            className={`w-full px-6 py-3 rounded-lg ${
-              theme.bg
-            } text-white font-bold text-lg shadow-md ${
-              !performanceMode &&
+            className={`w-full px-6 py-3 rounded-lg ${theme.bg
+              } text-white font-bold text-lg shadow-md ${!performanceMode &&
               "transition-transform transform hover:scale-105"
-            }`}
+              }`}
           >
             Guardar
           </button>

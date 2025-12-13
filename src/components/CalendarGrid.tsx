@@ -11,6 +11,9 @@ import { hoursToHHMM, formatDateKey } from "../utils";
 import { BookOpenIcon } from "./icons/BookOpenIcon";
 import { VestIcon } from "./icons/VestIcon";
 import { ClipboardDocumentListIcon } from "./icons/ClipboardDocumentListIcon";
+import { SparklesIcon } from "./icons/SparklesIcon";
+import { HomeIcon } from "./icons/HomeIcon";
+import { BuildingOfficeIcon } from "./icons/BuildingOfficeIcon";
 
 interface CalendarGridProps {
   selectedMonth: Date;
@@ -212,9 +215,17 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
           if (isCurrentMonth && !isSummaryMonth) {
             dayClasses.push("hover:bg-slate-200 dark:hover:bg-slate-700");
-            if (isCampaign) {
+
+            // Priority: Event > Campaign > Sick > Hours
+            if (dayEntry?.event === 'circuit_assembly') {
+              dayClasses.push("bg-indigo-100 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-700");
+            } else if (dayEntry?.event === 'regional_convention') {
+              dayClasses.push("bg-purple-100 dark:bg-purple-900/40 border-purple-200 dark:border-purple-700");
+            } else if (dayEntry?.event === 'cleaning') {
+              dayClasses.push("bg-teal-100 dark:bg-teal-900/40 border-teal-200 dark:border-teal-700");
+            } else if (isCampaign || dayEntry?.event === 'campaign') {
               dayClasses.push(theme.bg, "bg-opacity-20 dark:bg-opacity-20");
-            } else if (status === "sick") {
+            } else if (status === "sick" || dayEntry?.event === 'sick') {
               dayClasses.push("bg-red-200 dark:bg-red-800/50");
             } else if (hours > 3) {
               dayClasses.push("bg-green-300 dark:bg-green-700/60");
@@ -241,9 +252,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                 !isSummaryMonth &&
                 !isPrivacyMode && (
                   <div
-                    className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${
-                      hasRecurringActivity ? "bg-purple-500" : theme.bg
-                    }`}
+                    className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${hasRecurringActivity ? "bg-purple-500" : theme.bg
+                      }`}
                   ></div>
                 )}
               {hasPlan && !isSummaryMonth && !isPrivacyMode && (
@@ -254,11 +264,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
               )}
 
               <span
-                className={`text-sm font-semibold flex items-center justify-center ${
-                  isCurrentMonth
-                    ? "text-slate-700 dark:text-slate-200"
-                    : "text-slate-400 dark:text-slate-500"
-                }`}
+                className={`text-sm font-semibold flex items-center justify-center ${isCurrentMonth
+                  ? "text-slate-700 dark:text-slate-200"
+                  : "text-slate-400 dark:text-slate-500"
+                  }`}
               >
                 {date.getDate()}
                 {isMeetingDay && !isPrivacyMode && (
@@ -269,13 +278,17 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
               <div
                 className={`flex flex-col items-center justify-center -mt-1 ${privacyBlur}`}
               >
+                {/* Event Icons */}
+                {isCurrentMonth && dayEntry?.event === 'circuit_assembly' && <HomeIcon className="w-4 h-4 text-indigo-500" />}
+                {isCurrentMonth && dayEntry?.event === 'regional_convention' && <BuildingOfficeIcon className="w-4 h-4 text-purple-500" />}
+                {isCurrentMonth && dayEntry?.event === 'cleaning' && <SparklesIcon className="w-4 h-4 text-teal-500" />}
+
                 {hours > 0 && isCurrentMonth && !isSummaryMonth && (
                   <span
-                    className={`text-xs font-bold leading-tight ${
-                      status === "sick"
-                        ? "text-red-800 dark:text-red-200"
-                        : "text-green-800 dark:text-green-200"
-                    }`}
+                    className={`text-xs font-bold leading-tight ${status === "sick" || dayEntry?.event === 'sick'
+                      ? "text-red-800 dark:text-red-200"
+                      : "text-green-800 dark:text-green-200"
+                      }`}
                   >
                     {isPrivacyMode ? "0:00" : hoursToHHMM(hours)}
                   </span>
@@ -296,7 +309,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             </button>
           );
         })}
-      </div>
+      </div >
       <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-around text-center">
         <div>
           <p
@@ -321,7 +334,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 };
 

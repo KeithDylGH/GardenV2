@@ -83,8 +83,8 @@ const PlanningView: React.FC<PlanningViewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
+    <div className="w-full max-w-4xl mx-auto mt-4">
+      <div className="flex items-center justify-between mb-6">
         <button
           onClick={handlePrevWeek}
           className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"
@@ -111,25 +111,22 @@ const PlanningView: React.FC<PlanningViewProps> = ({
           return (
             <div
               key={day.toISOString()}
-              className={`bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm border ${
-                today
+              className={`bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm border ${today
                   ? `border-2 ${theme.text}`
                   : "border-slate-200/50 dark:border-slate-700/50"
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-baseline space-x-2">
                   <p
-                    className={`text-sm font-bold ${
-                      today ? theme.text : "text-slate-500 dark:text-slate-400"
-                    } capitalize`}
+                    className={`text-sm font-bold ${today ? theme.text : "text-slate-500 dark:text-slate-400"
+                      } capitalize`}
                   >
                     {day.toLocaleDateString("es-ES", { weekday: "long" })}
                   </p>
                   <p
-                    className={`text-2xl font-bold ${
-                      today ? theme.text : "text-slate-800 dark:text-slate-100"
-                    }`}
+                    className={`text-2xl font-bold ${today ? theme.text : "text-slate-800 dark:text-slate-100"
+                      }`}
                   >
                     {day.getDate()}
                   </p>

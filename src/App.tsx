@@ -29,6 +29,7 @@ import PlanningModal from "./components/PlanningModal";
 import PioneerUpgradeModal from "./components/PioneerUpgradeModal";
 import AchievementsView from "./components/AchievementsView";
 import AchievementToast from "./components/AchievementToast";
+import MonthWrapped from "./components/MonthWrapped";
 import { useOnlineStatus } from "./hooks/useOnlineStatus";
 import {
   AppView,
@@ -43,7 +44,7 @@ import {
   TutorialsSeen,
   TutorialStep,
   AppState,
-  WeatherCondition,
+  DayEvent,
   DayStatus,
   DayEntry,
   PlanningData,
@@ -87,7 +88,6 @@ const TUTORIALS_SEEN_KEY = "garden-tutorials-seen";
 const TUTORIAL_AGREEMENT_KEY = "garden-tutorial-agreement";
 const SETTINGS_KEY = "garden-settings";
 const PRIVACY_MODE_KEY = "garden-privacy-mode";
-const SIMPLE_MODE_KEY = "garden-simple-mode";
 
 const TUTORIALS: Record<AppView, TutorialStep[]> = {
   tracker: [
@@ -336,12 +336,6 @@ const App: React.FC = () => {
       ? initialThemeMode
       : "dark";
 
-  const [currentHours, setCurrentHours] = useState(
-    initialState?.currentHours ?? 0
-  );
-  const [currentLdcHours, setCurrentLdcHours] = useState(
-    initialState?.currentLdcHours ?? 0
-  );
   const [userName, setUserName] = useState(
     initialState?.userName ?? "Precursor"
   );
@@ -380,6 +374,61 @@ const App: React.FC = () => {
     initialState?.meetingDays ?? []
   );
 
+  // Derived state: currentHours and currentLdcHours are calculated from archives.
+  const currentHours = useMemo(() => {
+    const serviceYear = getServiceYear(currentDate);
+    const yearHistory = archives[serviceYear] || {};
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
+    let total = 0;
+    for (const key in yearHistory) {
+      if (!key.includes("SUMMARY") && !isNaN(new Date(key).getTime())) {
+        const entryDate = new Date(key);
+        if (
+          entryDate.getFullYear() === currentYear &&
+          entryDate.getMonth() === currentMonth
+        ) {
+          total += yearHistory[key].hours || 0;
+        }
+      }
+    }
+    // Add carryover
+    const carryoverKey = `${currentYear}-${String(currentMonth + 1).padStart(
+      2,
+      "0"
+    )}-CARRYOVER`;
+    if (yearHistory[carryoverKey]) {
+      total += yearHistory[carryoverKey].hours || 0;
+    }
+    return total;
+  }, [currentDate, archives]);
+
+  const currentLdcHours = useMemo(() => {
+    const serviceYear = getServiceYear(currentDate);
+    const yearHistory = archives[serviceYear] || {};
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
+    let total = 0;
+    for (const key in yearHistory) {
+      if (!key.includes("SUMMARY") && !isNaN(new Date(key).getTime())) {
+        const entryDate = new Date(key);
+        if (
+          entryDate.getFullYear() === currentYear &&
+          entryDate.getMonth() === currentMonth
+        ) {
+          total += yearHistory[key].ldcHours || 0;
+        }
+      }
+    }
+    return total;
+  }, [currentDate, archives]);
+
+  // Shims to allow incremental refactoring - will be removed
+  const setCurrentHours = (_: any) => { };
+  const setCurrentLdcHours = (_: any) => { };
+
   // Streak State
   const [streak, setStreak] = useState(initialState?.streak ?? 0);
   const [lastLogDate, setLastLogDate] = useState<Date | null>(
@@ -398,6 +447,26 @@ const App: React.FC = () => {
   const [achievementToastQueue, setAchievementToastQueue] = useState<
     Achievement[]
   >([]);
+
+  // Month Wrapped State
+  const [isMonthWrappedOpen, setIsMonthWrappedOpen] = useState(false);
+  const [wrappedStats, setWrappedStats] = useState<{
+    hours: number;
+    placements: number;
+    videos: number;
+    returnVisits: number;
+    bibleStudies: number;
+    ldcHours: number;
+    events: DayEvent[];
+    year: number;
+    month: number;
+    bestDay?: { date: string, hours: number } | null;
+    mostProductiveDayOfWeek?: string | null;
+    daysPreached: number;
+    consistency: number; // percentage
+    dailyAverage: number;
+    previousMonth?: { hours: number; daysPreached: number } | null;
+  } | null>(null);
 
   const [activeView, setActiveView] = useState<AppView>(
     getViewFromHash(window.location.hash)
@@ -461,15 +530,10 @@ const App: React.FC = () => {
     useState(false);
   const [showShareToast, setShowShareToast] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [isSimpleMode, setIsSimpleMode] = useState(
-    () => localStorage.getItem(SIMPLE_MODE_KEY) === "true"
-  );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const displayThemeColor = isSimpleMode ? "bw" : themeColor;
-  const displayThemeMode =
-    isSimpleMode && themeMode === "black" ? "dark" : themeMode;
+
 
   useEffect(() => {
     // Oculta la pantalla de bienvenida de Capacitor una vez que el componente principal se monta.
@@ -493,7 +557,7 @@ const App: React.FC = () => {
         try {
           const { StatusBar, Style } = await import("@capacitor/status-bar");
 
-          const style = displayThemeMode === "light" ? Style.Light : Style.Dark;
+          const style = themeMode === "light" ? Style.Light : Style.Dark;
 
           // Status Bar: Transparent and Overlay (extends header)
           // Note: We set the style here, visibility is handled by the other useEffect
@@ -513,13 +577,13 @@ const App: React.FC = () => {
               let navColor = "#ffffff"; // Default white for Light mode
               let darkButtons = true;
 
-              if (displayThemeMode === "light") {
+              if (themeMode === "light") {
                 navColor = "#ffffff";
                 darkButtons = true;
-              } else if (displayThemeMode === "dark") {
+              } else if (themeMode === "dark") {
                 navColor = "#0f172a"; // Slate 900 for Dark mode
                 darkButtons = false;
-              } else if (displayThemeMode === "black") {
+              } else if (themeMode === "black") {
                 navColor = "#000000"; // True Black for Black mode
                 darkButtons = false;
               }
@@ -547,7 +611,107 @@ const App: React.FC = () => {
       }
     };
     setSystemTheme();
-  }, [displayThemeMode]);
+  }, [themeMode]);
+
+  // Handle Android Back Button
+  useEffect(() => {
+    let backButtonListener: any;
+
+    const setupBackButton = async () => {
+      // Check if running on a native platform (Android/iOS)
+      if (window.Capacitor?.isNativePlatform()) {
+        try {
+          const { App: CapacitorApp } = await import("@capacitor/app");
+
+          backButtonListener = await CapacitorApp.addListener(
+            "backButton",
+            (data) => {
+              // Priority 1: Critical Modals & Alerts
+              if (showWelcome) {
+                CapacitorApp.exitApp();
+              } else if (activeTutorial) {
+                setActiveTutorial(null);
+              } else if (tutorialToConfirm) {
+                setTutorialToConfirm(null);
+              } else if (isStreakTutorialModalOpen) {
+                setStreakTutorialModalOpen(false);
+              } else if (isImportConfirmModalOpen) {
+                setImportConfirmModalOpen(false);
+              } else if (isGoalReachedModalOpen) {
+                setGoalReachedModalOpen(false);
+              } else if (isEndOfYearModalOpen) {
+                setEndOfYearModalOpen(false);
+              } else if (isPioneerUpgradeModalOpen) {
+                setIsPioneerUpgradeModalOpen(false);
+              }
+
+              // Priority 2: Full Screen / Feature Modals
+              else if (isMonthWrappedOpen) {
+                setIsMonthWrappedOpen(false);
+              } else if (isPlanningModalOpen) {
+                setIsPlanningModalOpen(false);
+              } else if (isProfileModalOpen) {
+                setIsProfileModalOpen(false);
+              } else if (isHelpModalOpen) {
+                setHelpModalOpen(false);
+              } else if (isSettingsOpen) {
+                setIsSettingsOpen(false);
+              } else if (isAddHoursModalOpen) {
+                setAddHoursModalOpen(false);
+              } else if (isStreakModalOpen) {
+                setIsStreakModalOpen(false);
+              } else if (isShareModalOpen) {
+                setIsShareModalOpen(false);
+              } else if (isSidebarOpen) {
+                setSidebarOpen(false);
+              }
+
+              // Priority 3: Navigation
+              else if (activeView !== "tracker") {
+                setActiveView("tracker");
+                window.location.hash = "#/";
+              }
+
+              // Priority 4: Exit
+              else {
+                CapacitorApp.exitApp();
+              }
+            }
+          );
+        } catch (e) {
+          console.error("Error setting up back button listener:", e);
+        }
+      }
+    };
+
+    setupBackButton();
+
+    return () => {
+      if (backButtonListener) {
+        backButtonListener.remove();
+      }
+    };
+  }, [
+    showWelcome,
+    activeTutorial,
+    tutorialToConfirm,
+    isStreakTutorialModalOpen,
+    isImportConfirmModalOpen,
+    isGoalReachedModalOpen,
+    isEndOfYearModalOpen,
+    isPioneerUpgradeModalOpen,
+    isMonthWrappedOpen,
+    isPlanningModalOpen,
+    isProfileModalOpen,
+    isHelpModalOpen,
+    isSettingsOpen,
+    isAddHoursModalOpen,
+    isStreakModalOpen,
+    isShareModalOpen,
+    isSidebarOpen,
+    activeView,
+
+  ]);
 
   // Check for new service year on app load
   useEffect(() => {
@@ -564,10 +728,6 @@ const App: React.FC = () => {
     const settings = { performanceMode };
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   }, [performanceMode]);
-
-  useEffect(() => {
-    localStorage.setItem(SIMPLE_MODE_KEY, String(isSimpleMode));
-  }, [isSimpleMode]);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -598,8 +758,10 @@ const App: React.FC = () => {
     };
   }, [currentDate]);
 
+
+
   useEffect(() => {
-    if (showWelcome || activeTutorial || tutorialToConfirm || isSimpleMode)
+    if (showWelcome || activeTutorial || tutorialToConfirm)
       return;
     const tutorialAgreement = localStorage.getItem(TUTORIAL_AGREEMENT_KEY);
     if (tutorialAgreement === "false") return;
@@ -624,7 +786,7 @@ const App: React.FC = () => {
     activeTutorial,
     tutorialToConfirm,
     hasAgreedToTutorials,
-    isSimpleMode,
+    activeTutorial,
   ]);
 
   const handleTutorialFinish = (view: AppView) => {
@@ -699,9 +861,9 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.toggle("dark", displayThemeMode !== "light");
-    root.classList.toggle("theme-black", displayThemeMode === "black");
-  }, [displayThemeMode]);
+    root.classList.toggle("dark", themeMode !== "light");
+    root.classList.toggle("theme-black", themeMode === "black");
+  }, [themeMode]);
 
   const appStateForSaving: AppState = useMemo(
     () => ({
@@ -864,7 +1026,7 @@ const App: React.FC = () => {
     setLastLogDate(today);
   };
 
-  const handleAddHours = (hoursToAdd: number, weather?: WeatherCondition) => {
+  const handleAddHours = (hoursToAdd: number, event?: DayEvent) => {
     if (hoursToAdd <= 0) return;
 
     const today = new Date();
@@ -878,11 +1040,22 @@ const App: React.FC = () => {
 
       const oldEntry: DayEntry = yearHistory[dateKey] || { hours: 0 };
 
-      yearHistory[dateKey] = {
+      const newEntry: DayEntry = {
         ...oldEntry,
         hours: oldEntry.hours + hoursToAdd,
-        weather: weather || oldEntry.weather,
+        event: event || oldEntry.event,
       };
+
+      if (
+        event &&
+        (event === "circuit_assembly" ||
+          event === "regional_convention")
+      ) {
+        // Maybe logic here if needed? 
+        // For now just setting it is enough as per previous logic
+      }
+
+      yearHistory[dateKey] = newEntry;
       newArchives[serviceYear] = yearHistory;
 
       // Recalculate total for current month
@@ -1029,7 +1202,7 @@ const App: React.FC = () => {
   const handleSetHoursForDate = (
     newTotalHours: number,
     date: Date,
-    weather?: WeatherCondition,
+    event?: DayEvent | null,
     isCampaign?: boolean
   ) => {
     const dateKey = formatDateKey(date);
@@ -1044,8 +1217,12 @@ const App: React.FC = () => {
       const newEntry: DayEntry = {
         ...oldEntry,
         hours: newTotalHours,
-        weather: weather || oldEntry.weather,
+        event: event || undefined, // Set the event
       };
+
+      if (event) {
+        delete newEntry.weather; // Clear legacy weather if event is set
+      }
 
       if (isCampaign) {
         newEntry.isCampaign = true;
@@ -1053,12 +1230,19 @@ const App: React.FC = () => {
         delete newEntry.isCampaign;
       }
 
-      if (newEntry.status === "sick") newEntry.hours = 0;
+      // Handle "sick" event logic - zero out hours if sick?
+      // User didn't strictly say sick days have 0 hours, but implied it by being a status replace.
+      // Existing logic for status='sick' zeroed hours.
+      if (newEntry.event === "sick") {
+        newEntry.hours = 0;
+        newEntry.ldcHours = 0;
+      }
 
       if (
         newEntry.hours > 0 ||
-        newEntry.weather ||
-        newEntry.status ||
+        newEntry.event ||
+        newEntry.weather || // Keep checking for legacy data
+        newEntry.status || // Keep checking for legacy data
         newEntry.isCampaign ||
         (newEntry.ldcHours && newEntry.ldcHours > 0) ||
         (newEntry.notes && newEntry.notes.trim())
@@ -1180,7 +1364,7 @@ const App: React.FC = () => {
     handleCloseModal();
   };
 
-  const handleMarkDayStatus = (date: Date, status: DayStatus | null) => {
+  const handleMarkDayStatus = (date: Date, status: DayEvent | "sick" | null) => {
     const dateKey = formatDateKey(date);
     const serviceYear = getServiceYear(date);
 
@@ -1193,17 +1377,24 @@ const App: React.FC = () => {
       const newEntry: DayEntry = { ...oldEntry };
 
       if (status) {
-        // Setting a status
-        newEntry.status = status;
-        newEntry.hours = 0;
-        newEntry.ldcHours = 0;
+        // "sick" is now an event
+        if (status === "sick") {
+          newEntry.event = "sick";
+          newEntry.hours = 0;
+          newEntry.ldcHours = 0;
+        } else {
+          // For other statuses if passed here, though mostly this fn was for sick
+          newEntry.event = status as DayEvent;
+        }
       } else {
-        // Clearing a status
-        delete newEntry.status;
+        // Clearing status/event
+        delete newEntry.event;
+        delete newEntry.status; // Clear legacy
       }
 
       if (
         newEntry.hours > 0 ||
+        newEntry.event ||
         newEntry.weather ||
         newEntry.status ||
         newEntry.isCampaign ||
@@ -1491,9 +1682,8 @@ const App: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `garden-backup-${
-        new Date().toISOString().split("T")[0]
-      }.json`;
+      a.download = `garden-backup-${new Date().toISOString().split("T")[0]
+        }.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -1602,6 +1792,117 @@ const App: React.FC = () => {
     setIsPioneerUpgradeModalOpen(false);
   };
 
+  const handleTestWrapped = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const serviceYear = getServiceYear(currentDate);
+    const yearHistory = archives[serviceYear] || {};
+
+    let hours = 0;
+    let ldcHours = 0;
+    const events: DayEvent[] = [];
+    let daysPreached = 0;
+
+    // Stats for best day and day of week
+    let maxHoursInADay = 0;
+    let bestDayDate: string | null = null;
+    const dayOfWeekHours = [0, 0, 0, 0, 0, 0, 0]; // Sun-Sat
+
+    // Calculate hours and events from archives
+    Object.keys(yearHistory).forEach(key => {
+      if (key.includes("SUMMARY") || key.includes("CARRYOVER")) return;
+      const entryDate = new Date(key);
+      if (entryDate.getFullYear() === year && entryDate.getMonth() === month) {
+        const entry = yearHistory[key];
+        const entryHours = entry.hours || 0;
+
+        if (entryHours > 0) {
+          hours += entryHours;
+          daysPreached++;
+          if (entryHours > maxHoursInADay) {
+            maxHoursInADay = entryHours;
+            bestDayDate = key;
+          }
+          const dayIndex = entryDate.getDay();
+          dayOfWeekHours[dayIndex] += entryHours;
+        }
+
+        if (entry.ldcHours) ldcHours += entry.ldcHours;
+        if (entry.event) events.push(entry.event);
+        if (entry.status === 'sick' && !entry.event) events.push('sick');
+      }
+    });
+
+    // Find most productive day of week
+    let maxDayIndex = -1;
+    let maxDayHours = 0;
+    dayOfWeekHours.forEach((h, idx) => {
+      if (h > maxDayHours) {
+        maxDayHours = h;
+        maxDayIndex = idx;
+      }
+    });
+
+    const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    const mostProductiveDayOfWeek = maxDayIndex >= 0 ? daysOfWeek[maxDayIndex] : null;
+
+    // Calculate consistency and daily average
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const consistency = daysInMonth > 0 ? Math.round((daysPreached / daysInMonth) * 100) : 0;
+    const dailyAverage = daysPreached > 0 ? hours / daysPreached : 0;
+
+    // Calculate previous month stats
+    const prevMonth = month === 0 ? 11 : month - 1;
+    const prevYear = month === 0 ? year - 1 : year;
+    const prevServiceYear = getServiceYear(new Date(prevYear, prevMonth));
+    const prevYearHistory = archives[prevServiceYear] || {};
+
+    let prevHours = 0;
+    let prevDaysPreached = 0;
+    Object.keys(prevYearHistory).forEach(key => {
+      if (key.includes("SUMMARY") || key.includes("CARRYOVER")) return;
+      const entryDate = new Date(key);
+      if (entryDate.getFullYear() === prevYear && entryDate.getMonth() === prevMonth) {
+        const entry = prevYearHistory[key];
+        const entryHours = entry.hours || 0;
+        if (entryHours > 0) {
+          prevHours += entryHours;
+          prevDaysPreached++;
+        }
+      }
+    });
+
+    let returnVisits = 0;
+    let bibleStudies = 0;
+    activities.forEach(act => {
+      const actDate = new Date(act.date);
+      if (actDate.getFullYear() === year && actDate.getMonth() === month) {
+        if (act.type === 'visit') returnVisits++;
+        if (act.type === 'study') bibleStudies++;
+      }
+    });
+
+    setWrappedStats({
+      year,
+      month,
+      hours,
+      ldcHours,
+      events,
+      placements: 0,
+      videos: 0,
+      returnVisits,
+      bibleStudies,
+      bestDay: bestDayDate ? { date: bestDayDate, hours: maxHoursInADay } : null,
+      mostProductiveDayOfWeek,
+      daysPreached,
+      consistency,
+      dailyAverage,
+      previousMonth: prevHours > 0 || prevDaysPreached > 0 ? { hours: prevHours, daysPreached: prevDaysPreached } : null
+    });
+    setIsMonthWrappedOpen(true);
+    setIsSettingsOpen(false);
+  };
+
   const handleTimerFinish = (hoursFromTimer: number) => {
     setInitialHoursForModal(hoursFromTimer);
     setAddHoursModalOpen(true);
@@ -1661,7 +1962,7 @@ const App: React.FC = () => {
               onEditLdcClick={openEditLdcModal}
               onTimerFinish={handleTimerFinish}
               progressShape={progressShape}
-              themeColor={displayThemeColor}
+              themeColor={themeColor}
               onHelpClick={() => setHelpModalOpen(true)}
               onShareReport={handleOpenShareModal}
               performanceMode={performanceMode}
@@ -1675,7 +1976,7 @@ const App: React.FC = () => {
               currentServiceYear={currentServiceYear}
               activities={activities}
               themeMode={themeMode}
-              isSimpleMode={isSimpleMode}
+
             />
           </>
         );
@@ -1685,7 +1986,7 @@ const App: React.FC = () => {
             activities={activities}
             groupArrangements={groupArrangements}
             onSaveArrangements={handleSaveArrangements}
-            themeColor={displayThemeColor}
+            themeColor={themeColor}
             onEdit={handleStartEditActivity}
             onDelete={handleDeleteActivity}
             isOnline={isOnline}
@@ -1694,7 +1995,7 @@ const App: React.FC = () => {
             isPrivacyMode={isPrivacyMode}
             notes={notes}
             onSaveNotes={handleSaveNotes}
-            isSimpleMode={isSimpleMode}
+
             themeMode={themeMode}
           />
         );
@@ -1703,7 +2004,7 @@ const App: React.FC = () => {
           <HistoryView
             archives={archives}
             currentServiceYear={currentServiceYear}
-            themeColor={displayThemeColor}
+            themeColor={themeColor}
             isPrivacyMode={isPrivacyMode}
             onDayClick={handleDayClickForHistory}
             activities={activities}
@@ -1717,7 +2018,7 @@ const App: React.FC = () => {
             planningData={planningData}
             activities={activities}
             onOpenModal={handleOpenPlanningModal}
-            themeColor={displayThemeColor}
+            themeColor={themeColor}
           />
         );
       case "achievements":
@@ -1725,7 +2026,7 @@ const App: React.FC = () => {
           <AchievementsView
             allAchievements={ALL_ACHIEVEMENTS}
             unlockedAchievements={unlockedAchievements}
-            themeColor={displayThemeColor}
+            themeColor={themeColor}
             appState={appStateForSaving}
           />
         );
@@ -1753,12 +2054,12 @@ const App: React.FC = () => {
     <div className="min-h-screen text-slate-800 dark:text-slate-200">
       <Header
         title={viewTitle}
-        themeColor={displayThemeColor}
+        themeColor={themeColor}
         streak={streak}
         onStreakClick={() => setIsStreakModalOpen(true)}
         onMenuClick={() => setSidebarOpen(true)}
-        onTitleClick={() => !isSimpleMode && setIsStatsMode((s) => !s)}
-        isSimpleMode={isSimpleMode}
+        onTitleClick={() => setIsStatsMode((s) => !s)}
+
         themeMode={themeMode}
       />
 
@@ -1775,7 +2076,7 @@ const App: React.FC = () => {
         onSetPerformanceMode={setPerformanceMode}
         onExport={handleExportData}
         onImport={handleImportClick}
-        themeColor={displayThemeColor}
+        themeColor={themeColor}
         onSettingsClick={() => {
           setSidebarOpen(false);
           setIsSettingsOpen(true);
@@ -1789,8 +2090,8 @@ const App: React.FC = () => {
           window.location.hash = "#/achievements";
           setSidebarOpen(false);
         }}
-        isSimpleMode={isSimpleMode}
-        onSetSimpleMode={setIsSimpleMode}
+
+
         themeMode={themeMode}
       />
       <input
@@ -1801,16 +2102,16 @@ const App: React.FC = () => {
         className="hidden"
       />
 
-      <main className="pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(7rem+env(safe-area-inset-bottom))]">
-        <div className="px-4 animate-fadeIn">{renderContent()}</div>
+      <main className="pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:pb-[calc(7rem+env(safe-area-inset-bottom))]">
+        <div className="px-4 animate-fadeIn max-h-full">{renderContent()}</div>
       </main>
 
       <BottomNav
         activeView={activeView}
         onAddClick={openAddModal}
-        themeColor={displayThemeColor}
+        themeColor={themeColor}
         performanceMode={performanceMode}
-        isSimpleMode={isSimpleMode}
+
         themeMode={themeMode}
       />
 
@@ -1828,7 +2129,7 @@ const App: React.FC = () => {
         currentLdcHours={currentLdcHours}
         isEditMode={isEditTotalHoursMode}
         isEditLdcMode={isEditLdcHoursMode}
-        themeColor={displayThemeColor}
+        themeColor={themeColor}
         performanceMode={performanceMode}
         dateForEntry={dateToEdit}
         onSetHoursForDate={handleSetHoursForDate}
@@ -1849,9 +2150,20 @@ const App: React.FC = () => {
         onSave={handleSavePlanningBlock}
         onDelete={handleDeletePlanningBlock}
         activities={activities}
-        themeColor={displayThemeColor}
+        themeColor={themeColor}
         performanceMode={performanceMode}
       />
+
+      {wrappedStats && (
+        <MonthWrapped
+          isOpen={isMonthWrappedOpen}
+          onClose={() => setIsMonthWrappedOpen(false)}
+          year={wrappedStats.year}
+          month={wrappedStats.month}
+          stats={wrappedStats}
+          themeColor={themeColor}
+        />
+      )}
 
       <ProfileModal
         isOpen={isProfileModalOpen}
@@ -1874,13 +2186,14 @@ const App: React.FC = () => {
         currentColor={themeColor}
         currentThemeMode={themeMode}
         performanceMode={performanceMode}
+        onTestWrapped={handleTestWrapped}
       />
 
       <HelpModal
         isOpen={isHelpModalOpen}
         onClose={() => setHelpModalOpen(false)}
         onReplayTutorial={handleReplayTutorial}
-        themeColor={displayThemeColor}
+        themeColor={themeColor}
         performanceMode={performanceMode}
       />
 
@@ -1888,7 +2201,7 @@ const App: React.FC = () => {
         isOpen={isStreakModalOpen}
         onClose={() => setIsStreakModalOpen(false)}
         streak={streak}
-        themeColor={displayThemeColor}
+        themeColor={themeColor}
         protectedDay={protectedDay}
         onSaveProtectedDay={handleSaveProtectedDay}
         protectedDaySetDate={protectedDaySetDate}
@@ -1900,7 +2213,7 @@ const App: React.FC = () => {
         isOpen={isStreakTutorialModalOpen}
         onClose={() => setStreakTutorialModalOpen(false)}
         onAddHoursClick={handleStartFirstLog}
-        themeColor={displayThemeColor}
+        themeColor={themeColor}
         performanceMode={performanceMode}
         currentHours={currentHours}
       />
@@ -1913,7 +2226,9 @@ const App: React.FC = () => {
         currentHours={currentHours}
         currentLdcHours={currentLdcHours}
         activities={activities}
-        themeColor={displayThemeColor}
+        themeColor={themeColor}
+        userRole={userRole}
+        archives={archives}
         onCopy={() => {
           setIsShareModalOpen(false);
           setShowShareToast(true);
@@ -1925,7 +2240,7 @@ const App: React.FC = () => {
         onClose={() => setGoalReachedModalOpen(false)}
         userName={userName}
         goal={goal}
-        themeColor={displayThemeColor}
+        themeColor={themeColor}
         performanceMode={performanceMode}
       />
 
@@ -1933,7 +2248,7 @@ const App: React.FC = () => {
         isOpen={isEndOfYearModalOpen}
         onArchive={handleArchiveAndStartNewYear}
         onLater={() => setEndOfYearModalOpen(false)}
-        themeColor={displayThemeColor}
+        themeColor={themeColor}
         performanceMode={performanceMode}
         previousYear={currentServiceYear}
       />
@@ -1948,21 +2263,21 @@ const App: React.FC = () => {
         title="Confirmar Importación"
         message="Esto reemplazará todos tus datos actuales con los del archivo. ¿Estás seguro de que quieres continuar?"
         confirmText="Sí, importar datos"
-        themeColor={displayThemeColor}
+        themeColor={themeColor}
       />
 
       <PioneerUpgradeModal
         isOpen={isPioneerUpgradeModalOpen}
         onClose={() => setIsPioneerUpgradeModalOpen(false)}
         onConfirm={handlePioneerUpgrade}
-        themeColor={displayThemeColor}
+        themeColor={themeColor}
       />
 
       <TutorialConfirmationModal
         isOpen={!!tutorialToConfirm}
         onStart={() => handleStartTutorial(tutorialToConfirm!)}
         onSkip={handleSkipAllTutorials}
-        themeColor={displayThemeColor}
+        themeColor={themeColor}
         viewName={tutorialToConfirm ? viewTitleMap[tutorialToConfirm] : ""}
         performanceMode={performanceMode}
       />
@@ -1970,14 +2285,14 @@ const App: React.FC = () => {
       <InteractiveTutorial
         steps={activeTutorial}
         onFinish={() => handleTutorialFinish(activeView)}
-        themeColor={displayThemeColor}
+        themeColor={themeColor}
         performanceMode={performanceMode}
       />
 
       <AchievementToast
         queue={achievementToastQueue}
         onDismiss={() => setAchievementToastQueue((q) => q.slice(1))}
-        themeColor={displayThemeColor}
+        themeColor={themeColor}
       />
 
       <OfflineToast

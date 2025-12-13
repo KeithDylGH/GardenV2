@@ -136,9 +136,8 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 z-[100] transition-opacity duration-300 ${
-        isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
-      }`}
+      className={`fixed inset-0 z-[100] transition-opacity duration-300 ${isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
     >
       <div
         style={{
@@ -154,9 +153,8 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({
       <div
         ref={popoverRef}
         style={popoverStyle}
-        className={`absolute z-[101] bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-80 p-5 border border-slate-200 dark:border-slate-700 ${
-          !performanceMode && "animate-fadeInUp"
-        }`}
+        className={`absolute z-[101] bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-80 p-5 border border-slate-200 dark:border-slate-700 ${!performanceMode && "animate-fadeInUp"
+          }`}
         role="dialog"
         aria-labelledby="tutorial-title"
       >
@@ -194,11 +192,9 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({
           </span>
           <button
             onClick={handleNext}
-            className={`px-5 py-2 rounded-lg ${
-              theme.bg
-            } text-white font-bold text-sm shadow-lg transition-transform ${
-              !performanceMode && "transform hover:scale-105"
-            }`}
+            className={`px-5 py-2 rounded-lg ${theme.bg
+              } text-white font-bold text-sm shadow-lg transition-transform ${!performanceMode && "transform hover:scale-105"
+              }`}
           >
             {steps.length === 1 || currentStepIndex === steps.length - 1
               ? "Finalizar"

@@ -21,6 +21,7 @@ interface SettingsModalProps {
   currentColor: ThemeColor;
   currentThemeMode: ThemeMode;
   performanceMode: boolean;
+  onTestWrapped: () => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -32,6 +33,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   currentColor,
   currentThemeMode,
   performanceMode,
+  onTestWrapped,
 }) => {
   const [shape, setShape] = useState<Shape>("flower");
   const [color, setColor] = useState<ThemeColor>("blue");
@@ -75,34 +77,31 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     name: Shape;
     Icon: React.FC<React.SVGProps<SVGSVGElement>>;
   }[] = [
-    { name: "flower", Icon: FlowerIcon },
-    { name: "circle", Icon: CircleIcon },
-    { name: "heart", Icon: HeartIcon },
-    { name: "diamond", Icon: DiamondIcon },
-    { name: "triangle", Icon: TriangleIcon },
-    { name: "hexagon", Icon: HexagonIcon },
-  ];
+      { name: "flower", Icon: FlowerIcon },
+      { name: "circle", Icon: CircleIcon },
+      { name: "heart", Icon: HeartIcon },
+      { name: "diamond", Icon: DiamondIcon },
+      { name: "triangle", Icon: TriangleIcon },
+      { name: "hexagon", Icon: HexagonIcon },
+    ];
 
   const isBwTheme = color === "bw";
 
   return (
     <div
-      className={`fixed inset-0 z-50 ${
-        hasBeenOpened ? "transition-colors duration-300" : ""
-      } ${isOpen ? "bg-black/40" : "bg-transparent pointer-events-none"}`}
+      className={`fixed inset-0 z-50 ${hasBeenOpened ? "transition-colors duration-300" : ""
+        } ${isOpen ? "bg-black/40" : "bg-transparent pointer-events-none"}`}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="settings-title"
     >
       <div
-        className={`fixed bottom-0 left-0 right-0 flex flex-col max-h-[90vh] bg-gray-100 dark:bg-slate-900 rounded-t-2xl shadow-2xl ${
-          hasBeenOpened
-            ? `transition-transform ${
-                performanceMode ? "duration-0" : "duration-300"
-              } ease-in-out`
-            : ""
-        } ${isOpen ? "translate-y-0" : "translate-y-full"}`}
+        className={`fixed bottom-0 left-0 right-0 flex flex-col max-h-[90vh] bg-gray-100 dark:bg-slate-900 rounded-t-2xl shadow-2xl ${hasBeenOpened
+          ? `transition-transform ${performanceMode ? "duration-0" : "duration-300"
+          } ease-in-out`
+          : ""
+          } ${isOpen ? "translate-y-0" : "translate-y-full"}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3" />
@@ -124,18 +123,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 Tema
               </label>
               <div
-                className={`flex gap-2 p-1 bg-gray-100 dark:bg-slate-700 rounded-lg ${
-                  isBwTheme ? "opacity-50" : ""
-                }`}
+                className={`flex gap-2 p-1 bg-gray-100 dark:bg-slate-700 rounded-lg ${isBwTheme ? "opacity-50" : ""
+                  }`}
               >
                 <button
                   onClick={() => handleModeChange("light")}
                   disabled={isBwTheme}
-                  className={`flex-1 flex items-center justify-center space-x-2 py-2 rounded-md text-sm font-semibold ${
-                    mode === "light"
-                      ? `${theme.bg} text-white shadow`
-                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600/50"
-                  } ${isBwTheme ? "cursor-not-allowed" : ""}`}
+                  className={`flex-1 flex items-center justify-center space-x-2 py-2 rounded-md text-sm font-semibold ${mode === "light"
+                    ? `${theme.bg} text-white shadow`
+                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600/50"
+                    } ${isBwTheme ? "cursor-not-allowed" : ""}`}
                   aria-pressed={mode === "light"}
                 >
                   <SunIcon className="w-5 h-5" />
@@ -144,11 +141,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 <button
                   onClick={() => handleModeChange("dark")}
                   disabled={isBwTheme}
-                  className={`flex-1 flex items-center justify-center space-x-2 py-2 rounded-md text-sm font-semibold ${
-                    mode === "dark"
-                      ? `${theme.bg} text-white shadow`
-                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600/50"
-                  } ${isBwTheme ? "cursor-not-allowed" : ""}`}
+                  className={`flex-1 flex items-center justify-center space-x-2 py-2 rounded-md text-sm font-semibold ${mode === "dark"
+                    ? `${theme.bg} text-white shadow`
+                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600/50"
+                    } ${isBwTheme ? "cursor-not-allowed" : ""}`}
                   aria-pressed={mode === "dark"}
                 >
                   <MoonIcon className="w-5 h-5" />
@@ -157,11 +153,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 <button
                   onClick={() => handleModeChange("black")}
                   disabled={isBwTheme}
-                  className={`flex-1 flex items-center justify-center space-x-2 py-2 rounded-md text-sm font-semibold ${
-                    mode === "black"
-                      ? `${theme.bg} text-white shadow`
-                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600/50"
-                  } ${isBwTheme ? "cursor-not-allowed" : ""}`}
+                  className={`flex-1 flex items-center justify-center space-x-2 py-2 rounded-md text-sm font-semibold ${mode === "black"
+                    ? `${theme.bg} text-white shadow`
+                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600/50"
+                    } ${isBwTheme ? "cursor-not-allowed" : ""}`}
                   aria-pressed={mode === "black"}
                 >
                   <SolidCircleIcon className="w-5 h-5" />
@@ -185,19 +180,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   <button
                     key={shapeName}
                     onClick={() => setShape(shapeName)}
-                    className={`flex-1 p-3 border-2 rounded-lg flex items-center justify-center ${
-                      shape === shapeName
-                        ? `${THEMES[color].text} border-current bg-blue-50/50 dark:bg-slate-700/50`
-                        : "border-slate-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600"
-                    }`}
+                    className={`flex-1 p-3 border-2 rounded-lg flex items-center justify-center ${shape === shapeName
+                      ? `${THEMES[color].text} border-current bg-blue-50/50 dark:bg-slate-700/50`
+                      : "border-slate-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600"
+                      }`}
                     aria-pressed={shape === shapeName}
                   >
                     <Icon
-                      className={`w-8 h-8 ${
-                        shape === shapeName
-                          ? "text-current"
-                          : "text-slate-500 dark:text-slate-400"
-                      }`}
+                      className={`w-8 h-8 ${shape === shapeName
+                        ? "text-current"
+                        : "text-slate-500 dark:text-slate-400"
+                        }`}
                     />
                     <span className="sr-only">{shapeName}</span>
                   </button>
@@ -215,40 +208,48 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   <button
                     key={themeOption.name}
                     onClick={() => handleColorSelect(themeOption.name)}
-                    className={`w-full h-12 rounded-lg flex items-center justify-center bg-gradient-to-br ${
-                      themeOption.gradientFrom
-                    } ${themeOption.gradientTo} ${
-                      !performanceMode &&
+                    className={`w-full h-12 rounded-lg flex items-center justify-center bg-gradient-to-br ${themeOption.gradientFrom
+                      } ${themeOption.gradientTo} ${!performanceMode &&
                       "transition-transform transform hover:scale-110"
-                    }`}
+                      }`}
                     aria-label={`Seleccionar color ${themeOption.name}`}
                     aria-pressed={color === themeOption.name}
                   >
                     {color === themeOption.name && (
                       <CheckIcon
-                        className={`w-6 h-6 ${
-                          themeOption.name === "bw"
-                            ? "text-slate-900"
-                            : "text-white"
-                        }`}
+                        className={`w-6 h-6 ${themeOption.name === "bw"
+                          ? "text-slate-900"
+                          : "text-white"
+                          }`}
                       />
                     )}
                   </button>
                 ))}
               </div>
             </div>
+            {/* Extras */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Extras
+              </label>
+              <button
+                onClick={onTestWrapped}
+                className={`w-full flex items-center justify-center space-x-2 p-3 border-2 border-indigo-200 dark:border-indigo-800 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors`}
+              >
+                <span className="text-xl">✨</span>
+                <span className="font-bold">Ver Resumen del Estilo Historia</span>
+              </button>
+            </div>
           </div>
         </main>
 
-        <footer className="flex-shrink-0 p-4 border-t border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50">
+        <footer className="flex-shrink-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50">
           <button
             onClick={handleSave}
-            className={`w-full px-6 py-3 rounded-lg ${theme.bg} ${
-              color === "bw" ? "text-slate-900" : "text-white"
-            } font-bold text-lg shadow-md ${
-              !performanceMode &&
+            className={`w-full px-6 py-3 rounded-lg ${theme.bg} ${color === "bw" ? "text-slate-900" : "text-white"
+              } font-bold text-lg shadow-md ${!performanceMode &&
               "transition-transform transform hover:scale-105"
-            }`}
+              }`}
           >
             Guardar
           </button>

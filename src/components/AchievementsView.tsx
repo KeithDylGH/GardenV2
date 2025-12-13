@@ -23,7 +23,7 @@ const AchievementsView: React.FC<AchievementsViewProps> = ({
   const unlockedCount = Object.keys(unlockedAchievements).length;
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto pt-6">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
           Mis Logros

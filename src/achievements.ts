@@ -1,7 +1,7 @@
 import { AppState, Achievement } from "./types";
 import { getServiceYear, formatDateKey } from "./utils";
 import { LeafIcon } from "./components/icons/LeafIcon";
-import { FireIcon } from "./components/icons/FireIcon";
+import { FlameIcon } from "./components/icons/FlameIcon";
 import { BookOpenIcon } from "./components/icons/BookOpenIcon";
 import { ArrowTrendingUpIcon } from "./components/icons/ArrowTrendingUpIcon";
 import { TrophyIcon } from "./components/icons/TrophyIcon";
@@ -9,7 +9,7 @@ import { ArrowUturnLeftIcon } from "./components/icons/ArrowUturnLeftIcon";
 import { UsersIcon } from "./components/icons/UsersIcon";
 import { ChartBarIcon } from "./components/icons/ChartBarIcon";
 import { BuildingOfficeIcon } from "./components/icons/BuildingOfficeIcon";
-import { BoltIcon } from "./components/icons/BoltIcon";
+
 import { CalendarDaysIcon } from "./components/icons/CalendarDaysIcon";
 import { MegaphoneIcon } from "./components/icons/MegaphoneIcon";
 
@@ -37,7 +37,7 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
     id: "streak",
     title: "Racha Imparable",
     description: (tier) => `Mantén una racha de ${tier} días de servicio.`,
-    icon: FireIcon,
+    icon: FlameIcon,
     tiers: [7, 14, 30, 60, 100],
     check: (state: AppState) => {
       return { unlocked: state.streak >= 7, currentProgress: state.streak };
@@ -148,33 +148,7 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
       return { unlocked: totalLdcHours >= 8, currentProgress: totalLdcHours };
     },
   },
-  {
-    id: "weather_warrior",
-    title: "Lluvia o Sol",
-    description: (tier) =>
-      `Sal a predicar ${tier} días con mal tiempo en un mes.`,
-    icon: BoltIcon,
-    tiers: [5, 10],
-    check: (state: AppState) => {
-      const currentDate = new Date(state.currentDate);
-      const currentMonth = currentDate.getMonth();
-      const currentYear = currentDate.getFullYear();
-      const history = state.archives[state.currentServiceYear] || {};
-      const count = Object.values(history).filter((entry) => {
-        if (!entry.weather || entry.weather !== "bad") return false;
-        const entryDateKey = Object.keys(history).find(
-          (key) => history[key] === entry
-        );
-        if (!entryDateKey) return false;
-        const entryDate = new Date(entryDateKey);
-        return (
-          entryDate.getMonth() === currentMonth &&
-          entryDate.getFullYear() === currentYear
-        );
-      }).length;
-      return { unlocked: count >= 5, currentProgress: count };
-    },
-  },
+
   {
     id: "perfect_week",
     title: "Semana Perfecta",

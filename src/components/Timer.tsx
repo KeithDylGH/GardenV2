@@ -15,7 +15,7 @@ interface TimerProps {
   onFinishAndOpenModal: (hours: number) => void;
   themeColor: ThemeColor;
   performanceMode: boolean;
-  isSimpleMode?: boolean;
+
   themeMode?: ThemeMode;
 }
 
@@ -35,7 +35,6 @@ const Timer: React.FC<TimerProps> = ({
   onFinishAndOpenModal,
   themeColor,
   performanceMode,
-  isSimpleMode = false,
   themeMode = "dark",
 }) => {
   const [time, setTime] = useState(0); // in seconds
@@ -231,8 +230,7 @@ const Timer: React.FC<TimerProps> = ({
     )}:${String(seconds).padStart(2, "0")}`;
   };
 
-  const checkIconColorClass =
-    isSimpleMode && themeMode === "light" ? "text-slate-900" : "";
+  const checkIconColorClass = theme.text;
 
   const renderNotificationButton = () => {
     if (!isCapacitor) return null;
@@ -293,9 +291,8 @@ const Timer: React.FC<TimerProps> = ({
         {time > 0 && !isActive ? (
           <button
             onClick={handleReset}
-            className={`w-14 h-14 text-red-500 rounded-full flex items-center justify-center duration-200 animate-fadeIn bg-red-500 bg-opacity-0 hover:bg-opacity-10 dark:hover:bg-opacity-20 ${
-              !performanceMode && "transform hover:scale-105"
-            }`}
+            className={`w-14 h-14 text-red-500 rounded-full flex items-center justify-center duration-200 animate-fadeIn bg-red-500 bg-opacity-0 hover:bg-opacity-10 dark:hover:bg-opacity-20 ${!performanceMode && "transform hover:scale-105"
+              }`}
             aria-label="Reiniciar temporizador"
           >
             <XIcon className="w-7 h-7" />
@@ -306,9 +303,8 @@ const Timer: React.FC<TimerProps> = ({
 
         <button
           onClick={handleToggle}
-          className={`w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg transition-transform ${
-            theme.bg
-          } ${!performanceMode && "transform hover:scale-105"}`}
+          className={`w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg transition-transform ${theme.bg
+            } ${!performanceMode && "transform hover:scale-105"}`}
           aria-label={isActive ? "Pausar temporizador" : "Iniciar temporizador"}
         >
           {isActive ? (
@@ -321,13 +317,10 @@ const Timer: React.FC<TimerProps> = ({
         {time > 0 ? (
           <button
             onClick={handleFinish}
-            className={`w-14 h-14 ${
-              theme.text
-            } rounded-full flex items-center justify-center duration-200 animate-fadeIn ${
-              theme.bg
-            } bg-opacity-0 hover:bg-opacity-10 dark:hover:bg-opacity-20 ${
-              !performanceMode && "transform hover:scale-105"
-            }`}
+            className={`w-14 h-14 ${theme.text
+              } rounded-full flex items-center justify-center duration-200 animate-fadeIn ${theme.bg
+              } bg-opacity-0 hover:bg-opacity-10 dark:hover:bg-opacity-20 ${!performanceMode && "transform hover:scale-105"
+              }`}
             aria-label="Finalizar y agregar horas"
           >
             <CheckIcon className={`w-7 h-7 ${checkIconColorClass}`} />

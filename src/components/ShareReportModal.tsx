@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { ThemeColor, ActivityItem } from "../types";
+import { ThemeColor, ActivityItem, UserRole, HistoryLog } from "../types";
 import { THEMES } from "../constants";
-import { hoursToHHMM } from "../utils";
+import { hoursToHHMM, getServiceYear } from "../utils";
 import { ClipboardDocumentCheckIcon } from "./icons/ClipboardDocumentCheckIcon";
 import { ChatBubbleBottomCenterTextIcon } from "./icons/ChatBubbleBottomCenterTextIcon";
 
@@ -14,6 +14,8 @@ interface ShareReportModalProps {
   currentLdcHours: number;
   activities: ActivityItem[];
   themeColor: ThemeColor;
+  userRole: UserRole;
+  archives: Record<string, HistoryLog>;
   onCopy: () => void;
 }
 
@@ -26,17 +28,50 @@ const ShareReportModal: React.FC<ShareReportModalProps> = ({
   currentLdcHours,
   activities,
   themeColor,
+  userRole,
+  archives,
   onCopy,
 }) => {
   const theme = THEMES[themeColor] || THEMES.blue;
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
+  const [optionalComment, setOptionalComment] = useState("");
   const reportTextAreaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setHasBeenOpened(true);
+    } else {
+      // Reset comment after modal closes (with delay for animation)
+      const timer = setTimeout(() => {
+        setOptionalComment("");
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
+
+  // Check if user was sick during the month
+  const wasSickThisMonth = useMemo(() => {
+    const serviceYear = getServiceYear(currentDate);
+    const yearHistory = archives[serviceYear] || {};
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
+    for (const dateKey in yearHistory) {
+      if (!dateKey.includes("SUMMARY") && !dateKey.includes("CARRYOVER")) {
+        const entry = yearHistory[dateKey];
+        const entryDate = new Date(dateKey);
+
+        if (
+          entryDate.getFullYear() === currentYear &&
+          entryDate.getMonth() === currentMonth &&
+          (entry.event === "sick" || entry.status === "sick")
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }, [archives, currentDate]);
 
   const reportText = useMemo(() => {
     const monthActivities = activities.filter((activity) => {
@@ -46,42 +81,85 @@ const ShareReportModal: React.FC<ShareReportModalProps> = ({
         activityDate.getMonth() === currentDate.getMonth()
       );
     });
-    const visits = monthActivities.filter((a) => a.type === "visit").length;
     const studies = monthActivities.filter((a) => a.type === "study").length;
 
     const monthName = currentDate.toLocaleDateString("es-ES", {
       month: "long",
     });
 
-    let report = `Informe de ${userName} - ${
-      monthName.charAt(0).toUpperCase() + monthName.slice(1)
-    }\n\n`;
-    report += `Horas: ${hoursToHHMM(currentHours)}\n`;
-    if (currentLdcHours > 0) {
-      report += `Horas LDC: ${hoursToHHMM(currentLdcHours)}\n`;
-    }
-    report += `Revisitas: ${visits}\n`;
-    report += `Estudios: ${studies}`;
+    const lines: string[] = [];
 
-    return report;
-  }, [userName, currentDate, currentHours, currentLdcHours, activities]);
+    // Header
+    lines.push(`Informe de ${userName} - ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`);
+    lines.push(""); // Empty line
+
+    if (userRole === "publisher") {
+      if (currentHours > 0) {
+        lines.push("Sí prediqué");
+      } else {
+        lines.push("No prediqué este mes");
+      }
+    }
+    // Pioneers: report hours and studies (if any)
+    else {
+      lines.push(`Horas: ${hoursToHHMM(currentHours)}`);
+      if (currentLdcHours > 0) {
+        lines.push(`Horas LDC: ${hoursToHHMM(currentLdcHours)}`);
+      }
+      // Only include studies if there are any
+      if (studies > 0) {
+        lines.push(`Estudios: ${studies}`);
+      }
+      // Add sick note if applicable
+      if (wasSickThisMonth) {
+        lines.push("Me enfermé");
+      }
+    }
+
+    // Add optional comment if provided
+    if (optionalComment.trim()) {
+      lines.push(""); // Empty line before comment
+      lines.push(`Comentario: ${optionalComment.trim()}`);
+    }
+
+    return lines.join("\n");
+  }, [userName, currentDate, currentHours, currentLdcHours, activities, userRole, wasSickThisMonth, optionalComment]);
 
   const handleCopyToClipboard = () => {
-    if (reportTextAreaRef.current) {
+    // Check if Clipboard API is available
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      // Modern Clipboard API
       navigator.clipboard
         .writeText(reportText)
         .then(() => {
           onCopy();
         })
         .catch((err) => {
-          console.error("Failed to copy text: ", err);
-          // Fallback for older browsers
-          if (reportTextAreaRef.current) {
-            reportTextAreaRef.current.select();
-            document.execCommand("copy");
-          }
-          onCopy();
+          console.error("Clipboard API failed:", err);
+          // Fallback to execCommand
+          fallbackCopy();
         });
+    } else {
+      // Use fallback directly if Clipboard API not available
+      fallbackCopy();
+    }
+  };
+
+  const fallbackCopy = () => {
+    if (reportTextAreaRef.current) {
+      try {
+        reportTextAreaRef.current.select();
+        reportTextAreaRef.current.setSelectionRange(0, 99999); // For mobile devices
+        const success = document.execCommand("copy");
+
+        if (success) {
+          onCopy();
+        } else {
+          console.error("execCommand copy failed");
+        }
+      } catch (err) {
+        console.error("Fallback copy error:", err);
+      }
     }
   };
 
@@ -89,18 +167,16 @@ const ShareReportModal: React.FC<ShareReportModalProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 z-50 transition-colors duration-300 ${
-        isOpen ? "bg-black/40" : "bg-transparent pointer-events-none"
-      }`}
+      className={`fixed inset-0 z-50 transition-colors duration-300 ${isOpen ? "bg-black/40" : "bg-transparent pointer-events-none"
+        }`}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="share-title"
     >
       <div
-        className={`fixed inset-0 flex items-center justify-center p-4 transition-opacity duration-300 ${
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className={`fixed inset-0 flex items-center justify-center p-4 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
       >
         <div
           className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-sm p-6 text-center transform transition-all duration-300"
@@ -129,6 +205,19 @@ const ShareReportModal: React.FC<ShareReportModalProps> = ({
             rows={5}
             className="w-full p-3 bg-slate-100 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-left font-mono"
           />
+
+          <div className="mt-4">
+            <label className="block text-left text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+              Comentario opcional
+            </label>
+            <textarea
+              value={optionalComment}
+              onChange={(e) => setOptionalComment(e.target.value)}
+              placeholder="Agrega un comentario si lo deseas..."
+              rows={2}
+              className="w-full p-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-left resize-none focus:ring-2 focus:ring-offset-0 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+            />
+          </div>
 
           <div className="flex flex-col space-y-3 mt-6">
             <button

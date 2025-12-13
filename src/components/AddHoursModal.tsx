@@ -4,8 +4,8 @@ import {
   ActivityItem,
   ActivityType,
   HistoryLog,
-  WeatherCondition,
-  DayStatus,
+  DayEvent,
+  DayStatus, // Keeping import if needed elsewhere, or remove if unused. It seems used in props.
   DayEntry,
   PlanningData,
   PlanningBlock,
@@ -32,11 +32,14 @@ import ToggleSwitch from "./ToggleSwitch";
 import { TrashIcon } from "./icons/TrashIcon";
 import { MinusIcon } from "./icons/MinusIcon";
 import { PlusIcon } from "./icons/PlusIcon";
+import { BuildingOfficeIcon } from "./icons/BuildingOfficeIcon";
+import { HomeIcon } from "./icons/HomeIcon";
+import { SparklesIcon } from "./icons/SparklesIcon";
 
 interface AddHoursModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddHours: (hours: number, weather?: WeatherCondition) => void;
+  onAddHours: (hours: number, event?: DayEvent) => void;
   onAddLdcHours: (hours: number, notes?: string) => void;
   onSetHours: (hours: number) => void;
   onSetLdcHours?: (hours: number) => void;
@@ -55,7 +58,7 @@ interface AddHoursModalProps {
   onSetHoursForDate: (
     hours: number,
     date: Date,
-    weather?: WeatherCondition,
+    event?: DayEvent | null,
     isCampaign?: boolean
   ) => void;
   onSetLdcHoursForDate: (hours: number, date: Date, notes?: string) => void;
@@ -69,34 +72,31 @@ interface AddHoursModalProps {
 
 type ModalTab = "hours" | "ldc" | "visit" | "study";
 
-const weatherOptions: {
-  id: WeatherCondition;
-  Icon: React.FC<React.SVGProps<SVGSVGElement>>;
+const eventOptions: {
+  id: DayEvent;
   label: string;
-  selectedClass: string;
+  Icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  colorClass: string;
 }[] = [
-  {
-    id: "sunny",
-    Icon: SunIcon,
-    label: "Soleado",
-    selectedClass:
-      "text-yellow-600 border-yellow-400 bg-yellow-50 dark:bg-yellow-500/10 dark:border-yellow-500/30",
-  },
-  {
-    id: "cloudy",
-    Icon: CloudIcon,
-    label: "Nublado",
-    selectedClass:
-      "text-slate-600 border-slate-400 bg-slate-100 dark:bg-slate-600/20 dark:border-slate-500/30",
-  },
-  {
-    id: "bad",
-    Icon: RainIcon,
-    label: "Lluvioso/Ventoso",
-    selectedClass:
-      "text-blue-600 border-blue-400 bg-blue-50 dark:bg-blue-500/10 dark:border-blue-500/30",
-  },
-];
+    {
+      id: "circuit_assembly",
+      label: "Asamblea de Circuito",
+      Icon: HomeIcon,
+      colorClass: "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-700",
+    },
+    {
+      id: "regional_convention",
+      label: "Asamblea Regional",
+      Icon: BuildingOfficeIcon,
+      colorClass: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700",
+    },
+    {
+      id: "cleaning",
+      label: "Limpieza del Salón",
+      Icon: SparklesIcon,
+      colorClass: "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700",
+    }
+  ];
 
 const AddHoursModal: React.FC<AddHoursModalProps> = ({
   isOpen,
@@ -131,8 +131,8 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
   const [notesInput, setNotesInput] = useState("");
   const [isHoursValid, setIsHoursValid] = useState(true);
   const [isLdcHoursValid, setIsLdcHoursValid] = useState(true);
-  const [selectedWeather, setSelectedWeather] = useState<
-    WeatherCondition | undefined
+  const [selectedEvent, setSelectedEvent] = useState<
+    DayEvent | undefined
   >(undefined);
 
   // Activity state
@@ -189,7 +189,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
       setComments("");
       setIsHoursValid(true);
       setIsLdcHoursValid(true);
-      setSelectedWeather(undefined);
+      setSelectedEvent(undefined);
       setIsRecurringActivity(false);
       setIsCampaignDay(false);
       setNotesInput("");
@@ -220,7 +220,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
             ? hoursToHHMM(dayEntryForDate.ldcHours)
             : ""
         );
-        setSelectedWeather(dayEntryForDate?.weather);
+        setSelectedEvent(dayEntryForDate?.event);
         setIsCampaignDay(dayEntryForDate?.isCampaign || false);
         setNotesInput(dayEntryForDate?.notes || "");
       } else if (isEditLdcMode) {
@@ -304,13 +304,13 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
         onSetHoursForDate(
           finalHours,
           dateForEntry!,
-          selectedWeather,
+          selectedEvent,
           isCampaignDay
         );
       } else if (isEditMode) {
         onSetHours(finalHours);
       } else {
-        onAddHours(finalHours, selectedWeather);
+        onAddHours(finalHours, selectedEvent);
       }
     } else if (activeTab === "ldc") {
       const ldcHoursValue = flexibleInputToHours(ldcHoursInput);
@@ -338,9 +338,8 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
 
   const getModalTitle = () => {
     if (isEditingActivity)
-      return `Editar ${
-        activityToEdit.type === "study" ? "Estudio" : "Revisita"
-      }`;
+      return `Editar ${activityToEdit.type === "study" ? "Estudio" : "Revisita"
+        }`;
     if (isEditLdcMode) return "Editar Horas Acreditadas";
     if (dateForEntry) {
       const today = new Date();
@@ -374,12 +373,12 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
 
   const handleSickClick = () => {
     if (dateForEntry) {
-      const isCurrentlySick = dayEntryForDate?.status === "sick";
+      const isCurrentlySick = dayEntryForDate?.event === "sick" || dayEntryForDate?.status === "sick";
       onMarkDayStatus(dateForEntry, isCurrentlySick ? null : "sick");
     }
   };
 
-  const isDaySick = dayEntryForDate?.status === "sick";
+  const isDaySick = dayEntryForDate?.event === "sick"; // Check event instead of status
 
   const TABS_ORDER: ModalTab[] = ["hours", "ldc", "visit", "study"].filter(
     (tab) => isPioneer || tab !== "ldc"
@@ -393,22 +392,19 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 z-50 ${
-        hasBeenOpened ? "transition-colors duration-300" : ""
-      } ${isOpen ? "bg-black/40" : "bg-transparent pointer-events-none"}`}
+      className={`fixed inset-0 z-50 ${hasBeenOpened ? "transition-colors duration-300" : ""
+        } ${isOpen ? "bg-black/40" : "bg-transparent pointer-events-none"}`}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="add-hours-title"
     >
       <div
-        className={`fixed bottom-0 left-0 right-0 bg-gray-100 dark:bg-slate-900 rounded-t-2xl shadow-2xl ${
-          hasBeenOpened
-            ? `transition-transform ${
-                performanceMode ? "duration-0" : "duration-300"
-              } ease-in-out`
-            : ""
-        } ${isOpen ? "translate-y-0" : "translate-y-full"}`}
+        className={`fixed bottom-0 left-0 right-0 bg-gray-100 dark:bg-slate-900 rounded-t-2xl shadow-2xl ${hasBeenOpened
+          ? `transition-transform ${performanceMode ? "duration-0" : "duration-300"
+          } ease-in-out`
+          : ""
+          } ${isOpen ? "translate-y-0" : "translate-y-full"}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-4" />
@@ -421,11 +417,10 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                     key={tab}
                     type="button"
                     onClick={() => setActiveTab(tab)}
-                    className={`flex-1 py-2 text-sm font-semibold rounded-md ${
-                      activeTab === tab
-                        ? `bg-white dark:bg-slate-700 ${theme.text} shadow`
-                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-300/50 dark:hover:bg-slate-700/50"
-                    }`}
+                    className={`flex-1 py-2 text-sm font-semibold rounded-md ${activeTab === tab
+                      ? `bg-white dark:bg-slate-700 ${theme.text} shadow`
+                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-300/50 dark:hover:bg-slate-700/50"
+                      }`}
                   >
                     {TABS_LABELS[tab]}
                   </button>
@@ -439,11 +434,10 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                     key={tab}
                     type="button"
                     onClick={() => setActiveTab(tab as ModalTab)}
-                    className={`flex-1 py-2 text-sm font-semibold rounded-md ${
-                      activeTab === tab
-                        ? `bg-white dark:bg-slate-700 ${theme.text} shadow`
-                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-300/50 dark:hover:bg-slate-700/50"
-                    }`}
+                    className={`flex-1 py-2 text-sm font-semibold rounded-md ${activeTab === tab
+                      ? `bg-white dark:bg-slate-700 ${theme.text} shadow`
+                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-300/50 dark:hover:bg-slate-700/50"
+                      }`}
                   >
                     {tab === "hours" ? "Predicación" : "LDC"}
                   </button>
@@ -544,9 +538,8 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                     <button
                       type="button"
                       onClick={handleDecrementHour}
-                      className={`p-3 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors ${
-                        isDaySick ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
+                      className={`p-3 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors ${isDaySick ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
                       disabled={isDaySick}
                       aria-label="Restar una hora"
                     >
@@ -558,13 +551,11 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                       value={hoursInput}
                       onChange={handleHoursChange}
                       placeholder="1:30"
-                      className={`w-full px-4 py-3 text-center text-2xl font-bold bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${
-                        theme.ring
-                      } outline-none transition dark:text-white ${
-                        isHoursValid
+                      className={`w-full px-4 py-3 text-center text-2xl font-bold bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${theme.ring
+                        } outline-none transition dark:text-white ${isHoursValid
                           ? "border-slate-300 dark:border-slate-600"
                           : "border-red-500 ring-2 ring-red-300"
-                      }`}
+                        }`}
                       onFocus={(e) => e.target.select()}
                       autoFocus={isOpen && !initialHours}
                       disabled={isDaySick}
@@ -572,9 +563,8 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                     <button
                       type="button"
                       onClick={handleIncrementHour}
-                      className={`p-3 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors ${
-                        isDaySick ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
+                      className={`p-3 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors ${isDaySick ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
                       disabled={isDaySick}
                       aria-label="Añadir una hora"
                     >
@@ -590,38 +580,31 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
 
                 {(!isEditMode || isEditingForDate) && (
                   <div>
-                    <label className="block text-center text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      ¿Qué tal estuvo el clima?
-                    </label>
-                    <div className="flex justify-center space-x-3">
-                      {weatherOptions.map(
-                        ({ id, Icon, label, selectedClass }) => (
-                          <button
-                            key={id}
-                            type="button"
-                            onClick={() =>
-                              setSelectedWeather((w) =>
-                                w === id ? undefined : id
-                              )
-                            }
-                            className={`p-3 border-2 rounded-lg transition-all ${
-                              selectedWeather === id
-                                ? selectedClass
-                                : "border-slate-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600"
-                            }`}
-                            aria-pressed={selectedWeather === id}
-                            title={label}
-                          >
-                            <Icon
-                              className={`w-6 h-6 ${
-                                selectedWeather !== id
-                                  ? "text-slate-500 dark:text-slate-400"
-                                  : ""
-                              }`}
-                            />
-                          </button>
-                        )
-                      )}
+                    <div>
+                      <label className="block text-center text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                        ¿Hubo algún evento especial?
+                      </label>
+                      <div className="flex flex-wrap justify-center gap-2">
+                        {eventOptions.map(
+                          ({ id, label, Icon, colorClass }) => (
+                            <button
+                              key={id}
+                              type="button"
+                              onClick={() => {
+                                // sick logic logic removed from options, so simplify
+                                setSelectedEvent(selectedEvent === id ? undefined : id);
+                              }}
+                              className={`px-3 py-2 border rounded-full text-sm font-medium transition-all flex items-center gap-2 ${selectedEvent === id
+                                ? colorClass + " ring-2 ring-offset-1 dark:ring-offset-slate-800"
+                                : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                                }`}
+                            >
+                              <Icon className="w-5 h-5" />
+                              <span>{label}</span>
+                            </button>
+                          )
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -665,9 +648,8 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                     <button
                       type="button"
                       onClick={handleDecrementLdcHour}
-                      className={`p-3 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors ${
-                        isDaySick ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
+                      className={`p-3 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors ${isDaySick ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
                       disabled={isDaySick}
                       aria-label="Restar una hora"
                     >
@@ -679,13 +661,11 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                       value={ldcHoursInput}
                       onChange={handleLdcHoursChange}
                       placeholder="Ej: 8:00 o 6.5"
-                      className={`w-full px-4 py-3 text-center text-2xl font-bold bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${
-                        theme.ring
-                      } outline-none transition dark:text-white ${
-                        isLdcHoursValid
+                      className={`w-full px-4 py-3 text-center text-2xl font-bold bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${theme.ring
+                        } outline-none transition dark:text-white ${isLdcHoursValid
                           ? "border-slate-300 dark:border-slate-600"
                           : "border-red-500 ring-2 ring-red-300"
-                      }`}
+                        }`}
                       onFocus={(e) => e.target.select()}
                       autoFocus={isOpen}
                       disabled={isDaySick}
@@ -693,9 +673,8 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                     <button
                       type="button"
                       onClick={handleIncrementLdcHour}
-                      className={`p-3 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors ${
-                        isDaySick ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
+                      className={`p-3 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors ${isDaySick ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
                       disabled={isDaySick}
                       aria-label="Añadir una hora"
                     >
@@ -811,11 +790,9 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
             <div className="flex flex-col space-y-3 mt-6">
               <button
                 type="submit"
-                className={`w-full px-6 py-3 rounded-lg ${
-                  theme.bg
-                } text-white font-bold text-lg shadow-lg transition-transform disabled:opacity-70 disabled:cursor-not-allowed ${
-                  !performanceMode && "transform hover:scale-105"
-                }`}
+                className={`w-full px-6 py-3 rounded-lg ${theme.bg
+                  } text-white font-bold text-lg shadow-lg transition-transform disabled:opacity-70 disabled:cursor-not-allowed ${!performanceMode && "transform hover:scale-105"
+                  }`}
                 disabled={
                   (!isHoursValid && activeTab === "hours") ||
                   (!isLdcHoursValid && activeTab === "ldc")
@@ -827,11 +804,10 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                 <button
                   type="button"
                   onClick={handleSickClick}
-                  className={`w-full flex items-center justify-center gap-2 px-6 py-2 rounded-lg font-semibold ${
-                    isDaySick
-                      ? "text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/50"
-                      : "text-slate-600 dark:text-slate-300 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600"
-                  }`}
+                  className={`w-full flex items-center justify-center gap-2 px-6 py-2 rounded-lg font-semibold ${isDaySick
+                    ? "text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/50"
+                    : "text-slate-600 dark:text-slate-300 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600"
+                    }`}
                 >
                   {isDaySick ? (
                     <XCircleIcon className="w-5 h-5" />
