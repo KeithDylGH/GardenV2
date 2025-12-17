@@ -4,7 +4,7 @@ import { THEMES } from "../constants";
 import { UserIcon } from "./icons/UserIcon";
 import { LocationMarkerIcon } from "./icons/LocationMarkerIcon";
 import { ClockIcon } from "./icons/ClockIcon";
-import { MapPinIcon } from "./icons/MapPinIcon";
+
 
 interface GroupArrangementCardProps {
   arrangement: GroupArrangement;
@@ -30,6 +30,8 @@ const InfoRow: React.FC<{
     </div>
   );
 };
+
+import { TerritoryIcon } from "./icons/TerritoryIcon";
 
 const GroupArrangementCard: React.FC<GroupArrangementCardProps> = ({
   arrangement,
@@ -68,7 +70,7 @@ const GroupArrangementCard: React.FC<GroupArrangementCardProps> = ({
           defaultText="Lugar no especificado"
         />
         <InfoRow
-          Icon={MapPinIcon}
+          Icon={TerritoryIcon}
           text={territory}
           defaultText="Territorio no especificado"
         />

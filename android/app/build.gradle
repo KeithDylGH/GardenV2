@@ -2,13 +2,13 @@ apply plugin: 'com.android.application'
 
 android {
     namespace "com.garden.app"
-    compileSdk rootProject.ext.compileSdkVersion
+    compileSdk 35
     defaultConfig {
         applicationId "com.garden.app"
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        minSdkVersion 23
+        targetSdkVersion 35
         versionCode 1
-        versionName "1.0"
+        versionName "1.5"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

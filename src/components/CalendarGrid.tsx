@@ -14,6 +14,10 @@ import { ClipboardDocumentListIcon } from "./icons/ClipboardDocumentListIcon";
 import { SparklesIcon } from "./icons/SparklesIcon";
 import { HomeIcon } from "./icons/HomeIcon";
 import { BuildingOfficeIcon } from "./icons/BuildingOfficeIcon";
+import WineIcon from "./icons/WineIcon";
+import { PlusIcon } from "./icons/PlusIcon";
+import { CalendarPlanIcon } from "./icons/CalendarPlanIcon";
+import { MedicalIcon } from "./icons/MedicalIcon";
 
 interface CalendarGridProps {
   selectedMonth: Date;
@@ -221,6 +225,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
               dayClasses.push("bg-indigo-100 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-700");
             } else if (dayEntry?.event === 'regional_convention') {
               dayClasses.push("bg-purple-100 dark:bg-purple-900/40 border-purple-200 dark:border-purple-700");
+            } else if (dayEntry?.event === 'memorial') {
+              dayClasses.push("bg-rose-100 dark:bg-rose-900/40 border-rose-200 dark:border-rose-700");
             } else if (dayEntry?.event === 'cleaning') {
               dayClasses.push("bg-teal-100 dark:bg-teal-900/40 border-teal-200 dark:border-teal-700");
             } else if (isCampaign || dayEntry?.event === 'campaign') {
@@ -247,65 +253,84 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
               className={dayClasses.join(" ")}
               disabled={!isCurrentMonth || isSummaryMonth}
             >
-              {isCurrentMonth &&
-                (hasActivity || hasRecurringActivity) &&
-                !isSummaryMonth &&
-                !isPrivacyMode && (
-                  <div
-                    className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${hasRecurringActivity ? "bg-purple-500" : theme.bg
-                      }`}
-                  ></div>
-                )}
-              {hasPlan && !isSummaryMonth && !isPrivacyMode && (
-                <ClipboardDocumentListIcon className="absolute bottom-1.5 left-1.5 w-4 h-4 text-slate-400 dark:text-slate-500" />
-              )}
-              {hasRecurringActivity && !isSummaryMonth && !isPrivacyMode && (
-                <BookOpenIcon className="absolute top-1.5 left-1.5 w-4 h-4 text-slate-500 dark:text-slate-400" />
-              )}
-
-              <span
-                className={`text-sm font-semibold flex items-center justify-center ${isCurrentMonth
-                  ? "text-slate-700 dark:text-slate-200"
-                  : "text-slate-400 dark:text-slate-500"
-                  }`}
-              >
-                {date.getDate()}
-                {isMeetingDay && !isPrivacyMode && (
-                  <span className="ml-1 w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500" />
-                )}
-              </span>
-
-              <div
-                className={`flex flex-col items-center justify-center -mt-1 ${privacyBlur}`}
-              >
-                {/* Event Icons */}
-                {isCurrentMonth && dayEntry?.event === 'circuit_assembly' && <HomeIcon className="w-4 h-4 text-indigo-500" />}
-                {isCurrentMonth && dayEntry?.event === 'regional_convention' && <BuildingOfficeIcon className="w-4 h-4 text-purple-500" />}
-                {isCurrentMonth && dayEntry?.event === 'cleaning' && <SparklesIcon className="w-4 h-4 text-teal-500" />}
-
-                {hours > 0 && isCurrentMonth && !isSummaryMonth && (
-                  <span
-                    className={`text-xs font-bold leading-tight ${status === "sick" || dayEntry?.event === 'sick'
-                      ? "text-red-800 dark:text-red-200"
-                      : "text-green-800 dark:text-green-200"
-                      }`}
-                  >
-                    {isPrivacyMode ? "0:00" : hoursToHHMM(hours)}
-                  </span>
-                )}
-              </div>
-              {ldcHours > 0 && isCurrentMonth && !isSummaryMonth && (
-                <div
-                  className={`absolute bottom-1 right-1 flex items-center gap-0.5 ${privacyBlur}`}
+              <div className="flex flex-col items-center justify-between h-full w-full py-0.5">
+                {/* 1. Date */}
+                <span
+                  className={`text-sm font-semibold leading-none ${isCurrentMonth
+                      ? "text-slate-700 dark:text-slate-200"
+                      : "text-slate-400 dark:text-slate-500"
+                    }`}
                 >
-                  <VestIcon className={`w-3 h-3 ${theme.text}`} />
-                  <span
-                    className={`text-[10px] font-bold leading-tight ${theme.text}`}
-                  >
-                    {isPrivacyMode ? "0" : ldcHours}
-                  </span>
+                  {date.getDate()}
+                  {isMeetingDay && !isPrivacyMode && (
+                    <span className="ml-[1px] inline-block w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-500 align-top" />
+                  )}
+                </span>
+                
+                {/* 2 & 3. Hours Stack */}
+                <div className={`flex flex-col items-center justify-center gap-0.5 ${privacyBlur}`}>
+                    {/* Main Hours */}
+                    {hours > 0 && isCurrentMonth && !isSummaryMonth && (
+                      <span
+                        className={`text-xs font-bold leading-none ${status === "sick" || dayEntry?.event === 'sick'
+                          ? "text-red-800 dark:text-red-200"
+                          : "text-green-800 dark:text-green-200"
+                          }`}
+                      >
+                        {isPrivacyMode ? "0:00" : hoursToHHMM(hours)}
+                      </span>
+                    )}
+                    
+                    {/* LDC Hours - Made larger as requested */}
+                    {ldcHours > 0 && isCurrentMonth && !isSummaryMonth && (
+                       <div className="flex items-center gap-0.5">
+                          <VestIcon className={`w-3 h-3 ${theme.text}`} />
+                          <span className={`text-[10px] font-bold leading-none ${theme.text}`}>
+                            {isPrivacyMode ? "0" : hoursToHHMM(ldcHours)}
+                          </span>
+                       </div>
+                    )}
                 </div>
-              )}
+
+                {/* 4. Icons Row - Dynamic Sizing */}
+                 <div className={`flex items-center justify-center gap-0.5 h-3 ${privacyBlur}`}>
+                    {(() => {
+                        const icons = [];
+                        const isDense = hours > 0 || ldcHours > 0;
+                        const iconSizeClass = isDense ? "w-2.5 h-2.5" : "w-3.5 h-3.5";
+                        
+                        // Event Icon
+                        if (isCurrentMonth) {
+                             if (dayEntry?.event === 'circuit_assembly') icons.push(<HomeIcon key="event" className={`${iconSizeClass} text-indigo-500`} />);
+                             else if (dayEntry?.event === 'regional_convention') icons.push(<BuildingOfficeIcon key="event" className={`${iconSizeClass} text-purple-500`} />);
+                             else if (dayEntry?.event === 'memorial') icons.push(<WineIcon key="event" className={`${iconSizeClass} text-rose-500`} />);
+                             else if (dayEntry?.event === 'cleaning') icons.push(<SparklesIcon key="event" className={`${iconSizeClass} text-teal-500`} />);
+                             else if (dayEntry?.event === 'sick' || status === 'sick') icons.push(<MedicalIcon key="event" className={`${iconSizeClass} text-red-500`} />);
+                        }
+                        
+                        // Plan Icon
+                        if (hasPlan && !isSummaryMonth && !isPrivacyMode) {
+                            icons.push(<CalendarPlanIcon key="plan" className={`${iconSizeClass} text-slate-400 dark:text-slate-500`} />);
+                        }
+
+                        // Recurring Icon
+                        if (hasRecurringActivity && !isSummaryMonth && !isPrivacyMode) {
+                            icons.push(<BookOpenIcon key="recurring" className={`${iconSizeClass} text-purple-500`} />);
+                        }
+                        
+                        // Render Logic
+                        if (icons.length > 3) {
+                             return (
+                                <>
+                                 {icons.slice(0, 2)}
+                                 <PlusIcon className={`${iconSizeClass} text-slate-400`} />
+                                </>
+                             );
+                        }
+                        return icons;
+                    })()}
+                 </div>
+              </div>
             </button>
           );
         })}

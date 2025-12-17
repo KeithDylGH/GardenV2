@@ -6,5 +6,5 @@
     <color name="colorAccent">#38BDF8</color>
     
     <!-- Color de fondo para el arranque de la app, que coincide con tu #000F11 -->
-    <color name="splash_background_color">#000F11</color>
+    <color name="splash_background_color">#000000</color>
 </resources>

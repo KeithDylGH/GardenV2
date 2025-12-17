@@ -105,11 +105,12 @@ const HistoryView: React.FC<HistoryViewProps> = ({
 
   const { eventCounts, totalLdcHours } = useMemo(() => {
     const counts: Record<DayEvent, number> = {
-      circuit_assembly: 0,
-      regional_convention: 0,
-      campaign: 0,
-      cleaning: 0,
-      sick: 0,
+        circuit_assembly: 0,
+        regional_convention: 0,
+        campaign: 0,
+        cleaning: 0,
+        sick: 0,
+        memorial: 0
     };
     let ldcHours = 0;
     if (isSummaryMonth)
@@ -262,7 +263,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
             <Stat
               Icon={VestIcon}
               count={hoursToHHMM(totalLdcHours)}
-              label="LDC"
+              label="Acred."
               colorClass={theme.text}
             />
           )}

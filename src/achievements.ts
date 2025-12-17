@@ -6,7 +6,7 @@ import { BookOpenIcon } from "./components/icons/BookOpenIcon";
 import { ArrowTrendingUpIcon } from "./components/icons/ArrowTrendingUpIcon";
 import { TrophyIcon } from "./components/icons/TrophyIcon";
 import { ArrowUturnLeftIcon } from "./components/icons/ArrowUturnLeftIcon";
-import { UsersIcon } from "./components/icons/UsersIcon";
+import { PeopleIcon } from "./components/icons/PeopleIcon";
 import { ChartBarIcon } from "./components/icons/ChartBarIcon";
 import { BuildingOfficeIcon } from "./components/icons/BuildingOfficeIcon";
 
@@ -60,7 +60,7 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
     id: "total_revisits",
     title: "Visitante Frecuente",
     description: (tier) => `Alcanza un total de ${tier} revisitas.`,
-    icon: UsersIcon,
+    icon: PeopleIcon,
     tiers: [3, 10, 25, 50, 100],
     check: (state: AppState) => {
       const visitCount = state.activities.filter(

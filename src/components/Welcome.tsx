@@ -359,11 +359,6 @@ const slideData: Slide[] = [
     step: 5,
     title: "Dale tu toque personal",
   },
-  {
-    type: "feature",
-    title: "FinalSlide",
-    description: "",
-  },
 ];
 
 const RoleButton: React.FC<{
@@ -528,9 +523,7 @@ const Welcome: React.FC<WelcomeProps> = ({
         break;
     }
   }
-  if (isLastSlide) {
-    backgroundClasses = "bg-black";
-  }
+
 
   useEffect(() => {
     const isOnOrAfterCustomize = currentSlide >= customizeSlideIndex;
@@ -1145,7 +1138,7 @@ const Welcome: React.FC<WelcomeProps> = ({
                                 Color
                               </label>
                               <div className="grid grid-cols-8 gap-2">
-                                {THEME_LIST.map((themeOption) => (
+                                {THEME_LIST.slice(0, 8).map((themeOption) => (
                                   <button
                                     key={themeOption.name}
                                     onClick={() =>

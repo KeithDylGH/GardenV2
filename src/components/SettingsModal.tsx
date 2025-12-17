@@ -21,7 +21,6 @@ interface SettingsModalProps {
   currentColor: ThemeColor;
   currentThemeMode: ThemeMode;
   performanceMode: boolean;
-  onTestWrapped: () => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -33,7 +32,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   currentColor,
   currentThemeMode,
   performanceMode,
-  onTestWrapped,
 }) => {
   const [shape, setShape] = useState<Shape>("flower");
   const [color, setColor] = useState<ThemeColor>("blue");
@@ -226,19 +224,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   </button>
                 ))}
               </div>
-            </div>
-            {/* Extras */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Extras
-              </label>
-              <button
-                onClick={onTestWrapped}
-                className={`w-full flex items-center justify-center space-x-2 p-3 border-2 border-indigo-200 dark:border-indigo-800 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors`}
-              >
-                <span className="text-xl">✨</span>
-                <span className="font-bold">Ver Resumen del Estilo Historia</span>
-              </button>
             </div>
           </div>
         </main>

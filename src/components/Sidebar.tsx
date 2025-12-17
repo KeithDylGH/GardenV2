@@ -13,6 +13,7 @@ import { TrophyIcon } from "./icons/TrophyIcon";
 import { FaceSmileIcon } from "./icons/FaceSmileIcon";
 import { UserIcon } from "./icons/UserIcon";
 import { LeafIcon } from "./icons/LeafIcon";
+import { NotificationIcon } from "./icons/NotificationIcon";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ interface SidebarProps {
   userRole: UserRole;
   onPioneerUpgradeClick: () => void;
   onAchievementsClick: () => void;
+  onNotificationsClick: () => void;
   themeMode: ThemeMode;
 }
 
@@ -47,6 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   userRole,
   onPioneerUpgradeClick,
   onAchievementsClick,
+  onNotificationsClick,
   themeMode,
 }) => {
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
@@ -90,7 +93,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="text-right">
           <LeafIcon className={`w-10 h-10 ${iconAndTextColorClass}`} />
           <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-1">
-            V1.2
+            V1.5
           </p>
         </div>
       </button>
@@ -182,6 +185,17 @@ const Sidebar: React.FC<SidebarProps> = ({
               />
               <p className="font-semibold text-slate-700 dark:text-slate-200">
                 Logros
+              </p>
+            </button>
+            <button
+              onClick={onNotificationsClick}
+              className="w-full text-left p-3 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50"
+            >
+              <NotificationIcon
+                className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`}
+              />
+              <p className="font-semibold text-slate-700 dark:text-slate-200">
+                Notificaciones
               </p>
             </button>
             <button

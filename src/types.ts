@@ -46,6 +46,7 @@ export type DayEvent =
   | "circuit_assembly"
   | "regional_convention"
   | "campaign"
+  | "memorial"
   | "cleaning"
   | "sick";
 

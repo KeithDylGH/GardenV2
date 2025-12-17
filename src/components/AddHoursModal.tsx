@@ -35,6 +35,7 @@ import { PlusIcon } from "./icons/PlusIcon";
 import { BuildingOfficeIcon } from "./icons/BuildingOfficeIcon";
 import { HomeIcon } from "./icons/HomeIcon";
 import { SparklesIcon } from "./icons/SparklesIcon";
+import WineIcon from "./icons/WineIcon";
 
 interface AddHoursModalProps {
   isOpen: boolean;
@@ -91,10 +92,10 @@ const eventOptions: {
       colorClass: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700",
     },
     {
-      id: "cleaning",
-      label: "Limpieza del Salón",
-      Icon: SparklesIcon,
-      colorClass: "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700",
+      id: "memorial",
+      label: "Conmemoración",
+      Icon: WineIcon,
+      colorClass: "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700",
     }
   ];
 
@@ -385,7 +386,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
   ) as ModalTab[];
   const TABS_LABELS: Record<ModalTab, string> = {
     hours: "Horas",
-    ldc: "LDC",
+    ldc: "Acreditadas",
     visit: "Revisita",
     study: "Estudio",
   };
@@ -400,7 +401,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
       aria-labelledby="add-hours-title"
     >
       <div
-        className={`fixed bottom-0 left-0 right-0 bg-gray-100 dark:bg-slate-900 rounded-t-2xl shadow-2xl ${hasBeenOpened
+        className={`fixed bottom-0 left-0 right-0 bg-gray-100 dark:bg-slate-900 rounded-t-2xl shadow-2xl pb-[env(safe-area-inset-bottom)] ${hasBeenOpened
           ? `transition-transform ${performanceMode ? "duration-0" : "duration-300"
           } ease-in-out`
           : ""
@@ -439,7 +440,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                       : "text-slate-600 dark:text-slate-300 hover:bg-slate-300/50 dark:hover:bg-slate-700/50"
                       }`}
                   >
-                    {tab === "hours" ? "Predicación" : "LDC"}
+                    {tab === "hours" ? "Predicación" : "Acreditadas"}
                   </button>
                 ))}
               </div>

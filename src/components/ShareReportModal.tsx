@@ -104,7 +104,7 @@ const ShareReportModal: React.FC<ShareReportModalProps> = ({
     else {
       lines.push(`Horas: ${hoursToHHMM(currentHours)}`);
       if (currentLdcHours > 0) {
-        lines.push(`Horas LDC: ${hoursToHHMM(currentLdcHours)}`);
+        lines.push(`Horas Acreditadas: ${hoursToHHMM(currentLdcHours)}`);
       }
       // Only include studies if there are any
       if (studies > 0) {

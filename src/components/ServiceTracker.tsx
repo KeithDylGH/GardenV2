@@ -33,6 +33,7 @@ interface ServiceTrackerProps {
   onTimerFinish: (hours: number) => void;
   progressShape: Shape;
   themeColor: ThemeColor;
+  showTimer: boolean;
   onHelpClick: () => void;
   onShareReport: () => void;
   performanceMode: boolean;
@@ -60,6 +61,7 @@ const ServiceTracker: React.FC<ServiceTrackerProps> = ({
   onTimerFinish,
   progressShape,
   themeColor,
+  showTimer,
   onHelpClick,
   onShareReport,
   performanceMode,
@@ -99,6 +101,7 @@ const ServiceTracker: React.FC<ServiceTrackerProps> = ({
 
   return (
     <div
+      id="service-tracker-card"
       className={`${cardClasses} mt-3 sm:mt-6 p-3 sm:p-4 rounded-2xl shadow-sm border w-full max-w-2xl mx-auto transition-[padding-bottom] duration-300 ${isStatsMode ? "pb-4 sm:pb-6" : ""
         }`}
     >
@@ -203,8 +206,8 @@ const ServiceTracker: React.FC<ServiceTrackerProps> = ({
                     {isPrivacyMode ? "**:**" : hoursToHHMM(currentLdcHours)}
                   </p>
                 </div>
-                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-2">
-                  Horas LDC
+                <p className="text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 mt-2">
+                  Horas Acreditadas
                 </p>
               </button>
             )}

@@ -26,6 +26,14 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({
 
   const currentStep = steps ? steps[currentStepIndex] : null;
 
+  const updateRect = () => {
+    if (!currentStep) return;
+    const element = document.querySelector(currentStep.target);
+    if (element) {
+      setTargetRect(element.getBoundingClientRect());
+    }
+  };
+
   useLayoutEffect(() => {
     if (!currentStep) {
       setTargetRect(null);
@@ -47,6 +55,15 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({
     };
 
     findElement();
+
+    // Add listeners for resize and scroll to update position
+    window.addEventListener("resize", updateRect);
+    window.addEventListener("scroll", updateRect, true); // Capture scroll events from any element
+
+    return () => {
+      window.removeEventListener("resize", updateRect);
+      window.removeEventListener("scroll", updateRect, true);
+    };
   }, [currentStepIndex, steps]);
 
   useEffect(() => {

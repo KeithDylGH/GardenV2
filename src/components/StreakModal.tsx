@@ -5,6 +5,7 @@ import { FlameIcon } from "./icons/FlameIcon";
 import { InformationCircleIcon } from "./icons/InformationCircleIcon";
 import { ShieldCheckIcon } from "./icons/ShieldCheckIcon";
 import { isWeekend } from "../utils";
+import ConfirmationModal from "./ConfirmationModal";
 
 interface StreakModalProps {
   isOpen: boolean;
@@ -39,6 +40,8 @@ const StreakModal: React.FC<StreakModalProps> = ({
 }) => {
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [pendingDay, setPendingDay] = useState<number | null>(null);
   const theme = THEMES[themeColor] || THEMES.blue;
 
   useEffect(() => {
@@ -69,11 +72,18 @@ const StreakModal: React.FC<StreakModalProps> = ({
 
   const handleDayClick = (dayValue: number) => {
     if (isLocked || meetingDays.includes(dayValue)) return;
-    if (protectedDay === dayValue) {
-      onSaveProtectedDay(null); // Deseleccionar
-    } else {
-      onSaveProtectedDay(dayValue);
-    }
+    
+    // Determine the new value (if clicking current, it becomes null/deselected)
+    const newValue = protectedDay === dayValue ? null : dayValue;
+    
+    // Set pending and open confirm
+    setPendingDay(newValue);
+    setIsConfirmOpen(true);
+  };
+
+  const confirmChange = () => {
+    onSaveProtectedDay(pendingDay);
+    setIsConfirmOpen(false);
   };
 
   const today = new Date();
@@ -92,7 +102,7 @@ const StreakModal: React.FC<StreakModalProps> = ({
       aria-labelledby="streak-title"
     >
       <div
-        className={`fixed bottom-0 left-0 right-0 bg-gray-100 dark:bg-slate-900 rounded-t-2xl shadow-2xl ${
+        className={`fixed bottom-0 left-0 right-0 bg-gray-100 dark:bg-slate-900 rounded-t-2xl shadow-2xl pb-[env(safe-area-inset-bottom)] ${
           hasBeenOpened
             ? `transition-transform ${
                 performanceMode ? "duration-0" : "duration-300"
@@ -203,6 +213,19 @@ const StreakModal: React.FC<StreakModalProps> = ({
           </div>
         </div>
       </div>
+      <ConfirmationModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={confirmChange}
+        title="Confirmar Cambio"
+        message={
+            pendingDay === null
+            ? "¿Seguro que quieres dejar de proteger tu racha este día? Se reiniciará si olvidas registrar actividad."
+            : "¿Seguro que quieres cambiar tu día de protección? Solo puedes hacer esto una vez a la semana."
+        }
+        confirmText="Confirmar"
+        themeColor={themeColor}
+      />
     </div>
   );
 };

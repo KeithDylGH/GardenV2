@@ -5,6 +5,10 @@ import React, {
   useMemo,
   useCallback,
 } from "react";
+import { Capacitor } from "@capacitor/core";
+import { Share } from "@capacitor/share";
+import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
+import { LocalNotifications } from "@capacitor/local-notifications";
 import Header from "./components/Header";
 import BottomNav from "./components/BottomNav";
 import ServiceTracker from "./components/ServiceTracker";
@@ -13,6 +17,7 @@ import ActivityView from "./components/ActivityView";
 import PlanningView from "./components/PlanningView";
 import AddHoursModal from "./components/AddHoursModal";
 import SettingsModal from "./components/SettingsModal";
+import NotificationsModal from "./components/NotificationsModal";
 import ProfileModal from "./components/ProfileModal";
 import HelpModal from "./components/HelpModal";
 import OfflineToast from "./components/OfflineToast";
@@ -29,7 +34,6 @@ import PlanningModal from "./components/PlanningModal";
 import PioneerUpgradeModal from "./components/PioneerUpgradeModal";
 import AchievementsView from "./components/AchievementsView";
 import AchievementToast from "./components/AchievementToast";
-import MonthWrapped from "./components/MonthWrapped";
 import { useOnlineStatus } from "./hooks/useOnlineStatus";
 import {
   AppView,
@@ -88,11 +92,13 @@ const TUTORIALS_SEEN_KEY = "garden-tutorials-seen";
 const TUTORIAL_AGREEMENT_KEY = "garden-tutorial-agreement";
 const SETTINGS_KEY = "garden-settings";
 const PRIVACY_MODE_KEY = "garden-privacy-mode";
+const SHOW_TIMER_KEY = "garden-show-timer";
+const REPORT_NOTIFICATION_KEY = "garden-report-notification";
 
 const TUTORIALS: Record<AppView, TutorialStep[]> = {
   tracker: [
     {
-      target: "#progress-display-container",
+      target: "#service-tracker-card",
       title: "Tu Progreso Mensual",
       content:
         "Este es el corazón de tu informe. Muestra tu avance hacia la meta. ¡Tócalo para editar tu total de horas!",
@@ -216,15 +222,10 @@ const getInitialState = (): AppState | null => {
     const parsed = JSON.parse(saved);
 
     const today = new Date();
+    // Force current date to today so the app always opens in the context of "now"
+    parsed.currentDate = today;
+    
     const currentServiceYear = getServiceYear(today);
-
-    // Date migration
-    if (parsed.currentDate) {
-      const d = new Date(parsed.currentDate);
-      parsed.currentDate = !isNaN(d.getTime()) ? d : today;
-    } else {
-      parsed.currentDate = today;
-    }
 
     // History migration to multi-year archive structure and DayEntry object structure
     if (parsed.history && !parsed.archives) {
@@ -251,7 +252,7 @@ const getInitialState = (): AppState | null => {
     }
 
     if (!parsed.currentServiceYear) {
-      parsed.currentServiceYear = getServiceYear(parsed.currentDate as Date);
+      parsed.currentServiceYear = currentServiceYear;
     }
 
     // Streak last log date migration
@@ -274,6 +275,41 @@ const getInitialState = (): AppState | null => {
     // Remove legacy streak restore fields
     delete parsed.streakRestores;
     delete parsed.lastRestoreMonth;
+
+    // Recalculate totals for the *current* month (based on 'today')
+    // This fixes the issue where starting a new month (e.g. Nov -> Dec) still shows Nov hours
+    let recalculatedHours = 0;
+    let recalculatedLdcHours = 0;
+    
+    // We check the archives for the current service year
+    const currentYearArchives = parsed.archives[currentServiceYear] || {};
+    
+    // Sum hours for the specific current month
+    for (const key in currentYearArchives) {
+        // Skip metadata keys
+        if (key.includes("SUMMARY") || key.includes("CARRYOVER")) continue;
+        
+        const entryDate = new Date(key);
+        if (isNaN(entryDate.getTime())) continue;
+
+        if (
+            entryDate.getFullYear() === today.getFullYear() &&
+            entryDate.getMonth() === today.getMonth()
+        ) {
+            const entry = currentYearArchives[key];
+            recalculatedHours += entry.hours || 0;
+            recalculatedLdcHours += entry.ldcHours || 0;
+        }
+    }
+
+    // Add carryover for this month if it exists
+    const carryoverKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-CARRYOVER`;
+    if (currentYearArchives[carryoverKey]) {
+        recalculatedHours += currentYearArchives[carryoverKey].hours || 0;
+    }
+
+    parsed.currentHours = recalculatedHours;
+    parsed.currentLdcHours = recalculatedLdcHours;
 
     return parsed;
   } catch (e) {
@@ -1006,10 +1042,22 @@ const App: React.FC = () => {
       for (let i = 1; i < daysDiff; i++) {
         const checkDate = new Date(lastLogDate);
         checkDate.setDate(checkDate.getDate() + i);
+        
+        // Extended protection logic:
+        // Protected if: Weekend OR Protected Weekday OR Special Event (Assembly, Memorial)
+        
+        const serviceYear = getServiceYear(checkDate);
+        const dateKey = formatDateKey(checkDate);
+        const dayEntry = archives[serviceYear]?.[dateKey];
+        const hasProtectedEvent = dayEntry?.event === 'circuit_assembly' || 
+                                  dayEntry?.event === 'regional_convention' || 
+                                  dayEntry?.event === 'memorial';
+
         if (
           !(
             isWeekend(checkDate) ||
-            (protectedDay !== null && checkDate.getDay() === protectedDay)
+            (protectedDay !== null && checkDate.getDay() === protectedDay) ||
+            hasProtectedEvent
           )
         ) {
           missedDaysAreProtected = false;
@@ -1093,6 +1141,21 @@ const App: React.FC = () => {
     if (hoursToAdd > 0) updateStreak();
     handleCloseModal();
   };
+
+  // Notifications & Timer State
+  const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
+  const [showTimer, setShowTimer] = useState(() => {
+     try {
+         const saved = localStorage.getItem(SHOW_TIMER_KEY);
+         return saved === null ? true : saved === "true";
+     } catch { return true; }
+  });
+  const [reportNotificationEnabled, setReportNotificationEnabled] = useState(() => {
+     try {
+         const saved = localStorage.getItem(REPORT_NOTIFICATION_KEY);
+         return saved === null ? false : saved === "true"; 
+     } catch { return false; }
+  });
 
   const handleAddLdcHours = (ldcHoursToAdd: number, note?: string) => {
     if (ldcHoursToAdd <= 0 && (!note || !note.trim())) return;
@@ -1287,11 +1350,20 @@ const App: React.FC = () => {
       return newArchives;
     });
 
-    if (newTotalHours > 0) {
+    if (newTotalHours > 0 || event === 'memorial' || event === 'circuit_assembly' || event === 'regional_convention') {
       const today = new Date();
+      // Only update last log date if the entry is for today or in the past
       if (date.getTime() <= today.getTime()) {
+         // Should we strictly update lastLogDate? 
+         // If I mark memorial today, I want to keep my streak active.
+         // Current logic updates lastLogDate if date > lastLogDate.
         if (!lastLogDate || date > lastLogDate) {
           setLastLogDate(date);
+          // Only increment streak if it was 0, otherwise let updateStreak handle the diff logic?
+          // Actually, updateStreak is called on mount/init usually? 
+          // No, updateStreak is meant to run when opening the app. 
+          // Here we are manually editing data.
+          // If streak is 0, we start it.
           if (streak === 0) setStreak(1);
         }
       }
@@ -1445,6 +1517,48 @@ const App: React.FC = () => {
       return newArchives;
     });
     handleCloseModal();
+  };
+
+  useEffect(() => {
+    localStorage.setItem(SHOW_TIMER_KEY, String(showTimer));
+  }, [showTimer]);
+
+  useEffect(() => {
+    localStorage.setItem(REPORT_NOTIFICATION_KEY, String(reportNotificationEnabled));
+  }, [reportNotificationEnabled]);
+
+  // Handle Report Notification Scheduling
+  const scheduleReportNotification = async (enabled: boolean) => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    if (enabled) {
+        // Request Permissions
+        const permStatus = await LocalNotifications.requestPermissions();
+        if (permStatus.display === 'granted') {
+             // Schedule for 1st of next month at 9:00 AM
+             await LocalNotifications.schedule({
+                 notifications: [
+                     {
+                         title: "Recordar Informe",
+                         body: "Recuerda enviar tu informe.",
+                         id: 1001,
+                         schedule: {
+                             on: { day: 1, hour: 9, minute: 0 },
+                             allowWhileIdle: true
+                         }
+                     }
+                 ]
+             });
+        }
+    } else {
+        // Cancel if disabled
+        await LocalNotifications.cancel({ notifications: [{ id: 1001 }] });
+    }
+  };
+
+  const handleToggleReportNotification = async (enabled: boolean) => {
+      setReportNotificationEnabled(enabled);
+      await scheduleReportNotification(enabled);
   };
 
   const handleCloseModal = () => {
@@ -1675,15 +1789,44 @@ const App: React.FC = () => {
     setEndOfYearModalOpen(false);
   };
 
-  const handleExportData = () => {
+  const handleExportData = async () => {
     const stateString = localStorage.getItem(APP_STORAGE_key);
-    if (stateString) {
+    if (!stateString) return;
+
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const fileName = `garden-backup-${new Date().toISOString().split("T")[0]}.json`;
+        
+        await Filesystem.writeFile({
+          path: fileName,
+          data: stateString,
+          directory: Directory.Documents,
+          encoding: Encoding.UTF8,
+        });
+
+        const uriResult = await Filesystem.getUri({
+          directory: Directory.Documents,
+          path: fileName,
+        });
+
+        await Share.share({
+          title: "Copia de Seguridad Garden",
+          text: "Aquí está tu copia de seguridad de Garden.",
+          url: uriResult.uri,
+          dialogTitle: "Guardar Copia de Seguridad",
+        });
+
+      } catch (error) {
+        console.error("Error exporting native file:", error);
+        alert("Error al exportar los datos en el dispositivo.");
+      }
+    } else {
+      // Web fallback
       const blob = new Blob([stateString], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `garden-backup-${new Date().toISOString().split("T")[0]
-        }.json`;
+      a.download = `garden-backup-${new Date().toISOString().split("T")[0]}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -1918,8 +2061,9 @@ const App: React.FC = () => {
   const viewTitle = viewTitleMap[activeView];
 
   const previousMonthHistory = useMemo(() => {
-    const prevMonthDate = new Date(currentDate);
-    prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
+    // START FIX: Use the 1st of the previous month to avoid rollover (e.g., Mar 31 -> Feb 28/29)
+    const prevMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    // END FIX
 
     const prevMonthServiceYear = getServiceYear(prevMonthDate);
     const prevYearHistory = archives[prevMonthServiceYear] || {};
@@ -1972,11 +2116,11 @@ const App: React.FC = () => {
               onToggleGhostMode={() => setIsGhostMode((p) => !p)}
               previousMonthHistory={previousMonthHistory}
               isStatsMode={isStatsMode}
-              archives={archives}
               currentServiceYear={currentServiceYear}
               activities={activities}
               themeMode={themeMode}
-
+              showTimer={showTimer}
+              archives={archives}
             />
           </>
         );
@@ -2071,7 +2215,7 @@ const App: React.FC = () => {
         onProfileClick={() => {
           setSidebarOpen(false);
           setIsProfileModalOpen(true);
-        }}
+        } }
         performanceMode={performanceMode}
         onSetPerformanceMode={setPerformanceMode}
         onExport={handleExportData}
@@ -2080,18 +2224,22 @@ const App: React.FC = () => {
         onSettingsClick={() => {
           setSidebarOpen(false);
           setIsSettingsOpen(true);
-        }}
+        } }
         userRole={userRole}
         onPioneerUpgradeClick={() => {
           setSidebarOpen(false);
           setIsPioneerUpgradeModalOpen(true);
-        }}
+        } }
         onAchievementsClick={() => {
           window.location.hash = "#/achievements";
           setSidebarOpen(false);
+        } }
+
+
+        onNotificationsClick={() => {
+          setSidebarOpen(false);
+          setIsNotificationsModalOpen(true);
         }}
-
-
         themeMode={themeMode}
       />
       <input
@@ -2154,17 +2302,6 @@ const App: React.FC = () => {
         performanceMode={performanceMode}
       />
 
-      {wrappedStats && (
-        <MonthWrapped
-          isOpen={isMonthWrappedOpen}
-          onClose={() => setIsMonthWrappedOpen(false)}
-          year={wrappedStats.year}
-          month={wrappedStats.month}
-          stats={wrappedStats}
-          themeColor={themeColor}
-        />
-      )}
-
       <ProfileModal
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
@@ -2186,7 +2323,6 @@ const App: React.FC = () => {
         currentColor={themeColor}
         currentThemeMode={themeMode}
         performanceMode={performanceMode}
-        onTestWrapped={handleTestWrapped}
       />
 
       <HelpModal
@@ -2264,6 +2400,17 @@ const App: React.FC = () => {
         message="Esto reemplazará todos tus datos actuales con los del archivo. ¿Estás seguro de que quieres continuar?"
         confirmText="Sí, importar datos"
         themeColor={themeColor}
+      />
+
+      <NotificationsModal
+        isOpen={isNotificationsModalOpen}
+        onClose={() => setIsNotificationsModalOpen(false)}
+        reportNotificationEnabled={reportNotificationEnabled}
+        onToggleReportNotification={handleToggleReportNotification}
+        showTimer={showTimer}
+        onToggleShowTimer={setShowTimer}
+        themeColor={themeColor}
+        themeMode={themeMode}
       />
 
       <PioneerUpgradeModal

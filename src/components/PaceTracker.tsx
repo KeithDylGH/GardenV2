@@ -49,8 +49,11 @@ const PaceTracker: React.FC<PaceTrackerProps> = ({
       };
     }
 
-    const prevMonthDate = new Date(currentDate);
-    prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
+
+    // START FIX: Use the 1st of the previous month to avoid rollover issues
+    const prevMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    // END FIX
+    
     const prevMonthYear = prevMonthDate.getFullYear();
     const prevMonthMonth = prevMonthDate.getMonth() + 1;
 
