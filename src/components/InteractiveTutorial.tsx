@@ -20,67 +20,18 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>({});
+  const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties | null>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const theme = THEMES[themeColor] || THEMES.blue;
 
   const currentStep = steps ? steps[currentStepIndex] : null;
 
-  const updateRect = () => {
-    if (!currentStep) return;
-    const element = document.querySelector(currentStep.target);
-    if (element) {
-      setTargetRect(element.getBoundingClientRect());
-    }
-  };
-
-  useLayoutEffect(() => {
-    if (!currentStep) {
-      setTargetRect(null);
-      return;
-    }
-
-    let attempts = 0;
-    const findElement = () => {
-      const element = document.querySelector(currentStep.target);
-      if (element) {
-        setTargetRect(element.getBoundingClientRect());
-      } else if (attempts < 5) {
-        // Try a few times in case of delayed rendering
-        attempts++;
-        setTimeout(findElement, 100);
-      } else {
-        handleNext();
-      }
-    };
-
-    findElement();
-
-    // Add listeners for resize and scroll to update position
-    window.addEventListener("resize", updateRect);
-    window.addEventListener("scroll", updateRect, true); // Capture scroll events from any element
-
-    return () => {
-      window.removeEventListener("resize", updateRect);
-      window.removeEventListener("scroll", updateRect, true);
-    };
-  }, [currentStepIndex, steps]);
-
-  useEffect(() => {
-    if (steps && steps.length > 0) {
-      setCurrentStepIndex(0);
-      setIsVisible(true);
-    } else {
-      setIsVisible(false);
-    }
-  }, [steps]);
-
-  useLayoutEffect(() => {
+  // Calculate popover position
+  const calculatePosition = () => {
     if (!popoverRef.current || !targetRect || !currentStep) return;
 
     const popover = popoverRef.current;
     const popoverRect = popover.getBoundingClientRect();
-    const pos: React.CSSProperties = {};
     const offset = 16;
     const margin = 10;
     const screenWidth = window.innerWidth;
@@ -119,11 +70,84 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({
     if (top + popoverRect.height > screenHeight - margin)
       top = screenHeight - popoverRect.height - margin;
 
-    pos.top = `${top}px`;
-    pos.left = `${left}px`;
+    setPopoverStyle({ top: `${top}px`, left: `${left}px` });
+  };
 
-    setPopoverStyle(pos);
-  }, [targetRect, currentStep]);
+  const updateRect = () => {
+    if (!currentStep) return;
+    const element = document.querySelector(currentStep.target);
+    if (element) {
+      setTargetRect(element.getBoundingClientRect());
+    }
+  };
+
+  // Reset state when steps change (tutorial opened/closed)
+  useEffect(() => {
+    if (steps && steps.length > 0) {
+      setCurrentStepIndex(0);
+      setPopoverStyle(null); // Reset position
+      setIsVisible(true);
+    } else {
+      setIsVisible(false);
+      setPopoverStyle(null);
+    }
+  }, [steps]);
+
+  // Find target element and set targetRect
+  useLayoutEffect(() => {
+    if (!steps || steps.length === 0) {
+      setTargetRect(null);
+      return;
+    }
+
+    const step = steps[currentStepIndex];
+    if (!step) {
+      setTargetRect(null);
+      return;
+    }
+
+    let attempts = 0;
+    const findElement = () => {
+      const element = document.querySelector(step.target);
+      if (element) {
+        setTargetRect(element.getBoundingClientRect());
+      } else if (attempts < 5) {
+        attempts++;
+        setTimeout(findElement, 100);
+      } else {
+        handleNext();
+      }
+    };
+
+    // Reset position when step changes
+    setPopoverStyle(null);
+    findElement();
+
+    window.addEventListener("resize", updateRect);
+    window.addEventListener("scroll", updateRect, true);
+
+    return () => {
+      window.removeEventListener("resize", updateRect);
+      window.removeEventListener("scroll", updateRect, true);
+    };
+  }, [currentStepIndex, steps]);
+
+  // Calculate position after popover is rendered and we have targetRect
+  useEffect(() => {
+    if (isVisible && targetRect && popoverRef.current && !popoverStyle) {
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        calculatePosition();
+      });
+    }
+  }, [isVisible, targetRect, popoverStyle]);
+
+  // Also recalculate when targetRect changes
+  useEffect(() => {
+    if (targetRect && popoverRef.current) {
+      calculatePosition();
+    }
+  }, [targetRect]);
 
   const handleNext = () => {
     if (steps && currentStepIndex < steps.length - 1) {
@@ -138,9 +162,12 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({
     setTimeout(() => {
       onFinish();
       setCurrentStepIndex(0);
+      setPopoverStyle(null);
+      setTargetRect(null);
     }, 300);
   };
 
+  // Don't render if no tutorial is active
   if (!isVisible || !currentStep || !targetRect) return null;
 
   const highlightPadding = currentStep.highlightPadding ?? 8;
@@ -150,6 +177,9 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({
     width: `${targetRect.width + highlightPadding * 2}px`,
     height: `${targetRect.height + highlightPadding * 2}px`,
   };
+
+  // Check if we have valid positioning
+  const hasValidPosition = popoverStyle && popoverStyle.top && popoverStyle.left;
 
   return (
     <div
@@ -169,8 +199,13 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({
 
       <div
         ref={popoverRef}
-        style={popoverStyle}
-        className={`absolute z-[101] bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-80 p-5 border border-slate-200 dark:border-slate-700 ${!performanceMode && "animate-fadeInUp"
+        style={{
+          ...(popoverStyle || {}),
+          // Hide popover until position is calculated to prevent flash at wrong position
+          opacity: hasValidPosition ? 1 : 0,
+          visibility: hasValidPosition ? 'visible' : 'hidden',
+        }}
+        className={`absolute z-[101] bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-80 p-5 border border-slate-200 dark:border-slate-700 ${!performanceMode && hasValidPosition && "animate-fadeInUp"
           }`}
         role="dialog"
         aria-labelledby="tutorial-title"
@@ -224,3 +259,4 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({
 };
 
 export default InteractiveTutorial;
+

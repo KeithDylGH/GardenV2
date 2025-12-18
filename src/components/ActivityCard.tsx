@@ -1,5 +1,5 @@
 import React from "react";
-import { ActivityItem, ThemeColor } from "../types";
+import { ActivityItem, ThemeColor, ConversationStage } from "../types";
 import { THEMES } from "../constants";
 import { UserIcon } from "./icons/UserIcon";
 import { LocationMarkerIcon } from "./icons/LocationMarkerIcon";
@@ -15,6 +15,17 @@ interface ActivityCardProps {
   onEdit: (activity: ActivityItem) => void;
   onDelete: (activityId: string) => void;
 }
+
+// Helper function to get conversation stage label
+const getConversationStageLabel = (stage?: ConversationStage): string => {
+  switch (stage) {
+    case "first": return "1ra conversación";
+    case "second": return "2da conversación";
+    case "third": return "3ra conversación";
+    case "fourth_plus": return "4+ conversaciones";
+    default: return "1ra conversación";
+  }
+};
 
 const ActivityCard: React.FC<ActivityCardProps> = ({
   activity,
@@ -59,7 +70,9 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
           </p>
         </div>
         <div
-          className={`flex items-center space-x-2 text-sm font-semibold px-3 py-1 rounded-full ${theme.bg} bg-opacity-10 ${theme.text}`}
+          className={`flex items-center space-x-2 text-sm font-semibold px-3 py-1 rounded-full ${
+            themeColor === "custom" ? "bg-custom-subtle text-custom" : `${theme.bg} bg-opacity-10 ${theme.text}`
+          }`}
         >
           {isStudy ? (
             <BookOpenIcon className="w-4 h-4" />
@@ -69,6 +82,31 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
           <span>{isStudy ? "Estudio" : "Revisita"}</span>
         </div>
       </div>
+
+      {/* Conversation stage for revisitas */}
+      {!isStudy && (
+        <div className="flex items-center">
+          <span className="text-xs font-medium px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400">
+            {getConversationStageLabel(activity.conversationStage)}
+          </span>
+        </div>
+      )}
+
+      {/* Lesson info for estudios */}
+      {isStudy && (activity.currentLesson || activity.weeklyFrequency) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {activity.currentLesson && (
+            <span className="text-xs font-medium px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400">
+              📖 Lección {activity.currentLesson}/60
+            </span>
+          )}
+          {activity.weeklyFrequency && (
+            <span className="text-xs font-medium px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400">
+              📅 {activity.weeklyFrequency}x por semana
+            </span>
+          )}
+        </div>
+      )}
 
       {activity.location && (
         <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-300">
@@ -88,3 +126,4 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
 };
 
 export default ActivityCard;
+

@@ -94,6 +94,8 @@ const SETTINGS_KEY = "garden-settings";
 const PRIVACY_MODE_KEY = "garden-privacy-mode";
 const SHOW_TIMER_KEY = "garden-show-timer";
 const REPORT_NOTIFICATION_KEY = "garden-report-notification";
+const VISIT_NOTIFICATION_KEY = "garden-visit-notification";
+const STUDY_NOTIFICATION_KEY = "garden-study-notification";
 
 const TUTORIALS: Record<AppView, TutorialStep[]> = {
   tracker: [
@@ -409,6 +411,8 @@ const App: React.FC = () => {
   const [meetingDays, setMeetingDays] = useState<number[]>(
     initialState?.meetingDays ?? []
   );
+  const [customColor, setCustomColor] = useState(initialState?.customColor ?? "#3b82f6");
+  const [customGradientTo, setCustomGradientTo] = useState(initialState?.customGradientTo ?? "#8b5cf6");
 
   // Derived state: currentHours and currentLdcHours are calculated from archives.
   const currentHours = useMemo(() => {
@@ -574,7 +578,9 @@ const App: React.FC = () => {
   useEffect(() => {
     // Oculta la pantalla de bienvenida de Capacitor una vez que el componente principal se monta.
     if (window.Capacitor?.Plugins?.SplashScreen) {
-      window.Capacitor.Plugins.SplashScreen.hide();
+      setTimeout(() => {
+        window.Capacitor?.Plugins?.SplashScreen?.hide();
+      }, 200);
     }
     // Configura la barra de estado para que sea transparente y superpuesta
     if (window.Capacitor?.isNativePlatform()) {
@@ -698,6 +704,8 @@ const App: React.FC = () => {
                 setIsStreakModalOpen(false);
               } else if (isShareModalOpen) {
                 setIsShareModalOpen(false);
+              } else if (isNotificationsModalOpen) {
+                setIsNotificationsModalOpen(false);
               } else if (isSidebarOpen) {
                 setSidebarOpen(false);
               }
@@ -899,7 +907,33 @@ const App: React.FC = () => {
     const root = document.documentElement;
     root.classList.toggle("dark", themeMode !== "light");
     root.classList.toggle("theme-black", themeMode === "black");
-  }, [themeMode]);
+    
+    // Apply custom colors if active
+    if (themeColor === "custom") {
+      root.style.setProperty("--custom-color", customColor);
+      root.style.setProperty("--custom-gradient-to", customGradientTo);
+      
+      const hexToRgb = (hex: string) => {
+        if (!hex || hex.length < 7) return "59 130 246";
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `${r} ${g} ${b}`;
+      };
+      
+      try {
+        root.style.setProperty("--custom-color-rgb", hexToRgb(customColor));
+        root.style.setProperty("--custom-gradient-to-rgb", hexToRgb(customGradientTo));
+      } catch (e) {
+        console.error("Error parsing custom colors", e);
+      }
+    } else {
+      root.style.removeProperty("--custom-color");
+      root.style.removeProperty("--custom-gradient-to");
+      root.style.removeProperty("--custom-color-rgb");
+      root.style.removeProperty("--custom-gradient-to-rgb");
+    }
+  }, [themeMode, themeColor, customColor, customGradientTo]);
 
   const appStateForSaving: AppState = useMemo(
     () => ({
@@ -925,6 +959,8 @@ const App: React.FC = () => {
       planningData,
       notes,
       unlockedAchievements,
+      customColor,
+      customGradientTo,
     }),
     [
       currentHours,
@@ -949,6 +985,8 @@ const App: React.FC = () => {
       planningData,
       notes,
       unlockedAchievements,
+      customColor,
+      customGradientTo,
     ]
   );
 
@@ -1078,6 +1116,13 @@ const App: React.FC = () => {
     if (hoursToAdd <= 0) return;
 
     const today = new Date();
+    
+    // Ensure currentDate is in sync with today to properly recalculate hours
+    // This fixes the issue where hours aren't displayed after crossing month boundaries
+    if (!isSameDay(today, currentDate)) {
+      setCurrentDate(today);
+    }
+    
     const serviceYear = getServiceYear(today);
     const dateKey = formatDateKey(today);
 
@@ -1155,6 +1200,18 @@ const App: React.FC = () => {
          const saved = localStorage.getItem(REPORT_NOTIFICATION_KEY);
          return saved === null ? false : saved === "true"; 
      } catch { return false; }
+  });
+  const [visitNotificationsEnabled, setVisitNotificationsEnabled] = useState(() => {
+     try {
+         const saved = localStorage.getItem(VISIT_NOTIFICATION_KEY);
+         return saved === null ? true : saved === "true"; 
+     } catch { return true; }
+  });
+  const [studyNotificationsEnabled, setStudyNotificationsEnabled] = useState(() => {
+     try {
+         const saved = localStorage.getItem(STUDY_NOTIFICATION_KEY);
+         return saved === null ? true : saved === "true"; 
+     } catch { return true; }
   });
 
   const handleAddLdcHours = (ldcHoursToAdd: number, note?: string) => {
@@ -1539,8 +1596,8 @@ const App: React.FC = () => {
              await LocalNotifications.schedule({
                  notifications: [
                      {
-                         title: "Recordar Informe",
-                         body: "Recuerda enviar tu informe.",
+                         title: "garden",
+                         body: "garden te recuerda que ya puedes enviar tu informe a tu sup. de grupo",
                          id: 1001,
                          schedule: {
                              on: { day: 1, hour: 9, minute: 0 },
@@ -1573,28 +1630,93 @@ const App: React.FC = () => {
     setInitialHoursForModal(null);
   };
 
+  const scheduleActivityNotifications = async (currentActivities: ActivityItem[]) => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    try {
+        // 1. Cancel all previous activity notifications (range 2000-5000)
+        const pending = await LocalNotifications.getPending();
+        const activityNotificationIds = pending.notifications
+            .filter(n => n.id >= 2000 && n.id <= 5000)
+            .map(n => ({ id: n.id }));
+        
+        if (activityNotificationIds.length > 0) {
+            await LocalNotifications.cancel({ notifications: activityNotificationIds });
+        }
+
+        // 2. Schedule new ones for recurring activities
+        const notificationsToSchedule = [];
+        let idCounter = 2000;
+
+        for (const act of currentActivities) {
+            if (act.recurring && act.recurringDays && act.recurringDays.length > 0) {
+                for (const day of act.recurringDays) {
+                    if (idCounter > 5000) break; // Safety limit
+                    
+                    const isStudy = act.type === "study";
+                    
+                    if (isStudy && !studyNotificationsEnabled) continue;
+                    if (!isStudy && !visitNotificationsEnabled) continue;
+
+                    const body = isStudy 
+                        ? `garden | Hoy tienes que dar estudio a ${act.name}`
+                        : `garden | Hoy tienes que revisitar a ${act.name}`;
+                    
+                    notificationsToSchedule.push({
+                        title: isStudy ? "Estudio Bíblico" : "Revisita",
+                        body,
+                        id: idCounter++,
+                        schedule: {
+                            on: {
+                                weekday: day + 1, // Capacitor uses 1-7 (Sun-Sat), we have 0-6
+                                hour: 7,
+                                minute: 0
+                            },
+                            allowWhileIdle: true
+                        }
+                    });
+                }
+            }
+        }
+
+        if (notificationsToSchedule.length > 0) {
+            await LocalNotifications.schedule({ notifications: notificationsToSchedule });
+        }
+    } catch (e) {
+        console.error("Error scheduling activity notifications:", e);
+    }
+  };
+
   const handleSaveActivity = (
     data: Omit<ActivityItem, "id" | "date"> & { recurring?: boolean }
   ) => {
     const activityDate = dateToEdit || new Date();
+    let updatedActivities: ActivityItem[] = [];
+
     if (activityToEdit) {
       const updatedActivity = { ...activityToEdit, ...data };
-      setActivities((prev) =>
-        prev.map((a) => (a.id === updatedActivity.id ? updatedActivity : a))
-      );
+      updatedActivities = activities.map((a) => (a.id === updatedActivity.id ? updatedActivity : a));
+      setActivities(updatedActivities);
     } else {
       const newActivity: ActivityItem = {
         ...data,
         id: Date.now().toString(),
         date: activityDate.toISOString(),
       };
-      setActivities((prev) => [newActivity, ...prev]);
+      updatedActivities = [newActivity, ...activities];
+      setActivities(updatedActivities);
     }
+
     handleCloseModal();
   };
 
+  useEffect(() => {
+    scheduleActivityNotifications(activities);
+  }, [activities, visitNotificationsEnabled, studyNotificationsEnabled]);
+
   const handleDeleteActivity = (activityId: string) => {
-    setActivities((prev) => prev.filter((a) => a.id !== activityId));
+    const updatedActivities = activities.filter((a) => a.id !== activityId);
+    setActivities(updatedActivities);
   };
 
   const handleStartEditActivity = (activity: ActivityItem) => {
@@ -1684,24 +1806,29 @@ const App: React.FC = () => {
   const handleSaveSettings = (
     newShape: Shape,
     newColor: ThemeColor,
-    newMode: ThemeMode
+    newMode: ThemeMode,
+    newCustomColor?: string,
+    newCustomGradientTo?: string
   ) => {
     setProgressShape(newShape);
     setThemeColor(newColor);
     setThemeMode(newMode);
+    if (newCustomColor) setCustomColor(newCustomColor);
+    if (newCustomGradientTo) setCustomGradientTo(newCustomGradientTo);
     setIsSettingsOpen(false);
   };
-
   const handleSaveProfile = (
     newName: string,
     newGoal: number,
     newProfilePic: string | null,
-    newMeetingDays: number[]
+    newMeetingDays: number[],
+    newRole: UserRole
   ) => {
     setUserName(newName);
     setGoal(newGoal);
     setProfilePicture(newProfilePic);
     setMeetingDays(newMeetingDays);
+    setUserRole(newRole);
 
     // If the currently protected day is now a meeting day, unset it.
     if (protectedDay !== null && newMeetingDays.includes(protectedDay)) {
@@ -2196,6 +2323,46 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen text-slate-800 dark:text-slate-200">
+      <style>{`
+        :root {
+          --custom-color: #3b82f6;
+          --custom-gradient-to: #8b5cf6;
+          --custom-color-rgb: 59 130 246;
+          --custom-gradient-to-rgb: 139 92 246;
+        }
+        .theme-black, .theme-black body, .theme-black #root {
+          background-color: #000000 !important;
+        }
+        .theme-black .bg-slate-900, 
+        .theme-black .bg-slate-800,
+        .theme-black .bg-gray-100,
+        .theme-black .bg-gray-50 {
+          background-color: #000000 !important;
+        }
+        .theme-black .dark\\:bg-slate-900,
+        .theme-black .dark\\:bg-slate-800 {
+          background-color: #000000 !important;
+        }
+        .theme-black .border-slate-200,
+        .theme-black .dark\\:border-slate-700 {
+          border-color: #1a1a1a !important;
+        }
+
+        .text-custom {
+          color: var(--custom-color) !important;
+        }
+        .bg-custom {
+          background-color: var(--custom-color) !important;
+        }
+        .bg-custom-subtle {
+          background-color: rgba(var(--custom-color-rgb), 0.2) !important;
+          background-color: rgb(var(--custom-color-rgb) / 0.2) !important;
+        }
+        .ring-custom {
+          --tw-ring-color: rgba(var(--custom-color-rgb), 0.5) !important;
+          --tw-ring-color: rgb(var(--custom-color-rgb) / 0.5) !important;
+        }
+      `}</style>
       <Header
         title={viewTitle}
         themeColor={themeColor}
@@ -2308,6 +2475,7 @@ const App: React.FC = () => {
         onSave={handleSaveProfile}
         currentName={userName}
         currentGoal={goal}
+        currentRole={userRole}
         currentProfilePicture={profilePicture}
         currentMeetingDays={meetingDays}
         themeColor={themeColor}
@@ -2323,6 +2491,8 @@ const App: React.FC = () => {
         currentColor={themeColor}
         currentThemeMode={themeMode}
         performanceMode={performanceMode}
+        customColor={customColor}
+        customGradientTo={customGradientTo}
       />
 
       <HelpModal
@@ -2407,6 +2577,16 @@ const App: React.FC = () => {
         onClose={() => setIsNotificationsModalOpen(false)}
         reportNotificationEnabled={reportNotificationEnabled}
         onToggleReportNotification={handleToggleReportNotification}
+        visitNotificationsEnabled={visitNotificationsEnabled}
+        onToggleVisitNotifications={(enabled) => {
+            setVisitNotificationsEnabled(enabled);
+            localStorage.setItem(VISIT_NOTIFICATION_KEY, String(enabled));
+        }}
+        studyNotificationsEnabled={studyNotificationsEnabled}
+        onToggleStudyNotifications={(enabled) => {
+            setStudyNotificationsEnabled(enabled);
+            localStorage.setItem(STUDY_NOTIFICATION_KEY, String(enabled));
+        }}
         showTimer={showTimer}
         onToggleShowTimer={setShowTimer}
         themeColor={themeColor}

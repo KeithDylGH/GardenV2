@@ -9,6 +9,7 @@ import {
 import { THEMES } from "../constants";
 import { hoursToHHMM, formatDateKey } from "../utils";
 import { BookOpenIcon } from "./icons/BookOpenIcon";
+import { ArrowUturnLeftIcon } from "./icons/ArrowUturnLeftIcon";
 import { VestIcon } from "./icons/VestIcon";
 import { ClipboardDocumentListIcon } from "./icons/ClipboardDocumentListIcon";
 import { SparklesIcon } from "./icons/SparklesIcon";
@@ -18,6 +19,7 @@ import WineIcon from "./icons/WineIcon";
 import { PlusIcon } from "./icons/PlusIcon";
 import { CalendarPlanIcon } from "./icons/CalendarPlanIcon";
 import { MedicalIcon } from "./icons/MedicalIcon";
+import { COVisitIcon } from "./icons/COVisitIcon";
 
 interface CalendarGridProps {
   selectedMonth: Date;
@@ -71,20 +73,27 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   }, [activities]);
 
   const recurringActivitiesByDayOfWeek = useMemo(() => {
-    const map = new Map<number, boolean>();
+    const map = new Map<number, { study: boolean; visit: boolean }>();
     const year = selectedMonth.getFullYear();
     const month = selectedMonth.getMonth();
+    
     activities.forEach((act) => {
       if (act.recurring) {
         const actDate = new Date(act.date);
-        const dayOfWeek = actDate.getDay();
-        if (
-          actDate.getFullYear() < year ||
-          (actDate.getFullYear() === year && actDate.getMonth() <= month)
-        ) {
-          if (!map.has(dayOfWeek)) {
-            map.set(dayOfWeek, true);
-          }
+        const isStarted = actDate.getFullYear() < year ||
+          (actDate.getFullYear() === year && actDate.getMonth() <= month);
+        
+        if (isStarted) {
+          const days = act.recurringDays && act.recurringDays.length > 0 
+            ? act.recurringDays 
+            : [actDate.getDay()];
+            
+          days.forEach(day => {
+            const current = map.get(day) || { study: false, visit: false };
+            if (act.type === 'study') current.study = true;
+            if (act.type === 'visit') current.visit = true;
+            map.set(day, current);
+          });
         }
       }
     });
@@ -229,6 +238,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
               dayClasses.push("bg-rose-100 dark:bg-rose-900/40 border-rose-200 dark:border-rose-700");
             } else if (dayEntry?.event === 'cleaning') {
               dayClasses.push("bg-teal-100 dark:bg-teal-900/40 border-teal-200 dark:border-teal-700");
+            } else if (dayEntry?.event === 'co_visit') {
+              dayClasses.push("bg-emerald-100 dark:bg-emerald-900/40 border-emerald-200 dark:border-emerald-700");
             } else if (isCampaign || dayEntry?.event === 'campaign') {
               dayClasses.push(theme.bg, "bg-opacity-20 dark:bg-opacity-20");
             } else if (status === "sick" || dayEntry?.event === 'sick') {
@@ -305,6 +316,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                              else if (dayEntry?.event === 'regional_convention') icons.push(<BuildingOfficeIcon key="event" className={`${iconSizeClass} text-purple-500`} />);
                              else if (dayEntry?.event === 'memorial') icons.push(<WineIcon key="event" className={`${iconSizeClass} text-rose-500`} />);
                              else if (dayEntry?.event === 'cleaning') icons.push(<SparklesIcon key="event" className={`${iconSizeClass} text-teal-500`} />);
+                             else if (dayEntry?.event === 'co_visit') icons.push(<COVisitIcon key="event" className={`${iconSizeClass} text-emerald-500`} />);
                              else if (dayEntry?.event === 'sick' || status === 'sick') icons.push(<MedicalIcon key="event" className={`${iconSizeClass} text-red-500`} />);
                         }
                         
@@ -313,9 +325,17 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                             icons.push(<CalendarPlanIcon key="plan" className={`${iconSizeClass} text-slate-400 dark:text-slate-500`} />);
                         }
 
-                        // Recurring Icon
-                        if (hasRecurringActivity && !isSummaryMonth && !isPrivacyMode) {
-                            icons.push(<BookOpenIcon key="recurring" className={`${iconSizeClass} text-purple-500`} />);
+                        // Recurring Icon(s)
+                        if (!isSummaryMonth && !isPrivacyMode) {
+                            const recurring = recurringActivitiesByDayOfWeek.get(date.getDay());
+                            if (recurring) {
+                                if (recurring.visit) {
+                                    icons.push(<ArrowUturnLeftIcon key="recurring-visit" className={`${iconSizeClass} text-blue-500`} />);
+                                }
+                                if (recurring.study) {
+                                    icons.push(<BookOpenIcon key="recurring-study" className={`${iconSizeClass} text-purple-500`} />);
+                                }
+                            }
                         }
                         
                         // Render Logic

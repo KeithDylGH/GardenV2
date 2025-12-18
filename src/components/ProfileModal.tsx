@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ThemeColor } from "../types";
+import { ThemeColor, UserRole } from "../types";
 import { THEMES } from "../constants";
 import { UserIcon } from "./icons/UserIcon";
 import { PencilIcon } from "./icons/PencilIcon";
@@ -11,10 +11,12 @@ interface ProfileModalProps {
     name: string,
     goal: number,
     profilePic: string | null,
-    meetingDays: number[]
+    meetingDays: number[],
+    role: UserRole
   ) => void;
   currentName: string;
   currentGoal: number;
+  currentRole: UserRole;
   currentProfilePicture: string | null;
   currentMeetingDays: number[];
   themeColor: ThemeColor;
@@ -37,6 +39,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   onSave,
   currentName,
   currentGoal,
+  currentRole,
   currentProfilePicture,
   currentMeetingDays,
   themeColor,
@@ -45,6 +48,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   const [name, setName] = useState("");
   const [goal, setGoal] = useState("");
   const [profilePic, setProfilePic] = useState<string | null>(null);
+  const [role, setRole] = useState<UserRole>("publisher");
   const [meetingDays, setMeetingDays] = useState<Set<number>>(new Set());
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -55,6 +59,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
       setHasBeenOpened(true);
       setName(currentName);
       setGoal(String(currentGoal));
+      setRole(currentRole);
       setProfilePic(currentProfilePicture);
       setMeetingDays(new Set(currentMeetingDays));
     }
@@ -62,6 +67,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
     isOpen,
     currentName,
     currentGoal,
+    currentRole,
     currentProfilePicture,
     currentMeetingDays,
   ]);
@@ -69,7 +75,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   const handleSave = () => {
     const goalValue = parseInt(goal, 10);
     if (!isNaN(goalValue) && goalValue > 0 && name.trim()) {
-      onSave(name.trim(), goalValue, profilePic, Array.from(meetingDays));
+      onSave(name.trim(), goalValue, profilePic, Array.from(meetingDays), role);
     }
   };
 
@@ -98,6 +104,27 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
       }
       return newSet;
     });
+  };
+
+  const roleLabels: Record<UserRole, string> = {
+    publisher: "Publicador",
+    aux_pioneer: "P. Auxiliar",
+    reg_pioneer: "P. Regular",
+    spec_pioneer: "P. Especial",
+  };
+
+  const roleDefaultGoals: Record<UserRole, number> = {
+    publisher: 1, // Sensible minimum, but usually custom
+    aux_pioneer: 30,
+    reg_pioneer: 50,
+    spec_pioneer: 100,
+  };
+
+  const handleRoleChange = (newRole: UserRole) => {
+    setRole(newRole);
+    if (roleDefaultGoals[newRole]) {
+      setGoal(String(roleDefaultGoals[newRole]));
+    }
   };
 
   return (
@@ -178,7 +205,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ej: Precursor"
-                  className={`w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${theme.ring} outline-none`}
+                  className={`w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${
+                    themeColor === "custom" ? "ring-custom" : theme.ring
+                  } outline-none`}
                 />
               </div>
             </div>
@@ -198,8 +227,32 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 value={goal}
                 onChange={(e) => setGoal(e.target.value)}
                 placeholder="Ej: 50"
-                className={`w-full px-4 py-2 bg-gray-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${theme.ring} outline-none`}
+                className={`w-full px-4 py-2 bg-gray-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${
+                  themeColor === "custom" ? "ring-custom" : theme.ring
+                } outline-none`}
               />
+            </div>
+
+            {/* Role */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Rol en el servicio
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(roleLabels) as UserRole[]).map((roleKey) => (
+                  <button
+                    key={roleKey}
+                    onClick={() => handleRoleChange(roleKey)}
+                    className={`px-3 py-2 rounded-lg text-xs font-bold border-2 transition-all ${
+                      role === roleKey
+                        ? `${themeColor === "custom" ? "bg-custom" : theme.bg} text-white border-transparent shadow-sm`
+                        : `bg-gray-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-400`
+                    }`}
+                  >
+                    {roleLabels[roleKey]}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Meeting Days */}
@@ -212,8 +265,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                   <button
                     key={`meeting-${day.value}`}
                     onClick={() => handleMeetingDayToggle(day.value)}
-                    className={`w-9 h-9 rounded-full font-bold text-sm flex items-center justify-center border-2 transition-all ${meetingDays.has(day.value)
-                        ? `${theme.bg} text-white border-transparent shadow-sm`
+                    className={`w-9 h-9 rounded-full font-bold text-sm flex items-center justify-center border-2 transition-all ${
+                      meetingDays.has(day.value)
+                        ? `${themeColor === "custom" ? "bg-custom" : theme.bg} text-white border-transparent shadow-sm`
                         : `bg-gray-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-400`
                       }`}
                   >
@@ -228,7 +282,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
         <footer className="flex-shrink-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50">
           <button
             onClick={handleSave}
-            className={`w-full px-6 py-3 rounded-lg ${theme.bg
+            className={`w-full px-6 py-3 rounded-lg ${
+              themeColor === "custom" ? "bg-custom" : theme.bg
               } text-white font-bold text-lg shadow-md ${!performanceMode &&
               "transition-transform transform hover:scale-105"
               }`}

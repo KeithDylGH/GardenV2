@@ -303,8 +303,9 @@ const Timer: React.FC<TimerProps> = ({
 
         <button
           onClick={handleToggle}
-          className={`w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg transition-transform ${theme.bg
-            } ${!performanceMode && "transform hover:scale-105"}`}
+          className={`w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg transition-transform ${
+            themeColor === "custom" ? "bg-custom" : theme.bg
+          } ${!performanceMode && "transform hover:scale-105"}`}
           aria-label={isActive ? "Pausar temporizador" : "Iniciar temporizador"}
         >
           {isActive ? (
@@ -317,13 +318,15 @@ const Timer: React.FC<TimerProps> = ({
         {time > 0 ? (
           <button
             onClick={handleFinish}
-            className={`w-14 h-14 ${theme.text
-              } rounded-full flex items-center justify-center duration-200 animate-fadeIn ${theme.bg
-              } bg-opacity-0 hover:bg-opacity-10 dark:hover:bg-opacity-20 ${!performanceMode && "transform hover:scale-105"
-              }`}
+            className={`w-14 h-14 ${
+              themeColor === "custom" ? "text-custom" : theme.text
+            } rounded-full flex items-center justify-center duration-200 animate-fadeIn ${
+              themeColor === "custom" ? "bg-custom-subtle" : `${theme.bg} bg-opacity-0 hover:bg-opacity-10 dark:hover:bg-opacity-20`
+            } ${themeColor !== "custom" && "hover:bg-opacity-10 dark:hover:bg-opacity-20"} ${!performanceMode && "transform hover:scale-105"
+            }`}
             aria-label="Finalizar y agregar horas"
           >
-            <CheckIcon className={`w-7 h-7 ${checkIconColorClass}`} />
+            <CheckIcon className={`w-7 h-7 ${themeColor === 'custom' ? 'text-custom' : checkIconColorClass}`} />
           </button>
         ) : (
           <div className="w-14 h-14" />

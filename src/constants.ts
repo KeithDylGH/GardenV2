@@ -193,6 +193,18 @@ export const THEMES: Record<ThemeColor, ThemeConfig> = {
     accentText: "text-fuchsia-100",
     accentTextLight: "text-fuchsia-200",
   },
+  custom: {
+    name: "custom",
+    gradientFrom: "from-custom",
+    gradientTo: "to-custom-to",
+    gradientFromColor: "var(--custom-color)",
+    gradientToColor: "var(--custom-gradient-to)",
+    bg: "bg-custom",
+    text: "text-custom",
+    ring: "focus:ring-custom",
+    accentText: "text-custom",
+    accentTextLight: "text-custom/70",
+  },
 };
 
 export const THEME_LIST = Object.values(THEMES);

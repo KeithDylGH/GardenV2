@@ -39,6 +39,10 @@ export default {
           "100%": { opacity: "1", transform: "scale(1)" },
         },
       },
+      colors: {
+        custom: "rgb(var(--custom-color-rgb) / <alpha-value>)",
+        "custom-to": "rgb(var(--custom-gradient-to-rgb) / <alpha-value>)",
+      },
     },
   },
   plugins: [],

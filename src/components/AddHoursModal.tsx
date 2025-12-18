@@ -5,11 +5,12 @@ import {
   ActivityType,
   HistoryLog,
   DayEvent,
-  DayStatus, // Keeping import if needed elsewhere, or remove if unused. It seems used in props.
+  DayStatus,
   DayEntry,
   PlanningData,
   PlanningBlock,
   UserRole,
+  ConversationStage,
 } from "../types";
 import { THEMES } from "../constants";
 import { UserIcon } from "./icons/UserIcon";
@@ -36,6 +37,7 @@ import { BuildingOfficeIcon } from "./icons/BuildingOfficeIcon";
 import { HomeIcon } from "./icons/HomeIcon";
 import { SparklesIcon } from "./icons/SparklesIcon";
 import WineIcon from "./icons/WineIcon";
+import { COVisitIcon } from "./icons/COVisitIcon";
 
 interface AddHoursModalProps {
   isOpen: boolean;
@@ -96,6 +98,12 @@ const eventOptions: {
       label: "Conmemoración",
       Icon: WineIcon,
       colorClass: "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700",
+    },
+    {
+      id: "co_visit",
+      label: "Visita del Sup.",
+      Icon: COVisitIcon,
+      colorClass: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700",
     }
   ];
 
@@ -140,8 +148,13 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [comments, setComments] = useState("");
-  const [isRecurringActivity, setIsRecurringActivity] = useState(false);
+  const [recurringDays, setRecurringDays] = useState<number[]>([]);
   const [isCampaignDay, setIsCampaignDay] = useState(false);
+  
+  // New activity detail states
+  const [conversationStage, setConversationStage] = useState<ConversationStage>("first");
+  const [weeklyFrequency, setWeeklyFrequency] = useState<number>(1);
+  const [currentLesson, setCurrentLesson] = useState<number>(1);
 
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
   const theme = THEMES[themeColor] || THEMES.blue;
@@ -191,8 +204,11 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
       setIsHoursValid(true);
       setIsLdcHoursValid(true);
       setSelectedEvent(undefined);
-      setIsRecurringActivity(false);
+      setRecurringDays([]);
       setIsCampaignDay(false);
+      setConversationStage("first");
+      setWeeklyFrequency(1);
+      setCurrentLesson(1);
       setNotesInput("");
 
       if (initialHours && initialHours > 0) {
@@ -204,7 +220,10 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
         setName(activityToEdit.name);
         setLocation(activityToEdit.location || "");
         setComments(activityToEdit.comments || "");
-        setIsRecurringActivity(activityToEdit.recurring || false);
+        setRecurringDays(activityToEdit.recurringDays || (activityToEdit.recurring ? [new Date(activityToEdit.date).getDay()] : []));
+        setConversationStage(activityToEdit.conversationStage || "first");
+        setWeeklyFrequency(activityToEdit.weeklyFrequency || 1);
+        setCurrentLesson(activityToEdit.currentLesson || 1);
         setHoursInput("");
         setLdcHoursInput("");
       } else if (dateForEntry) {
@@ -327,12 +346,18 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
     } else {
       // visit or study
       if (name.trim() === "") return;
+      const isStudy = activeTab === "study";
       onSaveActivity({
         type: activeTab as ActivityType,
         name,
         location,
         comments,
-        recurring: isRecurringActivity,
+        recurring: recurringDays.length > 0,
+        recurringDays: recurringDays,
+        // Include type-specific fields
+        conversationStage: !isStudy ? conversationStage : undefined,
+        weeklyFrequency: isStudy ? weeklyFrequency : undefined,
+        currentLesson: isStudy ? currentLesson : undefined,
       });
     }
   };
@@ -552,13 +577,12 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                       value={hoursInput}
                       onChange={handleHoursChange}
                       placeholder="1:30"
-                      className={`w-full px-4 py-3 text-center text-2xl font-bold bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${theme.ring
-                        } outline-none transition dark:text-white ${isHoursValid
+                      className={`w-full px-4 py-3 text-center text-2xl font-bold bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${
+                        themeColor === "custom" ? "ring-custom" : theme.ring
+                      } outline-none transition dark:text-white ${isHoursValid
                           ? "border-slate-300 dark:border-slate-600"
                           : "border-red-500 ring-2 ring-red-300"
                         }`}
-                      onFocus={(e) => e.target.select()}
-                      autoFocus={isOpen && !initialHours}
                       disabled={isDaySick}
                     />
                     <button
@@ -585,23 +609,22 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                       <label className="block text-center text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
                         ¿Hubo algún evento especial?
                       </label>
-                      <div className="flex flex-wrap justify-center gap-2">
+                      <div className="grid grid-cols-2 gap-2 max-w-sm mx-auto">
                         {eventOptions.map(
                           ({ id, label, Icon, colorClass }) => (
                             <button
                               key={id}
                               type="button"
                               onClick={() => {
-                                // sick logic logic removed from options, so simplify
                                 setSelectedEvent(selectedEvent === id ? undefined : id);
                               }}
-                              className={`px-3 py-2 border rounded-full text-sm font-medium transition-all flex items-center gap-2 ${selectedEvent === id
+                              className={`px-3 py-2 border rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${selectedEvent === id
                                 ? colorClass + " ring-2 ring-offset-1 dark:ring-offset-slate-800"
                                 : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                                 }`}
                             >
-                              <Icon className="w-5 h-5" />
-                              <span>{label}</span>
+                              <Icon className="w-4 h-4 shrink-0" />
+                              <span className="truncate">{label}</span>
                             </button>
                           )
                         )}
@@ -662,13 +685,12 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                       value={ldcHoursInput}
                       onChange={handleLdcHoursChange}
                       placeholder="Ej: 8:00 o 6.5"
-                      className={`w-full px-4 py-3 text-center text-2xl font-bold bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${theme.ring
-                        } outline-none transition dark:text-white ${isLdcHoursValid
+                      className={`w-full px-4 py-3 text-center text-2xl font-bold bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${
+                        themeColor === "custom" ? "ring-custom" : theme.ring
+                      } outline-none transition dark:text-white ${isLdcHoursValid
                           ? "border-slate-300 dark:border-slate-600"
                           : "border-red-500 ring-2 ring-red-300"
                         }`}
-                      onFocus={(e) => e.target.select()}
-                      autoFocus={isOpen}
                       disabled={isDaySick}
                     />
                     <button
@@ -702,7 +724,9 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                     onChange={(e) => setNotesInput(e.target.value)}
                     placeholder="¿Qué actividad hiciste? ¿qué trabajaste?"
                     rows={3}
-                    className={`w-full p-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${theme.ring} outline-none transition resize-none dark:text-white`}
+                    className={`w-full p-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${
+                      themeColor === "custom" ? "ring-custom" : theme.ring
+                    } outline-none transition resize-none dark:text-white`}
                     disabled={isDaySick}
                   ></textarea>
                 </div>
@@ -770,19 +794,159 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                     ></textarea>
                   </div>
                 </div>
-                <div className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
-                  <div className="flex items-center justify-between">
-                    <label
-                      htmlFor="recurring-toggle"
-                      className="font-semibold text-slate-700 dark:text-slate-200"
-                    >
-                      Repetir cada semana
+                
+                {/* Conversation Stage for Visits */}
+                {activeTab === "visit" && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                      Etapa de conversación
                     </label>
-                    <ToggleSwitch
-                      checked={isRecurringActivity}
-                      onChange={setIsRecurringActivity}
-                      themeColor={themeColor}
-                    />
+                    <div className="flex flex-wrap gap-2">
+                      {([
+                        { value: "first", label: "1ra" },
+                        { value: "second", label: "2da" },
+                        { value: "third", label: "3ra" },
+                        { value: "fourth_plus", label: "4+" },
+                      ] as const).map((stage) => (
+                        <button
+                          key={stage.value}
+                          type="button"
+                          onClick={() => setConversationStage(stage.value)}
+                          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                            conversationStage === stage.value
+                              ? `${themeColor === "custom" ? "bg-custom" : theme.bg} text-white`
+                              : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600"
+                          }`}
+                        >
+                          {stage.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Convert to study button for visits */}
+                {activeTab === "visit" && isEditingActivity && (
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("study")}
+                      className={`w-full py-2 px-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 font-semibold flex items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors`}
+                    >
+                      <BookOpenIcon className="w-5 h-5" />
+                      Pasar a estudio
+                    </button>
+                  </div>
+                )}
+                
+                {/* Study Details */}
+                {activeTab === "study" && (
+                  <div className="space-y-4">
+                    {/* Weekly Frequency */}
+                    <div>
+                      <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                        ¿Cuántas veces estudia por semana?
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setWeeklyFrequency(Math.max(1, weeklyFrequency - 1))}
+                          className="p-2 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600"
+                        >
+                          <MinusIcon className="w-5 h-5" />
+                        </button>
+                        <span className="text-2xl font-bold text-slate-800 dark:text-slate-100 w-12 text-center">
+                          {weeklyFrequency}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setWeeklyFrequency(Math.min(7, weeklyFrequency + 1))}
+                          className="p-2 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600"
+                        >
+                          <PlusIcon className="w-5 h-5" />
+                        </button>
+                        <span className="text-sm text-slate-500 dark:text-slate-400 ml-2">
+                          {weeklyFrequency === 1 ? "vez por semana" : "veces por semana"}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Current Lesson */}
+                    <div>
+                      <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                        Lección actual en "Disfrute de la Vida"
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setCurrentLesson(Math.max(1, currentLesson - 1))}
+                          className="p-2 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600"
+                        >
+                          <MinusIcon className="w-5 h-5" />
+                        </button>
+                        <input
+                          type="number"
+                          min="1"
+                          max="60"
+                          value={currentLesson}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value);
+                            if (!isNaN(val) && val >= 1 && val <= 60) {
+                              setCurrentLesson(val);
+                            }
+                          }}
+                          className={`w-20 px-3 py-2 text-center text-xl font-bold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${theme.ring} outline-none dark:text-white`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setCurrentLesson(Math.min(60, currentLesson + 1))}
+                          className="p-2 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600"
+                        >
+                          <PlusIcon className="w-5 h-5" />
+                        </button>
+                        <span className="text-sm text-slate-500 dark:text-slate-400 ml-2">
+                          de 60
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <div className="space-y-3">
+                    <label className="block font-semibold text-slate-700 dark:text-slate-200">
+                      Repetir los días
+                    </label>
+                    <div className="flex justify-between gap-1">
+                      {["D", "L", "M", "M", "J", "V", "S"].map((day, index) => {
+                        const isSelected = recurringDays.includes(index);
+                        return (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => {
+                              setRecurringDays(prev => 
+                                isSelected 
+                                  ? prev.filter(d => d !== index)
+                                  : [...prev, index].sort()
+                              );
+                            }}
+                            className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+                              isSelected
+                                ? `${themeColor === "custom" ? "bg-custom" : theme.bg} text-white shadow-md`
+                                : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600"
+                            }`}
+                          >
+                            {day}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {recurringDays.length > 0 && (
+                      <p className="text-[10px] text-center text-slate-500 dark:text-slate-400 mt-1">
+                        Se guardará en el historial y recibirás una notificación a las 7:00 AM.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -791,7 +955,8 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
             <div className="flex flex-col space-y-3 mt-6">
               <button
                 type="submit"
-                className={`w-full px-6 py-3 rounded-lg ${theme.bg
+                className={`w-full px-6 py-3 rounded-lg ${
+                  themeColor === "custom" ? "bg-custom" : theme.bg
                   } text-white font-bold text-lg shadow-lg transition-transform disabled:opacity-70 disabled:cursor-not-allowed ${!performanceMode && "transform hover:scale-105"
                   }`}
                 disabled={

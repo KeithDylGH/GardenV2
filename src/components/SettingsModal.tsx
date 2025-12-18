@@ -15,12 +15,14 @@ import { HexagonIcon } from "./icons/HexagonIcon";
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (shape: Shape, color: ThemeColor, mode: ThemeMode) => void;
+  onSave: (shape: Shape, color: ThemeColor, mode: ThemeMode, customColor?: string, customGradientTo?: string) => void;
   onModeChange: (mode: ThemeMode) => void;
   currentShape: Shape;
   currentColor: ThemeColor;
   currentThemeMode: ThemeMode;
   performanceMode: boolean;
+  customColor: string;
+  customGradientTo: string;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -32,10 +34,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   currentColor,
   currentThemeMode,
   performanceMode,
+  customColor: initialCustomColor,
+  customGradientTo: initialCustomGradientTo,
 }) => {
   const [shape, setShape] = useState<Shape>("flower");
   const [color, setColor] = useState<ThemeColor>("blue");
   const [mode, setMode] = useState<ThemeMode>("light");
+  const [localCustomColor, setLocalCustomColor] = useState("#3b82f6");
+  const [localCustomGradientTo, setLocalCustomGradientTo] = useState("#8b5cf6");
+  const [showCustomPicker, setShowCustomPicker] = useState(false);
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
   const theme = THEMES[color] || THEMES.blue;
 
@@ -50,19 +57,25 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       setShape(currentShape);
       setColor(currentColor);
       setMode(currentThemeMode);
+      setLocalCustomColor(initialCustomColor || "#3b82f6");
+      setLocalCustomGradientTo(initialCustomGradientTo || "#8b5cf6");
+      setShowCustomPicker(currentColor === "custom");
     }
-  }, [isOpen, currentShape, currentColor, currentThemeMode]);
+  }, [isOpen, currentShape, currentColor, currentThemeMode, initialCustomColor, initialCustomGradientTo]);
 
   const handleSave = () => {
-    onSave(shape, color, mode);
+    onSave(shape, color, mode, localCustomColor, localCustomGradientTo);
   };
 
   const handleColorSelect = (selectedColor: ThemeColor) => {
     setColor(selectedColor);
     if (selectedColor === "bw") {
-      const newMode = "black";
+      const newMode = "black" as ThemeMode;
       setMode(newMode);
       onModeChange(newMode);
+    }
+    if (selectedColor !== "custom") {
+      setShowCustomPicker(false);
     }
   };
 
@@ -131,7 +144,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     ? `${theme.bg} text-white shadow`
                     : "text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600/50"
                     } ${isBwTheme ? "cursor-not-allowed" : ""}`}
-                  aria-pressed={mode === "light"}
                 >
                   <SunIcon className="w-5 h-5" />
                   <span>Claro</span>
@@ -143,7 +155,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     ? `${theme.bg} text-white shadow`
                     : "text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600/50"
                     } ${isBwTheme ? "cursor-not-allowed" : ""}`}
-                  aria-pressed={mode === "dark"}
                 >
                   <MoonIcon className="w-5 h-5" />
                   <span>Oscuro</span>
@@ -155,17 +166,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     ? `${theme.bg} text-white shadow`
                     : "text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600/50"
                     } ${isBwTheme ? "cursor-not-allowed" : ""}`}
-                  aria-pressed={mode === "black"}
                 >
                   <SolidCircleIcon className="w-5 h-5" />
                   <span>Negro</span>
                 </button>
               </div>
-              {isBwTheme && (
-                <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-1">
-                  El tema Blanco y Negro requiere el modo Negro.
-                </p>
-              )}
             </div>
 
             {/* Shape */}
@@ -182,7 +187,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                       ? `${THEMES[color].text} border-current bg-blue-50/50 dark:bg-slate-700/50`
                       : "border-slate-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600"
                       }`}
-                    aria-pressed={shape === shapeName}
                   >
                     <Icon
                       className={`w-8 h-8 ${shape === shapeName
@@ -190,7 +194,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         : "text-slate-500 dark:text-slate-400"
                         }`}
                     />
-                    <span className="sr-only">{shapeName}</span>
                   </button>
                 ))}
               </div>
@@ -210,8 +213,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                       } ${themeOption.gradientTo} ${!performanceMode &&
                       "transition-transform transform hover:scale-110"
                       }`}
-                    aria-label={`Seleccionar color ${themeOption.name}`}
-                    aria-pressed={color === themeOption.name}
                   >
                     {color === themeOption.name && (
                       <CheckIcon
@@ -223,7 +224,81 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     )}
                   </button>
                 ))}
+                
+                {/* Custom Color Button */}
+                <button
+                  onClick={() => {
+                    setColor("custom");
+                    setShowCustomPicker(!showCustomPicker);
+                  }}
+                  className={`w-full h-12 rounded-lg flex items-center justify-center border-2 border-dashed ${
+                    color === "custom" 
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" 
+                      : "border-slate-300 dark:border-slate-600 hover:border-blue-400"
+                  }`}
+                >
+                  <div className="flex flex-col items-center justify-center">
+                    <span className="text-[10px] font-bold leading-none dark:text-slate-300">MIX</span>
+                    <div className="flex mt-0.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-red-400 -mr-0.5"></div>
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-400 -mr-0.5"></div>
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
+                    </div>
+                  </div>
+                </button>
               </div>
+
+              {/* Mini Color Picker Interface */}
+              {showCustomPicker && (
+                <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 animate-fadeIn">
+                  <header className="flex justify-between items-center mb-4">
+                     <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Paleta Personalizada</p>
+                     <div className="flex items-center space-x-2">
+                        <div className="w-6 h-6 rounded-full shadow-sm border border-white" style={{ background: `linear-gradient(to bottom right, ${localCustomColor}, ${localCustomGradientTo})` }}></div>
+                     </div>
+                  </header>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between items-center mb-1.5">
+                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Color Primario</label>
+                        <code className="text-[10px] font-mono bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 uppercase">{localCustomColor}</code>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                         <input 
+                           type="color" 
+                           value={localCustomColor}
+                           onChange={(e) => setLocalCustomColor(e.target.value)}
+                           className="w-10 h-10 rounded-lg overflow-hidden cursor-pointer border-none bg-transparent"
+                         />
+                         <div className="flex-grow h-2 bg-gradient-to-r from-red-500 via-green-500 to-blue-500 rounded-full"></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-1.5">
+                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Gradiente (Final)</label>
+                        <code className="text-[10px] font-mono bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 uppercase">{localCustomGradientTo}</code>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                         <input 
+                           type="color" 
+                           value={localCustomGradientTo}
+                           onChange={(e) => setLocalCustomGradientTo(e.target.value)}
+                           className="w-10 h-10 rounded-lg overflow-hidden cursor-pointer border-none bg-transparent"
+                         />
+                         <div className="flex-grow h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div className="h-full w-full" style={{ background: `linear-gradient(to right, ${localCustomColor}, ${localCustomGradientTo})` }}></div>
+                         </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-4 text-center">
+                    Toca los cuadros de color para abrir el selector detallado.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </main>

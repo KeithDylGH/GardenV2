@@ -184,7 +184,9 @@ const ShareReportModal: React.FC<ShareReportModalProps> = ({
           onClick={(e) => e.stopPropagation()}
         >
           <div
-            className={`mx-auto w-14 h-14 rounded-full flex items-center justify-center bg-gradient-to-br ${theme.gradientFrom} ${theme.gradientTo} mb-4`}
+            className={`mx-auto w-14 h-14 rounded-full flex items-center justify-center ${
+              themeColor === "custom" ? "bg-custom" : `bg-gradient-to-br ${theme.gradientFrom} ${theme.gradientTo}`
+            } mb-4`}
           >
             <ChatBubbleBottomCenterTextIcon className="w-8 h-8 text-white" />
           </div>
@@ -215,14 +217,18 @@ const ShareReportModal: React.FC<ShareReportModalProps> = ({
               onChange={(e) => setOptionalComment(e.target.value)}
               placeholder="Agrega un comentario si lo deseas..."
               rows={2}
-              className="w-full p-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-left resize-none focus:ring-2 focus:ring-offset-0 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+              className={`w-full p-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-left resize-none focus:ring-2 focus:ring-offset-0 ${
+                themeColor === "custom" ? "ring-custom" : "focus:ring-blue-500 dark:focus:ring-blue-400"
+              } transition-all`}
             />
           </div>
 
           <div className="flex flex-col space-y-3 mt-6">
             <button
               onClick={handleCopyToClipboard}
-              className={`w-full px-6 py-2.5 rounded-lg ${theme.bg} text-white font-bold text-lg shadow-lg flex items-center justify-center gap-2 transform hover:scale-105 transition-transform`}
+              className={`w-full px-6 py-2.5 rounded-lg ${
+                themeColor === "custom" ? "bg-custom" : theme.bg
+              } text-white font-bold text-lg shadow-lg flex items-center justify-center gap-2 transform hover:scale-105 transition-transform`}
             >
               <ClipboardDocumentCheckIcon className="w-5 h-5" />
               Copiar Informe

@@ -7,7 +7,7 @@ import { ChatBubbleBottomCenterTextIcon } from "./icons/ChatBubbleBottomCenterTe
 import { BoltIcon } from "./icons/BoltIcon";
 import { ArrowDownTrayIcon } from "./icons/ArrowDownTrayIcon";
 import { ArrowUpTrayIcon } from "./icons/ArrowUpTrayIcon";
-import { SettingsIcon } from "./icons/SettingsIcon";
+import { PaletteIcon } from "./icons/PaletteIcon";
 import { StarIcon } from "./icons/StarIcon";
 import { TrophyIcon } from "./icons/TrophyIcon";
 import { FaceSmileIcon } from "./icons/FaceSmileIcon";
@@ -93,7 +93,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="text-right">
           <LeafIcon className={`w-10 h-10 ${iconAndTextColorClass}`} />
           <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-1">
-            V1.5
+            V1.6
           </p>
         </div>
       </button>
@@ -202,7 +202,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               onClick={onSettingsClick}
               className="w-full text-left p-3 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50"
             >
-              <SettingsIcon
+              <PaletteIcon
                 className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`}
               />
               <p className="font-semibold text-slate-700 dark:text-slate-200">

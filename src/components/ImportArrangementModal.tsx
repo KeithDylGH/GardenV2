@@ -278,7 +278,9 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
               <div className="flex flex-col space-y-3">
                 <button
                   onClick={handleConfirmAndClose}
-                  className={`w-full px-6 py-3 rounded-lg ${theme.bg} text-white font-bold text-lg shadow-lg transform hover:scale-105 transition-transform flex items-center justify-center gap-2`}
+                  className={`w-full px-6 py-3 rounded-lg ${
+                    themeColor === "custom" ? "bg-custom" : theme.bg
+                  } text-white font-bold text-lg shadow-lg transform hover:scale-105 transition-transform flex items-center justify-center gap-2`}
                 >
                   Aceptar y Guardar
                 </button>
@@ -306,7 +308,7 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
 
               <div className="space-y-4">
                 <div
-                  className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${selectedImage ? 'border-green-500 bg-green-50 dark:bg-green-900/10' : 'border-slate-300 dark:border-slate-600 hover:border-blue-500'
+                  className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${selectedImage ? 'border-green-500 bg-green-50 dark:bg-green-900/10' : `border-slate-300 dark:border-slate-600 ${themeColor === 'custom' ? 'hover:border-custom' : 'hover:border-blue-500'}`
                     }`}
                   onClick={() => fileInputRef.current?.click()}
                 >
@@ -355,7 +357,9 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
                   onChange={(e) => setText(e.target.value)}
                   placeholder="Escribe o pega el texto aquí..."
                   rows={4}
-                  className={`w-full p-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${theme.ring} outline-none transition resize-none dark:text-white`}
+                  className={`w-full p-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${
+                    themeColor === "custom" ? "ring-custom" : theme.ring
+                  } outline-none transition resize-none dark:text-white`}
                   disabled={isLoading}
                 />
               </div>
@@ -373,7 +377,9 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
               <div className="flex flex-col space-y-3 mt-6">
                 <button
                   onClick={handleProcess}
-                  className={`w-full px-6 py-3 rounded-lg ${theme.bg} text-white font-bold text-lg shadow-lg transform hover:scale-105 transition-transform flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={`w-full px-6 py-3 rounded-lg ${
+                    themeColor === "custom" ? "bg-custom" : theme.bg
+                  } text-white font-bold text-lg shadow-lg transform hover:scale-105 transition-transform flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
                   disabled={isLoading || !isOnline}
                 >
                   {isLoading ? (

@@ -49,7 +49,9 @@ const GroupArrangementCard: React.FC<GroupArrangementCardProps> = ({
           </h3>
           {conductor && (
             <div
-              className={`flex items-center space-x-2 text-sm font-semibold px-3 py-1 rounded-full ${theme.bg} bg-opacity-10 ${theme.text}`}
+              className={`flex items-center space-x-2 text-sm font-semibold px-3 py-1 rounded-full ${
+                themeColor === "custom" ? "bg-custom-subtle text-custom" : `${theme.bg} bg-opacity-10 ${theme.text}`
+              }`}
             >
               <UserIcon className="w-4 h-4" />
               <span>{conductor}</span>

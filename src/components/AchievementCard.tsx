@@ -52,7 +52,9 @@ const AchievementCard: React.FC<AchievementCardProps> = ({
           <div
             className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center ${
               isUnlocked
-                ? `${theme.bg} bg-opacity-10`
+                ? themeColor === "custom"
+                  ? "bg-custom-subtle"
+                  : `${theme.bg} bg-opacity-10`
                 : "bg-slate-200 dark:bg-slate-700"
             }`}
           >

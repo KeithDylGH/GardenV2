@@ -62,29 +62,19 @@ const ActivityView: React.FC<ActivityViewProps> = ({
   }, [notes]);
 
   const monthlySummary = useMemo(() => {
-    const now = currentDate;
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
-
     let visits = 0;
     let studies = 0;
 
     activities.forEach((activity) => {
-      const activityDate = new Date(activity.date);
-      if (
-        activityDate.getFullYear() === currentYear &&
-        activityDate.getMonth() === currentMonth
-      ) {
-        if (activity.type === "visit") {
-          visits++;
-        } else if (activity.type === "study") {
-          studies++;
-        }
+      if (activity.type === "visit") {
+        visits++;
+      } else if (activity.type === "study") {
+        studies++;
       }
     });
 
     return { visits, studies };
-  }, [activities, currentDate]);
+  }, [activities]);
 
   const filteredActivities = useMemo(() => {
     if (activeTab !== "visits" && activeTab !== "studies") return [];
@@ -124,7 +114,9 @@ const ActivityView: React.FC<ActivityViewProps> = ({
               <button
                 id="import-groups-button"
                 onClick={() => setImportModalOpen(true)}
-                className={`flex items-center gap-2 text-sm font-semibold px-3 py-1 rounded-lg ${dynamicTextColor} ${theme.bg} bg-opacity-10 hover:bg-opacity-20`}
+                className={`flex items-center gap-2 text-sm font-semibold px-3 py-1 rounded-lg ${
+                  themeColor === "custom" ? "bg-custom-subtle text-custom" : `${theme.bg} bg-opacity-10 hover:bg-opacity-20 ${dynamicTextColor}`
+                }`}
               >
                 <ClipboardPasteIcon className="w-4 h-4" />
                 Importar Nuevo
@@ -152,7 +144,8 @@ const ActivityView: React.FC<ActivityViewProps> = ({
           <button
             id="import-groups-button"
             onClick={() => setImportModalOpen(true)}
-            className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg ${theme.bg
+            className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg ${
+              themeColor === "custom" ? "bg-custom" : theme.bg
               } text-white font-bold text-lg shadow-md transition-transform ${!performanceMode && "transform hover:scale-105"
               }`}
           >
@@ -172,7 +165,9 @@ const ActivityView: React.FC<ActivityViewProps> = ({
             onBlur={() => onSaveNotes(localNotes)}
             placeholder="Escribe aquí tus notas personales sobre el ministerio..."
             rows={15}
-            className="w-full p-4 bg-white dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition resize-none dark:text-white shadow-sm"
+            className={`w-full p-4 bg-white dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700 rounded-2xl focus:ring-2 ${
+              themeColor === "custom" ? "ring-custom" : "focus:ring-blue-500"
+            } outline-none transition resize-none dark:text-white shadow-sm`}
             aria-label="Área de notas"
           />
           <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-2">
@@ -235,7 +230,9 @@ const ActivityView: React.FC<ActivityViewProps> = ({
       <div className={`grid grid-cols-2 gap-4 mb-6 ${privacyBlur}`}>
         <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl flex items-center space-x-3 shadow-sm border border-slate-200/50 dark:border-slate-700/50">
           <div
-            className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${theme.bg} bg-opacity-10`}
+            className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${
+              themeColor === "custom" ? "bg-custom-subtle" : `${theme.bg} bg-opacity-10`
+            }`}
           >
             <ArrowUturnLeftIcon className={`w-6 h-6 ${dynamicTextColor}`} />
           </div>
@@ -244,13 +241,15 @@ const ActivityView: React.FC<ActivityViewProps> = ({
               {isPrivacyMode ? "**" : monthlySummary.visits}
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Revisitas este mes
+              Revisitas actuales
             </p>
           </div>
         </div>
         <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl flex items-center space-x-3 shadow-sm border border-slate-200/50 dark:border-slate-700/50">
           <div
-            className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${theme.bg} bg-opacity-10`}
+            className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${
+              themeColor === "custom" ? "bg-custom-subtle" : `${theme.bg} bg-opacity-10`
+            }`}
           >
             <BookOpenIcon className={`w-6 h-6 ${dynamicTextColor}`} />
           </div>
@@ -259,7 +258,7 @@ const ActivityView: React.FC<ActivityViewProps> = ({
               {isPrivacyMode ? "**" : monthlySummary.studies}
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Estudios este mes
+              Estudios actuales
             </p>
           </div>
         </div>

@@ -16,7 +16,8 @@ export type ThemeColor =
   | "sunset"
   | "ocean"
   | "forest"
-  | "lavender";
+  | "lavender"
+  | "custom";
 
 export type ThemeConfig = {
   name: ThemeColor;
@@ -48,6 +49,7 @@ export type DayEvent =
   | "campaign"
   | "memorial"
   | "cleaning"
+  | "co_visit"
   | "sick";
 
 export type DayEntry = {
@@ -72,6 +74,9 @@ export type DayLog = {
 
 export type ActivityType = "visit" | "study";
 
+// Conversation stage for revisitas
+export type ConversationStage = "first" | "second" | "third" | "fourth_plus";
+
 export type ActivityItem = {
   id: string;
   type: ActivityType;
@@ -82,6 +87,15 @@ export type ActivityItem = {
   lat?: number;
   lng?: number;
   recurring?: boolean;
+  recurringDays?: number[]; // 0-6 for Sun-Sat
+  
+  // Revisita fields
+  conversationStage?: ConversationStage; // Default: "first"
+  
+  // Estudio fields  
+  weeklyFrequency?: number; // How many times per week (1-7)
+  currentLesson?: number;   // Lesson number in "Disfrute de la Vida" (1-60)
+  lessonNotes?: string;     // Notes about lesson progress
 };
 
 export type GroupArrangement = {
@@ -166,6 +180,8 @@ export type AppState = {
   notes?: string;
   unlockedAchievements?: UnlockedAchievements;
   profilePicture?: string | null;
+  customColor?: string;
+  customGradientTo?: string;
 };
 
 export type PlanningBlock = {

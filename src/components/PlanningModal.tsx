@@ -105,7 +105,7 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
                 performanceMode ? "duration-0" : "duration-300"
               } ease-in-out`
             : ""
-        } ${isOpen ? "translate-y-0" : "translate-y-full"}`}
+        } ${isOpen ? "translate-y-0" : "translate-y-full"} pb-[env(safe-area-inset-bottom)]`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-4" />
@@ -139,7 +139,9 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Ej: Predicación Matutina"
-                  className={`mt-1 w-full px-4 py-2 bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${theme.ring} outline-none transition dark:text-white border-slate-300 dark:border-slate-600`}
+                  className={`mt-1 w-full px-4 py-2 bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${
+                    themeColor === "custom" ? "ring-custom" : theme.ring
+                  } outline-none transition dark:text-white border-slate-300 dark:border-slate-600`}
                   required
                 />
               </div>
@@ -156,7 +158,9 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
                   value={timeRange}
                   onChange={(e) => setTimeRange(e.target.value)}
                   placeholder="Ej: 9:00 - 12:00"
-                  className={`mt-1 w-full px-4 py-2 bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${theme.ring} outline-none transition dark:text-white border-slate-300 dark:border-slate-600`}
+                  className={`mt-1 w-full px-4 py-2 bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${
+                    themeColor === "custom" ? "ring-custom" : theme.ring
+                  } outline-none transition dark:text-white border-slate-300 dark:border-slate-600`}
                 />
               </div>
 
@@ -173,14 +177,14 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
                         onClick={() => toggleActivitySelection(act.id)}
                         className={`w-full text-left p-2 rounded-md flex items-center gap-3 ${
                           selectedActivityIds.has(act.id)
-                            ? `${theme.bg} bg-opacity-10 dark:bg-opacity-20`
+                            ? themeColor === "custom" ? "bg-custom-subtle" : `${theme.bg} bg-opacity-10 dark:bg-opacity-20`
                             : "hover:bg-slate-100 dark:hover:bg-slate-700/50"
                         }`}
                       >
                         <div
                           className={`w-5 h-5 flex-shrink-0 rounded border-2 flex items-center justify-center ${
                             selectedActivityIds.has(act.id)
-                              ? `${theme.bg} border-transparent`
+                              ? `${themeColor === "custom" ? "bg-custom" : theme.bg} border-transparent`
                               : "border-slate-300 dark:border-slate-500"
                           }`}
                         >
@@ -211,7 +215,7 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
               <button
                 type="submit"
                 className={`w-full px-6 py-3 rounded-lg ${
-                  theme.bg
+                  themeColor === "custom" ? "bg-custom" : theme.bg
                 } text-white font-bold text-lg shadow-lg transition-transform ${
                   !performanceMode && "transform hover:scale-105"
                 }`}

@@ -14,12 +14,15 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   themeColor,
 }) => {
   const theme = THEMES[themeColor] || THEMES.blue;
-  const backgroundClass = checked ? theme.bg : "bg-slate-300 dark:bg-slate-600";
+  const backgroundClass = checked 
+    ? themeColor === "custom" ? "bg-custom" : theme.bg 
+    : "bg-slate-300 dark:bg-slate-600";
+  const ringClass = themeColor === "custom" ? "ring-custom" : theme.ring;
 
   return (
     <button
       type="button"
-      className={`${backgroundClass} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 dark:ring-offset-slate-800 ${theme.ring}`}
+      className={`${backgroundClass} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 dark:ring-offset-slate-800 ${ringClass}`}
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}

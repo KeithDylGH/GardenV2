@@ -5,12 +5,18 @@ import ToggleSwitch from "./ToggleSwitch";
 import { NotificationIcon } from "./icons/NotificationIcon";
 import { ClockIcon } from "./icons/ClockIcon";
 import { PaperAirplaneIcon } from "./icons/PaperAirplaneIcon";
+import { ArrowUturnLeftIcon } from "./icons/ArrowUturnLeftIcon";
+import { BookOpenIcon } from "./icons/BookOpenIcon";
 
 interface NotificationsModalProps {
   isOpen: boolean;
   onClose: () => void;
   reportNotificationEnabled: boolean;
   onToggleReportNotification: (enabled: boolean) => void;
+  visitNotificationsEnabled: boolean;
+  onToggleVisitNotifications: (enabled: boolean) => void;
+  studyNotificationsEnabled: boolean;
+  onToggleStudyNotifications: (enabled: boolean) => void;
   showTimer: boolean;
   onToggleShowTimer: (enabled: boolean) => void;
   themeColor: ThemeColor;
@@ -22,6 +28,10 @@ const NotificationsModal: React.FC<NotificationsModalProps> = ({
   onClose,
   reportNotificationEnabled,
   onToggleReportNotification,
+  visitNotificationsEnabled,
+  onToggleVisitNotifications,
+  studyNotificationsEnabled,
+  onToggleStudyNotifications,
   showTimer,
   onToggleShowTimer,
   themeColor,
@@ -52,9 +62,9 @@ const NotificationsModal: React.FC<NotificationsModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+        <div className="flex items-center justify-between p-4 pt-[calc(1rem+env(safe-area-inset-top))] border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
           <div className="flex items-center space-x-2">
-            <NotificationIcon className={`w-6 h-6 ${theme.text}`} />
+            <NotificationIcon className={`w-6 h-6 ${themeColor === 'custom' ? 'text-custom' : theme.text}`} />
             <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
               Notificaciones
             </h2>
@@ -91,8 +101,10 @@ const NotificationsModal: React.FC<NotificationsModalProps> = ({
              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                 <div className="p-4 flex items-center justify-between">
                    <div className="flex items-start space-x-3">
-                      <div className={`p-2 rounded-lg ${theme.bg} bg-opacity-10 dark:bg-opacity-20`}>
-                        <PaperAirplaneIcon className={`w-5 h-5 ${theme.text}`} />
+                      <div className={`p-2 rounded-lg ${
+                        themeColor === "custom" ? "bg-custom-subtle" : `${theme.bg} bg-opacity-10 dark:bg-opacity-20`
+                      }`}>
+                        <PaperAirplaneIcon className={`w-5 h-5 ${themeColor === "custom" ? "text-custom" : theme.text}`} />
                       </div>
                       <div>
                         <p className="font-semibold text-slate-700 dark:text-slate-200">
@@ -109,7 +121,51 @@ const NotificationsModal: React.FC<NotificationsModalProps> = ({
                       themeColor={themeColor}
                    />
                 </div>
-             </div>
+
+                 {/* Visit Reminders */}
+                 <div className="p-4 flex items-center justify-between border-t border-slate-100 dark:border-slate-700/50">
+                    <div className="flex items-start space-x-3">
+                       <div className={`p-2 rounded-lg ${theme.bg} bg-opacity-10 dark:bg-opacity-20`}>
+                         <ArrowUturnLeftIcon className={`w-5 h-5 ${theme.text}`} />
+                       </div>
+                       <div>
+                         <p className="font-semibold text-slate-700 dark:text-slate-200">
+                           Recordar Revisitas
+                         </p>
+                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                           Aviso a las 7:00 AM el día seleccionado.
+                         </p>
+                       </div>
+                    </div>
+                    <ToggleSwitch
+                       checked={visitNotificationsEnabled}
+                       onChange={onToggleVisitNotifications}
+                       themeColor={themeColor}
+                    />
+                 </div>
+
+                 {/* Study Reminders */}
+                 <div className="p-4 flex items-center justify-between border-t border-slate-100 dark:border-slate-700/50">
+                    <div className="flex items-start space-x-3">
+                       <div className={`p-2 rounded-lg ${theme.bg} bg-opacity-10 dark:bg-opacity-20`}>
+                         <BookOpenIcon className={`w-5 h-5 ${theme.text}`} />
+                       </div>
+                       <div>
+                         <p className="font-semibold text-slate-700 dark:text-slate-200">
+                           Recordar Estudios
+                         </p>
+                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                           Aviso a las 7:00 AM el día seleccionado.
+                         </p>
+                       </div>
+                    </div>
+                    <ToggleSwitch
+                       checked={studyNotificationsEnabled}
+                       onChange={onToggleStudyNotifications}
+                       themeColor={themeColor}
+                    />
+                 </div>
+              </div>
           </section>
 
           {/* Section: Interfaz */}

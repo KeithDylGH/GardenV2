@@ -48,14 +48,16 @@ const HelpModal: React.FC<HelpModalProps> = ({
                 performanceMode ? "duration-0" : "duration-300"
               } ease-in-out`
             : ""
-        } ${isOpen ? "translate-y-0" : "translate-y-full"}`}
+        } ${isOpen ? "translate-y-0" : "translate-y-full"} pb-[env(safe-area-inset-bottom)]`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3" />
 
         <div className="p-6 text-center">
           <div
-            className={`mx-auto w-14 h-14 rounded-full flex items-center justify-center bg-gradient-to-br ${theme.gradientFrom} ${theme.gradientTo} mb-4`}
+            className={`mx-auto w-14 h-14 rounded-full flex items-center justify-center ${
+              themeColor === "custom" ? "bg-custom" : `bg-gradient-to-br ${theme.gradientFrom} ${theme.gradientTo}`
+            } mb-4`}
           >
             <LightBulbIcon className="w-8 h-8 text-white" />
           </div>
@@ -72,7 +74,7 @@ const HelpModal: React.FC<HelpModalProps> = ({
             <button
               onClick={handleReplay}
               className={`w-full px-6 py-3 rounded-lg ${
-                theme.bg
+                themeColor === "custom" ? "bg-custom" : theme.bg
               } text-white font-bold text-lg shadow-lg transition-transform ${
                 !performanceMode && "transform hover:scale-105"
               }`}

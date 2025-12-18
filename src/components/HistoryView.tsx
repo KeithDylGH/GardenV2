@@ -20,6 +20,7 @@ import { HomeIcon } from "./icons/HomeIcon";
 import { BuildingOfficeIcon } from "./icons/BuildingOfficeIcon";
 import { MegaphoneIcon } from "./icons/MegaphoneIcon";
 import { MedicalIcon } from "./icons/MedicalIcon";
+import { COVisitIcon } from "./icons/COVisitIcon";
 
 interface HistoryViewProps {
   archives: Record<string, HistoryLog>;
@@ -110,7 +111,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({
         campaign: 0,
         cleaning: 0,
         sick: 0,
-        memorial: 0
+        memorial: 0,
+        co_visit: 0
     };
     let ldcHours = 0;
     if (isSummaryMonth)
@@ -258,6 +260,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
           {eventCounts.campaign > 0 && <Stat Icon={MegaphoneIcon} count={eventCounts.campaign} label="Campaña" colorClass="text-orange-500" />}
           {eventCounts.cleaning > 0 && <Stat Icon={SparklesIcon} count={eventCounts.cleaning} label="Limpieza" colorClass="text-teal-500" />}
           {eventCounts.sick > 0 && <Stat Icon={MedicalIcon} count={eventCounts.sick} label="Enfermo" colorClass="text-red-500" />}
+          {eventCounts.co_visit > 0 && <Stat Icon={COVisitIcon} count={eventCounts.co_visit} label="Visita Sup." colorClass="text-emerald-500" />}
 
           {totalLdcHours > 0 && (
             <Stat
