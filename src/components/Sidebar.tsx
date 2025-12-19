@@ -207,7 +207,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             >
               <ShareIcon className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`} />
               <p className="font-semibold text-slate-700 dark:text-slate-200">
-                Ir a Garden Web
+                Sitio web
               </p>
             </button>
             <button

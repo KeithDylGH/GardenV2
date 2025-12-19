@@ -224,18 +224,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     )}
                   </button>
                 ))}
-                
+
                 {/* Custom Color Button */}
                 <button
                   onClick={() => {
                     setColor("custom");
                     setShowCustomPicker(!showCustomPicker);
                   }}
-                  className={`w-full h-12 rounded-lg flex items-center justify-center border-2 border-dashed ${
-                    color === "custom" 
-                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" 
+                  className={`w-full h-12 rounded-lg flex items-center justify-center border-2 border-dashed ${color === "custom"
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                       : "border-slate-300 dark:border-slate-600 hover:border-blue-400"
-                  }`}
+                    }`}
                 >
                   <div className="flex flex-col items-center justify-center">
                     <span className="text-[10px] font-bold leading-none dark:text-slate-300">MIX</span>
@@ -252,12 +251,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               {showCustomPicker && (
                 <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 animate-fadeIn">
                   <header className="flex justify-between items-center mb-4">
-                     <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Paleta Personalizada</p>
-                     <div className="flex items-center space-x-2">
-                        <div className="w-6 h-6 rounded-full shadow-sm border border-white" style={{ background: `linear-gradient(to bottom right, ${localCustomColor}, ${localCustomGradientTo})` }}></div>
-                     </div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Paleta Personalizada</p>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-6 h-6 rounded-full shadow-sm border border-white" style={{ background: `linear-gradient(to bottom right, ${localCustomColor}, ${localCustomGradientTo})` }}></div>
+                    </div>
                   </header>
-                  
+
                   <div className="space-y-4">
                     <div>
                       <div className="flex justify-between items-center mb-1.5">
@@ -265,13 +264,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         <code className="text-[10px] font-mono bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 uppercase">{localCustomColor}</code>
                       </div>
                       <div className="flex items-center space-x-3">
-                         <input 
-                           type="color" 
-                           value={localCustomColor}
-                           onChange={(e) => setLocalCustomColor(e.target.value)}
-                           className="w-10 h-10 rounded-lg overflow-hidden cursor-pointer border-none bg-transparent"
-                         />
-                         <div className="flex-grow h-2 bg-gradient-to-r from-red-500 via-green-500 to-blue-500 rounded-full"></div>
+                        <input
+                          type="color"
+                          value={localCustomColor}
+                          onChange={(e) => setLocalCustomColor(e.target.value)}
+                          className="w-10 h-10 rounded-lg overflow-hidden cursor-pointer border-none bg-transparent"
+                        />
+                        <div className="flex-grow h-2 bg-gradient-to-r from-red-500 via-green-500 to-blue-500 rounded-full"></div>
                       </div>
                     </div>
 
@@ -281,19 +280,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         <code className="text-[10px] font-mono bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 uppercase">{localCustomGradientTo}</code>
                       </div>
                       <div className="flex items-center space-x-3">
-                         <input 
-                           type="color" 
-                           value={localCustomGradientTo}
-                           onChange={(e) => setLocalCustomGradientTo(e.target.value)}
-                           className="w-10 h-10 rounded-lg overflow-hidden cursor-pointer border-none bg-transparent"
-                         />
-                         <div className="flex-grow h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                            <div className="h-full w-full" style={{ background: `linear-gradient(to right, ${localCustomColor}, ${localCustomGradientTo})` }}></div>
-                         </div>
+                        <input
+                          type="color"
+                          value={localCustomGradientTo}
+                          onChange={(e) => setLocalCustomGradientTo(e.target.value)}
+                          className="w-10 h-10 rounded-lg overflow-hidden cursor-pointer border-none bg-transparent"
+                        />
+                        <div className="flex-grow h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                          <div className="h-full w-full" style={{ background: `linear-gradient(to right, ${localCustomColor}, ${localCustomGradientTo})` }}></div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  
+
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-4 text-center">
                     Toca los cuadros de color para abrir el selector detallado.
                   </p>
