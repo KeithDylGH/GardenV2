@@ -136,7 +136,7 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
           Puede ser una foto de un Excel, una lista en WhatsApp o texto informal.
           Si falta información explícita (como el número de grupo), infiérelo del contexto o usa un nombre genérico (ej: "Grupo Mañana").
           
-          Extrae la información y devuélvela estrictamente como un ARRAY de objetos JSON.
+          Extrae la información e devuélvela estrictamente como un ARRAY de objetos JSON.
           No incluyas texto adicional, ni markdown, solo el JSON puro o dentro de un bloque de código json.
 
           Texto adicional (si hay):
@@ -237,7 +237,7 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
       aria-labelledby="import-title"
     >
       <div
-        className={`fixed bottom-0 left-0 right-0 bg-gray-100 dark:bg-slate-900 rounded-t-2xl shadow-2xl ${hasBeenOpened
+        className={`fixed bottom-0 left-0 right-0 bg-gray-100 dark:bg-slate-900 rounded-t-2xl shadow-2xl pb-[env(safe-area-inset-bottom)] ${hasBeenOpened
           ? `transition-transform ${performanceMode ? "duration-0" : "duration-300"
           } ease-in-out`
           : ""

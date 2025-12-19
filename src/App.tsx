@@ -58,13 +58,13 @@ import {
   Achievement,
 } from "./types";
 import {
+  hoursToHHMM,
+  getServiceYear,
+  formatDateKey,
   isSameDay,
   daysBetween,
   isWeekend,
-  getServiceYear,
-  getServiceYearMonths,
-  hoursToHHMM,
-  formatDateKey,
+  parseDateKey,
 } from "./utils";
 import ShareToast from "./components/ShareToast";
 import ShareReportModal from "./components/ShareReportModal";
@@ -100,7 +100,7 @@ const STUDY_NOTIFICATION_KEY = "garden-study-notification";
 const TUTORIALS: Record<AppView, TutorialStep[]> = {
   tracker: [
     {
-      target: "#service-tracker-card",
+      target: "#progress-display-container",
       title: "Tu Progreso Mensual",
       content:
         "Este es el corazón de tu informe. Muestra tu avance hacia la meta. ¡Tócalo para editar tu total de horas!",
@@ -291,7 +291,7 @@ const getInitialState = (): AppState | null => {
         // Skip metadata keys
         if (key.includes("SUMMARY") || key.includes("CARRYOVER")) continue;
         
-        const entryDate = new Date(key);
+        const entryDate = parseDateKey(key);
         if (isNaN(entryDate.getTime())) continue;
 
         if (
@@ -423,8 +423,8 @@ const App: React.FC = () => {
 
     let total = 0;
     for (const key in yearHistory) {
-      if (!key.includes("SUMMARY") && !isNaN(new Date(key).getTime())) {
-        const entryDate = new Date(key);
+      if (!key.includes("SUMMARY") && !key.includes("CARRYOVER")) {
+        const entryDate = parseDateKey(key);
         if (
           entryDate.getFullYear() === currentYear &&
           entryDate.getMonth() === currentMonth
@@ -452,8 +452,8 @@ const App: React.FC = () => {
 
     let total = 0;
     for (const key in yearHistory) {
-      if (!key.includes("SUMMARY") && !isNaN(new Date(key).getTime())) {
-        const entryDate = new Date(key);
+      if (!key.includes("SUMMARY") && !key.includes("CARRYOVER")) {
+        const entryDate = parseDateKey(key);
         if (
           entryDate.getFullYear() === currentYear &&
           entryDate.getMonth() === currentMonth
@@ -1155,8 +1155,8 @@ const App: React.FC = () => {
       total = 0; // reset total
       const currentMonthHistory = newArchives[serviceYear] || {};
       for (const key in currentMonthHistory) {
-        if (!key.includes("SUMMARY") && !isNaN(new Date(key).getTime())) {
-          const entryDate = new Date(key);
+        if (!key.includes("SUMMARY") && !key.includes("CARRYOVER")) {
+          const entryDate = parseDateKey(key);
           if (
             entryDate.getFullYear() === today.getFullYear() &&
             entryDate.getMonth() === today.getMonth()
@@ -1383,8 +1383,8 @@ const App: React.FC = () => {
         let total = 0;
 
         for (const key in currentMonthHistory) {
-          if (!key.includes("SUMMARY") && !isNaN(new Date(key).getTime())) {
-            const entryDate = new Date(key);
+          if (!key.includes("SUMMARY") && !key.includes("CARRYOVER")) {
+            const entryDate = parseDateKey(key);
             if (
               entryDate.getFullYear() === today.getFullYear() &&
               entryDate.getMonth() === today.getMonth()
@@ -1473,10 +1473,9 @@ const App: React.FC = () => {
         for (const key in currentMonthHistory) {
           if (
             !key.includes("SUMMARY") &&
-            !key.includes("CARRYOVER") &&
-            !isNaN(new Date(key).getTime())
+            !key.includes("CARRYOVER")
           ) {
-            const entryDate = new Date(key);
+            const entryDate = parseDateKey(key);
             if (
               entryDate.getFullYear() === today.getFullYear() &&
               entryDate.getMonth() === today.getMonth()
@@ -1548,8 +1547,8 @@ const App: React.FC = () => {
         let totalLdc = 0;
 
         for (const key in currentMonthHistory) {
-          if (!key.includes("SUMMARY") && !isNaN(new Date(key).getTime())) {
-            const entryDate = new Date(key);
+          if (!key.includes("SUMMARY") && !key.includes("CARRYOVER")) {
+            const entryDate = parseDateKey(key);
             if (
               entryDate.getFullYear() === today.getFullYear() &&
               entryDate.getMonth() === today.getMonth()

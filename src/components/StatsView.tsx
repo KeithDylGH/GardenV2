@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { HistoryLog, ThemeColor } from "../types";
-import { hoursToHHMM } from "../utils";
+import { hoursToHHMM, parseDateKey } from "../utils";
 import { CalendarStarIcon } from "./icons/CalendarStarIcon";
 import { ArrowTrendingUpIcon } from "./icons/ArrowTrendingUpIcon";
 
@@ -69,7 +69,7 @@ const StatsView: React.FC<StatsViewProps> = ({
         for (const dateKey in historyForYear) {
           if (dateKey.includes("CARRYOVER") || dateKey.includes("SUMMARY"))
             continue;
-          const entryDate = new Date(dateKey);
+          const entryDate = parseDateKey(dateKey);
           if (
             entryDate.getFullYear() === year &&
             entryDate.getMonth() === month

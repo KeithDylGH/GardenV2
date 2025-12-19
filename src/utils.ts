@@ -148,3 +148,13 @@ export const formatDateKey = (date: Date): string => {
   const day = date.getDate().toString().padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
+/**
+ * Safely parses a "YYYY-MM-DD" string key into a local Date object.
+ * This avoids the UTC shift issue with `new Date("YYYY-MM-DD")`.
+ * @param dateKey - The string key to parse (e.g., "2023-09-01").
+ * @returns A local Date object.
+ */
+export const parseDateKey = (dateKey: string): Date => {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};

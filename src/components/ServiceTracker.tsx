@@ -123,8 +123,8 @@ const ServiceTracker: React.FC<ServiceTrackerProps> = ({
               id="ghost-mode-toggle"
               onClick={onToggleGhostMode}
               className={`p-2 rounded-full transition-colors ${isGhostMode
-                ? theme.text + " " + theme.bg + " bg-opacity-10"
-                : "text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700/50"
+                  ? (themeColor === "custom" ? "text-custom bg-custom-subtle" : `${theme.text} ${theme.bg} bg-opacity-10`)
+                  : "text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700/50"
                 }`}
               aria-label={
                 isGhostMode

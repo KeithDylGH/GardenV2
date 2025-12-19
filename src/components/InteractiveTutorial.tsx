@@ -67,8 +67,8 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({
     if (left + popoverRect.width > screenWidth - margin)
       left = screenWidth - popoverRect.width - margin;
     if (top < margin) top = margin;
-    if (top + popoverRect.height > screenHeight - margin)
-      top = screenHeight - popoverRect.height - margin;
+    if (top + popoverRect.height > screenHeight - 80)
+      top = screenHeight - popoverRect.height - 80;
 
     setPopoverStyle({ top: `${top}px`, left: `${left}px` });
   };

@@ -9,7 +9,7 @@ import {
 } from "../types";
 import { THEMES } from "../constants";
 import CalendarGrid from "./CalendarGrid";
-import { getServiceYear, getServiceYearMonths, hoursToHHMM } from "../utils";
+import { getServiceYear, getServiceYearMonths, hoursToHHMM, parseDateKey } from "../utils";
 import { ChevronLeftIcon } from "./icons/ChevronLeftIcon";
 import { ChevronRightIcon } from "./icons/ChevronRightIcon";
 // Removing weather icons imports as they are replaced by emojis/text
@@ -125,7 +125,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
       const entry = historyForSelectedYear[dateKey];
       if (dateKey.includes("CARRYOVER") || dateKey.includes("SUMMARY")) return;
 
-      const entryDate = new Date(dateKey);
+      const entryDate = parseDateKey(dateKey);
       if (entryDate.getFullYear() === year && entryDate.getMonth() === month) {
         if (typeof entry === "object" && entry) {
           // Count events

@@ -125,9 +125,11 @@ const NotificationsModal: React.FC<NotificationsModalProps> = ({
                  {/* Visit Reminders */}
                  <div className="p-4 flex items-center justify-between border-t border-slate-100 dark:border-slate-700/50">
                     <div className="flex items-start space-x-3">
-                       <div className={`p-2 rounded-lg ${theme.bg} bg-opacity-10 dark:bg-opacity-20`}>
-                         <ArrowUturnLeftIcon className={`w-5 h-5 ${theme.text}`} />
-                       </div>
+                     <div className={`p-2 rounded-lg ${
+                       themeColor === "custom" ? "bg-custom-subtle" : `${theme.bg} bg-opacity-10 dark:bg-opacity-20`
+                     }`}>
+                       <ArrowUturnLeftIcon className={`w-5 h-5 ${themeColor === "custom" ? "text-custom" : theme.text}`} />
+                     </div>
                        <div>
                          <p className="font-semibold text-slate-700 dark:text-slate-200">
                            Recordar Revisitas
@@ -147,9 +149,11 @@ const NotificationsModal: React.FC<NotificationsModalProps> = ({
                  {/* Study Reminders */}
                  <div className="p-4 flex items-center justify-between border-t border-slate-100 dark:border-slate-700/50">
                     <div className="flex items-start space-x-3">
-                       <div className={`p-2 rounded-lg ${theme.bg} bg-opacity-10 dark:bg-opacity-20`}>
-                         <BookOpenIcon className={`w-5 h-5 ${theme.text}`} />
-                       </div>
+                       <div className={`p-2 rounded-lg ${
+                       themeColor === "custom" ? "bg-custom-subtle" : `${theme.bg} bg-opacity-10 dark:bg-opacity-20`
+                     }`}>
+                       <BookOpenIcon className={`w-5 h-5 ${themeColor === "custom" ? "text-custom" : theme.text}`} />
+                     </div>
                        <div>
                          <p className="font-semibold text-slate-700 dark:text-slate-200">
                            Recordar Estudios
@@ -176,8 +180,10 @@ const NotificationsModal: React.FC<NotificationsModalProps> = ({
              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                 <div className="p-4 flex items-center justify-between">
                    <div className="flex items-start space-x-3">
-                      <div className={`p-2 rounded-lg ${theme.bg} bg-opacity-10 dark:bg-opacity-20`}>
-                         <ClockIcon className={`w-5 h-5 ${theme.text}`} />
+                      <div className={`p-2 rounded-lg ${
+                        themeColor === "custom" ? "bg-custom-subtle" : `${theme.bg} bg-opacity-10 dark:bg-opacity-20`
+                      }`}>
+                         <ClockIcon className={`w-5 h-5 ${themeColor === "custom" ? "text-custom" : theme.text}`} />
                       </div>
                       <div>
                         <p className="font-semibold text-slate-700 dark:text-slate-200">
