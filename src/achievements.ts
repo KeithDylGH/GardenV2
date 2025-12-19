@@ -24,7 +24,9 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
       let hasAnyHours = false;
       for (const year in state.archives) {
         if (
-          Object.values(state.archives[year]).some((entry) => entry.hours > 0)
+          Object.values(state.archives[year]).some(
+            (entry) => entry.hours > 0 || (entry.ldcHours || 0) > 0
+          )
         ) {
           hasAnyHours = true;
           break;
@@ -173,7 +175,9 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
         const dateKey = formatDateKey(checkDate);
         const serviceYear = getServiceYear(checkDate);
         const history = state.archives[serviceYear] || {};
-        const hasHours = history[dateKey] && history[dateKey].hours > 0;
+        const hasHours =
+          history[dateKey] &&
+          (history[dateKey].hours > 0 || (history[dateKey].ldcHours || 0) > 0);
 
         if (!hasHours) {
           success = false;

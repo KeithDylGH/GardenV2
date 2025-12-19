@@ -1020,6 +1020,53 @@ const App: React.FC = () => {
     localStorage.setItem(PRIVACY_MODE_KEY, String(isPrivacyMode));
   }, [isPrivacyMode]);
 
+  const checkStreakConsistency = useCallback(() => {
+    if (!lastLogDate || streak <= 0) return;
+
+    const today = new Date();
+    const daysDiff = daysBetween(today, lastLogDate);
+
+    // If it's same day or the next day, it's potentially still valid
+    if (daysDiff <= 1) return;
+
+    // We missed at least one day (yesterday or older). Check if they were all protected.
+    let missedDaysAreProtected = true;
+    for (let i = 1; i < daysDiff; i++) {
+      const checkDate = new Date(lastLogDate);
+      checkDate.setDate(checkDate.getDate() + i);
+
+      const serviceYear = getServiceYear(checkDate);
+      const dateKey = formatDateKey(checkDate);
+      const dayEntry = archives[serviceYear]?.[dateKey];
+      const hasProtectedEvent =
+        dayEntry?.event === "circuit_assembly" ||
+        dayEntry?.event === "regional_convention" ||
+        dayEntry?.event === "memorial";
+
+      if (
+        !(
+          isWeekend(checkDate) ||
+          (protectedDay !== null && checkDate.getDay() === protectedDay) ||
+          hasProtectedEvent
+        )
+      ) {
+        missedDaysAreProtected = false;
+        break;
+      }
+    }
+
+    if (!missedDaysAreProtected) {
+      if (streak > 0) {
+        setShowStreakEndedToast(true);
+      }
+      setStreak(0);
+    }
+  }, [lastLogDate, streak, archives, protectedDay]);
+
+  useEffect(() => {
+    checkStreakConsistency();
+  }, [currentDate, checkStreakConsistency]);
+
   const updateStreak = () => {
     const today = new Date();
 
@@ -1066,7 +1113,7 @@ const App: React.FC = () => {
       if (missedDaysAreProtected) {
         setStreak((s) => s + 1);
       } else {
-        if (streak > 1) {
+        if (streak > 0) {
           setShowStreakEndedToast(true);
         }
         setStreak(1);

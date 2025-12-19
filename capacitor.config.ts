@@ -19,6 +19,12 @@ const config: CapacitorConfig = {
       androidScaleType: "CENTER_CROP",
       showSpinner: false,
     },
-  },
+    LiveUpdates: {
+      appId: 'b8a00d75', 
+      channel: 'Production',
+      autoUpdateMethod: 'background',
+      maxVersions: 2 // Recomendado para no llenar el almacenamiento del usuario
+    }
+  }
 };
 export default config;

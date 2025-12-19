@@ -690,7 +690,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                       type="text"
                       value={ldcHoursInput}
                       onChange={handleLdcHoursChange}
-                      placeholder="Ej: 8:00 o 6.5"
+                      placeholder="8:00"
                       className={`w-full px-4 py-3 text-center text-2xl font-bold bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${
                         themeColor === "custom" ? "ring-custom" : theme.ring
                       } outline-none transition dark:text-white ${isLdcHoursValid
