@@ -15,7 +15,7 @@ interface TimerProps {
   onFinishAndOpenModal: (hours: number) => void;
   themeColor: ThemeColor;
   performanceMode: boolean;
-
+  showTimer?: boolean;
   themeMode?: ThemeMode;
 }
 
@@ -35,6 +35,7 @@ const Timer: React.FC<TimerProps> = ({
   onFinishAndOpenModal,
   themeColor,
   performanceMode,
+  showTimer = true,
   themeMode = "dark",
 }) => {
   const [time, setTime] = useState(0); // in seconds
@@ -101,6 +102,19 @@ const Timer: React.FC<TimerProps> = ({
     };
   }, [isActive]);
 
+  // Handle auto-canceling notification if showTimer is disabled while active
+  useEffect(() => {
+    if (!showTimer && isActive && isCapacitor) {
+      import("@capacitor/local-notifications")
+        .then(({ LocalNotifications }) => {
+          LocalNotifications.cancel({
+            notifications: [{ id: NOTIFICATION_ID }],
+          });
+        })
+        .catch(console.error);
+    }
+  }, [showTimer, isActive, isCapacitor]);
+
   const requestCapacitorPermissions = async () => {
     if (isCapacitor) {
       try {
@@ -133,7 +147,7 @@ const Timer: React.FC<TimerProps> = ({
       if (newIsActive) {
         // Starting
         localStorage.setItem(TIMER_STORAGE.START_TIME, String(Date.now()));
-        if (permStatus?.display === "granted" && isCapacitor) {
+        if (permStatus?.display === "granted" && isCapacitor && showTimer) {
           import("@capacitor/local-notifications")
             .then(({ LocalNotifications }) => {
               LocalNotifications.schedule({
@@ -241,13 +255,21 @@ const Timer: React.FC<TimerProps> = ({
 
     switch (permissionStatus?.display) {
       case "granted":
-        return (
+        return showTimer ? (
           <div
             className={`${commonButtonClasses} bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-300 cursor-default`}
             title="Las notificaciones del temporizador están activadas."
           >
             <BellIcon className={commonIconClasses} />
             Notificaciones activas
+          </div>
+        ) : (
+          <div
+            className={`${commonButtonClasses} bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 cursor-default`}
+            title="Las notificaciones del temporizador están desactivadas en los ajustes."
+          >
+            <BellSlashIcon className={commonIconClasses} />
+            Notificaciones desactivadas
           </div>
         );
       case "denied":

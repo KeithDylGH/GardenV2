@@ -160,36 +160,6 @@ const HistoryView: React.FC<HistoryViewProps> = ({
 
   return (
     <div className="w-full max-w-4xl mx-auto mt-4">
-      <div className="mb-6">
-        <label htmlFor="history-year-selector" className="sr-only">
-          Seleccionar año de servicio
-        </label>
-        <select
-          id="history-year-selector"
-          value={selectedYear}
-          onChange={(e) => {
-            setSelectedYear(e.target.value);
-            const today = new Date();
-            const yearMonths = getServiceYearMonths(
-              new Date(parseInt(e.target.value.split("-")[0]), 8, 1)
-            );
-            const currentMonthIdx = yearMonths.findIndex(
-              (d) =>
-                d.getFullYear() === today.getFullYear() &&
-                d.getMonth() === today.getMonth()
-            );
-            setCurrentMonthIndex(currentMonthIdx !== -1 ? currentMonthIdx : 0);
-          }}
-          className={`w-full max-w-xs mx-auto block text-center py-2 px-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-md shadow-sm focus:outline-none focus:ring-2 ${theme.ring} font-semibold`}
-        >
-          {availableYears.map((year) => (
-            <option key={year} value={year}>
-              Año de Servicio {year}{" "}
-              {year === currentServiceYear ? "(Actual)" : ""}
-            </option>
-          ))}
-        </select>
-      </div>
 
       <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-700/50">
         <div
@@ -202,12 +172,40 @@ const HistoryView: React.FC<HistoryViewProps> = ({
           >
             <ChevronLeftIcon className="w-6 h-6 text-slate-500" />
           </button>
-          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 capitalize">
-            {selectedMonthDate.toLocaleDateString("es-ES", {
-              month: "long",
-              year: "numeric",
-            })}
-          </h2>
+          <div className="relative group cursor-pointer inline-block">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 capitalize">
+              {selectedMonthDate.toLocaleDateString("es-ES", {
+                month: "long",
+                year: "numeric",
+              })}
+            </h2>
+            <select
+              id="history-year-selector"
+              value={selectedYear}
+              onChange={(e) => {
+                setSelectedYear(e.target.value);
+                const today = new Date();
+                const yearMonths = getServiceYearMonths(
+                  new Date(parseInt(e.target.value.split("-")[0]), 8, 1)
+                );
+                const currentMonthIdx = yearMonths.findIndex(
+                  (d) =>
+                    d.getFullYear() === today.getFullYear() &&
+                    d.getMonth() === today.getMonth()
+                );
+                setCurrentMonthIndex(currentMonthIdx !== -1 ? currentMonthIdx : 0);
+              }}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none"
+              aria-label="Seleccionar año de servicio"
+            >
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  Año de Servicio {year}{" "}
+                  {year === currentServiceYear ? "(Actual)" : ""}
+                </option>
+              ))}
+            </select>
+          </div>
           <button
             onClick={handleNextMonth}
             className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"
@@ -257,8 +255,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({
         <div className="flex justify-center items-center gap-x-4 gap-y-2 flex-wrap">
           {eventCounts.circuit_assembly > 0 && <Stat Icon={HomeIcon} count={eventCounts.circuit_assembly} label="Asamblea" colorClass="text-indigo-500" />}
           {eventCounts.regional_convention > 0 && <Stat Icon={BuildingOfficeIcon} count={eventCounts.regional_convention} label="Regional" colorClass="text-purple-500" />}
-          {eventCounts.campaign > 0 && <Stat Icon={MegaphoneIcon} count={eventCounts.campaign} label="Campaña" colorClass="text-orange-500" />}
-          {eventCounts.cleaning > 0 && <Stat Icon={SparklesIcon} count={eventCounts.cleaning} label="Limpieza" colorClass="text-teal-500" />}
+          {eventCounts.campaign > 0 && <Stat Icon={MegaphoneIcon} count={eventCounts.campaign} label="Campaña" colorClass="text-slate-500 dark:text-slate-400" />}
+          {eventCounts.cleaning > 0 && <Stat Icon={SparklesIcon} count={eventCounts.cleaning} label="Limpieza" colorClass="text-slate-500 dark:text-slate-400" />}
           {eventCounts.sick > 0 && <Stat Icon={MedicalIcon} count={eventCounts.sick} label="Enfermo" colorClass="text-red-500" />}
           {eventCounts.co_visit > 0 && <Stat Icon={COVisitIcon} count={eventCounts.co_visit} label="Visita Sup." colorClass="text-emerald-500" />}
 
@@ -267,7 +265,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
               Icon={VestIcon}
               count={hoursToHHMM(totalLdcHours)}
               label="Acred."
-              colorClass={theme.text}
+              colorClass="text-slate-600 dark:text-slate-300"
             />
           )}
 

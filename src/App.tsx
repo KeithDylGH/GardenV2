@@ -34,6 +34,7 @@ import PlanningModal from "./components/PlanningModal";
 import PioneerUpgradeModal from "./components/PioneerUpgradeModal";
 import AchievementsView from "./components/AchievementsView";
 import AchievementToast from "./components/AchievementToast";
+import TimerSelectionModal from "./components/TimerSelectionModal";
 import { useOnlineStatus } from "./hooks/useOnlineStatus";
 import {
   AppView,
@@ -161,9 +162,9 @@ const TUTORIALS: Record<AppView, TutorialStep[]> = {
   history: [
     {
       target: "#history-year-selector",
-      title: "Historial Anual",
+      title: "Año de Servicio",
       content:
-        "Usa este selector para ver tu progreso en años de servicio anteriores.",
+        "Presiona el nombre del mes para elegir el año de servicio que quieres consultar.",
       position: "bottom",
     },
     {
@@ -538,6 +539,7 @@ const App: React.FC = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isHelpModalOpen, setHelpModalOpen] = useState(false);
   const [isOfflineReady, setIsOfflineReady] = useState(false);
+  const [isTimerSelectionModalOpen, setIsTimerSelectionModalOpen] = useState(false);
 
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [performanceMode, setPerformanceMode] = useState(
@@ -654,108 +656,6 @@ const App: React.FC = () => {
     };
     setSystemTheme();
   }, [themeMode]);
-
-  // Handle Android Back Button
-  useEffect(() => {
-    let backButtonListener: any;
-
-    const setupBackButton = async () => {
-      // Check if running on a native platform (Android/iOS)
-      if (window.Capacitor?.isNativePlatform()) {
-        try {
-          const { App: CapacitorApp } = await import("@capacitor/app");
-
-          backButtonListener = await CapacitorApp.addListener(
-            "backButton",
-            (data) => {
-              // Priority 1: Critical Modals & Alerts
-              if (showWelcome) {
-                CapacitorApp.exitApp();
-              } else if (activeTutorial) {
-                setActiveTutorial(null);
-              } else if (tutorialToConfirm) {
-                setTutorialToConfirm(null);
-              } else if (isStreakTutorialModalOpen) {
-                setStreakTutorialModalOpen(false);
-              } else if (isImportConfirmModalOpen) {
-                setImportConfirmModalOpen(false);
-              } else if (isGoalReachedModalOpen) {
-                setGoalReachedModalOpen(false);
-              } else if (isEndOfYearModalOpen) {
-                setEndOfYearModalOpen(false);
-              } else if (isPioneerUpgradeModalOpen) {
-                setIsPioneerUpgradeModalOpen(false);
-              }
-
-              // Priority 2: Full Screen / Feature Modals
-              else if (isMonthWrappedOpen) {
-                setIsMonthWrappedOpen(false);
-              } else if (isPlanningModalOpen) {
-                setIsPlanningModalOpen(false);
-              } else if (isProfileModalOpen) {
-                setIsProfileModalOpen(false);
-              } else if (isHelpModalOpen) {
-                setHelpModalOpen(false);
-              } else if (isSettingsOpen) {
-                setIsSettingsOpen(false);
-              } else if (isAddHoursModalOpen) {
-                setAddHoursModalOpen(false);
-              } else if (isStreakModalOpen) {
-                setIsStreakModalOpen(false);
-              } else if (isShareModalOpen) {
-                setIsShareModalOpen(false);
-              } else if (isNotificationsModalOpen) {
-                setIsNotificationsModalOpen(false);
-              } else if (isSidebarOpen) {
-                setSidebarOpen(false);
-              }
-
-              // Priority 3: Navigation
-              else if (activeView !== "tracker") {
-                setActiveView("tracker");
-                window.location.hash = "#/";
-              }
-
-              // Priority 4: Exit
-              else {
-                CapacitorApp.exitApp();
-              }
-            }
-          );
-        } catch (e) {
-          console.error("Error setting up back button listener:", e);
-        }
-      }
-    };
-
-    setupBackButton();
-
-    return () => {
-      if (backButtonListener) {
-        backButtonListener.remove();
-      }
-    };
-  }, [
-    showWelcome,
-    activeTutorial,
-    tutorialToConfirm,
-    isStreakTutorialModalOpen,
-    isImportConfirmModalOpen,
-    isGoalReachedModalOpen,
-    isEndOfYearModalOpen,
-    isPioneerUpgradeModalOpen,
-    isMonthWrappedOpen,
-    isPlanningModalOpen,
-    isProfileModalOpen,
-    isHelpModalOpen,
-    isSettingsOpen,
-    isAddHoursModalOpen,
-    isStreakModalOpen,
-    isShareModalOpen,
-    isSidebarOpen,
-    activeView,
-
-  ]);
 
   // Check for new service year on app load
   useEffect(() => {
@@ -1189,6 +1089,7 @@ const App: React.FC = () => {
 
   // Notifications & Timer State
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
+  const [timerHours, setTimerHours] = useState<number | null>(null);
   const [showTimer, setShowTimer] = useState(() => {
      try {
          const saved = localStorage.getItem(SHOW_TIMER_KEY);
@@ -1213,6 +1114,112 @@ const App: React.FC = () => {
          return saved === null ? true : saved === "true"; 
      } catch { return true; }
   });
+
+  const backButtonListenerRef = useRef<any>(null);
+
+  // Handle Android Back Button
+  useEffect(() => {
+
+    const setupBackButton = async () => {
+      // Check if running on a native platform (Android/iOS)
+      if (window.Capacitor?.isNativePlatform()) {
+        try {
+          const { App: CapacitorApp } = await import("@capacitor/app");
+
+          backButtonListenerRef.current = await CapacitorApp.addListener(
+            "backButton",
+            (data) => {
+              // Priority 1: Critical Modals & Alerts
+              if (showWelcome) {
+                CapacitorApp.exitApp();
+              } else if (activeTutorial) {
+                setActiveTutorial(null);
+              } else if (tutorialToConfirm) {
+                setTutorialToConfirm(null);
+              } else if (isStreakTutorialModalOpen) {
+                setStreakTutorialModalOpen(false);
+              } else if (isImportConfirmModalOpen) {
+                setImportConfirmModalOpen(false);
+              } else if (isGoalReachedModalOpen) {
+                setGoalReachedModalOpen(false);
+              } else if (isEndOfYearModalOpen) {
+                setEndOfYearModalOpen(false);
+              } else if (isPioneerUpgradeModalOpen) {
+                setIsPioneerUpgradeModalOpen(false);
+              }
+
+              // Priority 2: Full Screen / Feature Modals
+              else if (isMonthWrappedOpen) {
+                setIsMonthWrappedOpen(false);
+              } else if (isPlanningModalOpen) {
+                setIsPlanningModalOpen(false);
+              } else if (isProfileModalOpen) {
+                setIsProfileModalOpen(false);
+              } else if (isHelpModalOpen) {
+                setHelpModalOpen(false);
+              } else if (isSettingsOpen) {
+                setIsSettingsOpen(false);
+              } else if (isAddHoursModalOpen) {
+                setAddHoursModalOpen(false);
+              } else if (isStreakModalOpen) {
+                setIsStreakModalOpen(false);
+              } else if (isShareModalOpen) {
+                setIsShareModalOpen(false);
+              } else if (isNotificationsModalOpen) {
+                setIsNotificationsModalOpen(false);
+              } else if (isSidebarOpen) {
+                setSidebarOpen(false);
+              }
+
+              // Priority 3: Navigation
+              else if (activeView !== "tracker") {
+                setActiveView("tracker");
+                window.location.hash = "#/";
+              }
+
+              // Priority 4: Exit
+              else {
+                CapacitorApp.exitApp();
+              }
+            }
+          );
+        } catch (e) {
+          console.error("Error setting up back button listener:", e);
+        }
+      }
+    };
+
+    setupBackButton();
+
+    return () => {
+      if (backButtonListenerRef.current) {
+        backButtonListenerRef.current.remove();
+        backButtonListenerRef.current = null;
+      }
+    };
+  }, [
+    showWelcome,
+    activeTutorial,
+    tutorialToConfirm,
+    isStreakTutorialModalOpen,
+    isImportConfirmModalOpen,
+    isGoalReachedModalOpen,
+    isEndOfYearModalOpen,
+    isPioneerUpgradeModalOpen,
+    isMonthWrappedOpen,
+    isPlanningModalOpen,
+    isProfileModalOpen,
+    isHelpModalOpen,
+    isSettingsOpen,
+    isAddHoursModalOpen,
+    isStreakModalOpen,
+    isShareModalOpen,
+    isSidebarOpen,
+    isNotificationsModalOpen,
+    isTimerSelectionModalOpen,
+    activeView,
+    streak,
+  ]);
 
   const handleAddLdcHours = (ldcHoursToAdd: number, note?: string) => {
     if (ldcHoursToAdd <= 0 && (!note || !note.trim())) return;
@@ -1658,8 +1665,8 @@ const App: React.FC = () => {
                     if (!isStudy && !visitNotificationsEnabled) continue;
 
                     const body = isStudy 
-                        ? `garden | Hoy tienes que dar estudio a ${act.name}`
-                        : `garden | Hoy tienes que revisitar a ${act.name}`;
+                        ? `Recuerda darle estudio a ${act.name}`
+                        : `Recuerda revisitar a ${act.name}`;
                     
                     notificationsToSchedule.push({
                         title: isStudy ? "Estudio Bíblico" : "Revisita",
@@ -2173,8 +2180,28 @@ const App: React.FC = () => {
   };
 
   const handleTimerFinish = (hoursFromTimer: number) => {
-    setInitialHoursForModal(hoursFromTimer);
-    setAddHoursModalOpen(true);
+    setTimerHours(hoursFromTimer);
+    setIsTimerSelectionModalOpen(true);
+  };
+
+  const handleSelectStandardHours = () => {
+    if (timerHours !== null) {
+      setInitialHoursForModal(timerHours);
+      setIsEditLdcHoursMode(false);
+      setAddHoursModalOpen(true);
+      setIsTimerSelectionModalOpen(false);
+      setTimerHours(null);
+    }
+  };
+
+  const handleSelectLdcHours = () => {
+    if (timerHours !== null) {
+      setInitialHoursForModal(timerHours);
+      setIsEditLdcHoursMode(true);
+      setAddHoursModalOpen(true);
+      setIsTimerSelectionModalOpen(false);
+      setTimerHours(null);
+    }
   };
 
   const viewTitleMap: Record<AppView, string> = {
@@ -2624,6 +2651,14 @@ const App: React.FC = () => {
       <OfflineToast
         isVisible={isOfflineReady}
         onDismiss={() => setIsOfflineReady(false)}
+      />
+
+      <TimerSelectionModal
+        isOpen={isTimerSelectionModalOpen}
+        onClose={() => setIsTimerSelectionModalOpen(false)}
+        onSelectStandard={handleSelectStandardHours}
+        onSelectLdc={handleSelectLdcHours}
+        themeColor={themeColor}
       />
       <ShareToast
         isVisible={showShareToast}

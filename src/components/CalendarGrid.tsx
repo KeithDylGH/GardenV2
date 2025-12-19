@@ -295,8 +295,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                     {/* LDC Hours - Made larger as requested */}
                     {ldcHours > 0 && isCurrentMonth && !isSummaryMonth && (
                        <div className="flex items-center gap-0.5">
-                          <VestIcon className={`w-3 h-3 ${theme.text}`} />
-                          <span className={`text-[10px] font-bold leading-none ${theme.text}`}>
+                          <VestIcon className={`w-3 h-3 text-slate-600 dark:text-slate-300`} />
+                          <span className={`text-[10px] font-bold leading-none text-slate-600 dark:text-slate-300`}>
                             {isPrivacyMode ? "0" : hoursToHHMM(ldcHours)}
                           </span>
                        </div>
@@ -315,7 +315,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                              if (dayEntry?.event === 'circuit_assembly') icons.push(<HomeIcon key="event" className={`${iconSizeClass} text-indigo-500`} />);
                              else if (dayEntry?.event === 'regional_convention') icons.push(<BuildingOfficeIcon key="event" className={`${iconSizeClass} text-purple-500`} />);
                              else if (dayEntry?.event === 'memorial') icons.push(<WineIcon key="event" className={`${iconSizeClass} text-rose-500`} />);
-                             else if (dayEntry?.event === 'cleaning') icons.push(<SparklesIcon key="event" className={`${iconSizeClass} text-teal-500`} />);
+                             else if (dayEntry?.event === 'cleaning') icons.push(<SparklesIcon key="event" className={`${iconSizeClass} text-slate-500 dark:text-slate-400`} />);
                              else if (dayEntry?.event === 'co_visit') icons.push(<COVisitIcon key="event" className={`${iconSizeClass} text-emerald-500`} />);
                              else if (dayEntry?.event === 'sick' || status === 'sick') icons.push(<MedicalIcon key="event" className={`${iconSizeClass} text-red-500`} />);
                         }
@@ -330,10 +330,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                             const recurring = recurringActivitiesByDayOfWeek.get(date.getDay());
                             if (recurring) {
                                 if (recurring.visit) {
-                                    icons.push(<ArrowUturnLeftIcon key="recurring-visit" className={`${iconSizeClass} text-blue-500`} />);
+                                    icons.push(<ArrowUturnLeftIcon key="recurring-visit" className={`${iconSizeClass} text-slate-500 dark:text-slate-400`} />);
                                 }
                                 if (recurring.study) {
-                                    icons.push(<BookOpenIcon key="recurring-study" className={`${iconSizeClass} text-purple-500`} />);
+                                    icons.push(<BookOpenIcon key="recurring-study" className={`${iconSizeClass} text-slate-500 dark:text-slate-400`} />);
                                 }
                             }
                         }

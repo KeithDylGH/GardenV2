@@ -93,7 +93,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="text-right">
           <LeafIcon className={`w-10 h-10 ${iconAndTextColorClass}`} />
           <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-1">
-            V1.6.1
+            V1.7
           </p>
         </div>
       </button>

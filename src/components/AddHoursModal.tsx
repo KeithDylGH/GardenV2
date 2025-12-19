@@ -212,9 +212,15 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
       setNotesInput("");
 
       if (initialHours && initialHours > 0) {
-        setActiveTab("hours");
-        setHoursInput(hoursToHHMM(initialHours));
-        setLdcHoursInput("");
+        if (isEditLdcMode) {
+          setActiveTab("ldc");
+          setLdcHoursInput(hoursToHHMM(initialHours));
+          setHoursInput("");
+        } else {
+          setActiveTab("hours");
+          setHoursInput(hoursToHHMM(initialHours));
+          setLdcHoursInput("");
+        }
       } else if (activityToEdit) {
         setActiveTab(activityToEdit.type);
         setName(activityToEdit.name);
@@ -666,7 +672,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                 </p>
                 <div>
                   <label htmlFor="ldc-hours-input" className="sr-only">
-                    Horas LDC
+                    Horas Acreditadas
                   </label>
                   <div className="flex items-center gap-2">
                     <button

@@ -6,6 +6,9 @@ import { SparklesIcon } from "./icons/SparklesIcon";
 import GroupArrangementCard from "./GroupArrangementCard";
 import { RefreshIcon } from "./icons/RefreshIcon";
 
+const AI_COOLDOWN_KEY = "ai_import_cooldown_timestamp";
+const COOLDOWN_DURATION = 3 * 60 * 1000; // 3 minutes in ms
+
 interface ImportArrangementModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -31,13 +34,24 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
   const [processedArrangements, setProcessedArrangements] = useState<
     GroupArrangement[] | null
   >(null);
+  const [cooldownTimeLeft, setCooldownTimeLeft] = useState(0);
   const theme = THEMES[themeColor] || THEMES.blue;
   const processingCancelledRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       setHasBeenOpened(true);
+      
+      // Check for existing cooldown
+      const lastImport = localStorage.getItem(AI_COOLDOWN_KEY);
+      if (lastImport) {
+        const elapsed = Date.now() - parseInt(lastImport, 10);
+        if (elapsed < COOLDOWN_DURATION) {
+            setCooldownTimeLeft(Math.ceil((COOLDOWN_DURATION - elapsed) / 1000));
+        }
+      }
     } else {
       if (isLoading) {
         processingCancelledRef.current = true;
@@ -51,6 +65,26 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
       }, 300);
     }
   }, [isOpen, isLoading]);
+
+  useEffect(() => {
+    if (cooldownTimeLeft > 0) {
+      cooldownTimerRef.current = setInterval(() => {
+        setCooldownTimeLeft((prev) => {
+          if (prev <= 1) {
+            if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
+    }
+
+    return () => {
+      if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
+    };
+  }, [cooldownTimeLeft]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -93,7 +127,7 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
     while (!processingCancelledRef.current) {
       try {
         const ai = new GoogleGenAI({
-          apiKey: import.meta.env.VITE_GEMINI_API_KEY as string,
+          apiKey: import.meta.env.VITE_GEMINI_API_KEYS as string,
         });
 
         const responseSchema = {
@@ -191,6 +225,12 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
         if (Array.isArray(parsedData)) {
           setProcessedArrangements(parsedData);
           setIsLoading(false);
+          
+          // Set cooldown
+          const now = Date.now();
+          localStorage.setItem(AI_COOLDOWN_KEY, now.toString());
+          setCooldownTimeLeft(Math.ceil(COOLDOWN_DURATION / 1000));
+          
           return; // Success
         } else {
           throw new Error("La respuesta no contiene una lista de grupos válida.");
@@ -379,8 +419,8 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
                   onClick={handleProcess}
                   className={`w-full px-6 py-3 rounded-lg ${
                     themeColor === "custom" ? "bg-custom" : theme.bg
-                  } text-white font-bold text-lg shadow-lg transform hover:scale-105 transition-transform flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
-                  disabled={isLoading || !isOnline}
+                  } text-white font-bold text-lg shadow-lg transform ${cooldownTimeLeft > 0 || isLoading || !isOnline ? "" : "hover:scale-105"} transition-transform flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  disabled={isLoading || !isOnline || cooldownTimeLeft > 0}
                 >
                   {isLoading ? (
                     <>
@@ -405,6 +445,10 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
                         ></path>
                       </svg>
                       Procesando...
+                    </>
+                  ) : cooldownTimeLeft > 0 ? (
+                    <>
+                       Espera {Math.floor(cooldownTimeLeft / 60)}:{(cooldownTimeLeft % 60).toString().padStart(2, '0')}...
                     </>
                   ) : (
                     <>

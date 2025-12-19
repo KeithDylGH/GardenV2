@@ -275,6 +275,7 @@ const ServiceTracker: React.FC<ServiceTrackerProps> = ({
               themeColor={themeColor}
               performanceMode={performanceMode}
               themeMode={themeMode}
+              showTimer={showTimer}
             />
           </div>
         )}
