@@ -9,6 +9,7 @@ import { Capacitor } from "@capacitor/core";
 import { Share } from "@capacitor/share";
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
 import { LocalNotifications } from "@capacitor/local-notifications";
+import { App as CapacitorApp } from "@capacitor/app";
 import Header from "./components/Header";
 import BottomNav from "./components/BottomNav";
 import ServiceTracker from "./components/ServiceTracker";
@@ -1182,16 +1183,12 @@ const App: React.FC = () => {
 
   // Handle Android Back Button
   useEffect(() => {
-
     const setupBackButton = async () => {
-      // Check if running on a native platform (Android/iOS)
-      if (window.Capacitor?.isNativePlatform()) {
+      if (Capacitor.isNativePlatform()) {
         try {
-          const { App: CapacitorApp } = await import("@capacitor/app");
-
           backButtonListenerRef.current = await CapacitorApp.addListener(
             "backButton",
-            (data) => {
+            () => {
               // Priority 1: Critical Modals & Alerts
               if (showWelcome) {
                 CapacitorApp.exitApp();
@@ -1230,17 +1227,24 @@ const App: React.FC = () => {
                 setIsShareModalOpen(false);
               } else if (isNotificationsModalOpen) {
                 setIsNotificationsModalOpen(false);
+              } else if (isTimerSelectionModalOpen) {
+                setIsTimerSelectionModalOpen(false);
               } else if (isSidebarOpen) {
                 setSidebarOpen(false);
               }
 
-              // Priority 3: Navigation
+              // Priority 3: UI States
+              else if (isStatsMode) {
+                setIsStatsMode(false);
+              }
+
+              // Priority 4: Navigation
               else if (activeView !== "tracker") {
                 setActiveView("tracker");
                 window.location.hash = "#/";
               }
 
-              // Priority 4: Exit
+              // Priority 5: Exit
               else {
                 CapacitorApp.exitApp();
               }
@@ -1280,8 +1284,8 @@ const App: React.FC = () => {
     isSidebarOpen,
     isNotificationsModalOpen,
     isTimerSelectionModalOpen,
+    isStatsMode,
     activeView,
-    streak,
   ]);
 
   const handleAddLdcHours = (ldcHoursToAdd: number, note?: string) => {
@@ -2056,6 +2060,10 @@ const App: React.FC = () => {
     setEndOfYearModalOpen(false);
   };
 
+  const handleOpenWeb = () => {
+    window.open("https://garden-yqpu.onrender.com/", "_blank");
+  };
+
   const handleExportData = async () => {
     const stateString = localStorage.getItem(APP_STORAGE_key);
     if (!stateString) return;
@@ -2567,6 +2575,7 @@ const App: React.FC = () => {
           setSidebarOpen(false);
           setIsNotificationsModalOpen(true);
         }}
+        onOpenWeb={handleOpenWeb}
         themeMode={themeMode}
       />
       <input

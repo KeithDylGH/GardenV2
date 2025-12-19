@@ -14,6 +14,7 @@ import { FaceSmileIcon } from "./icons/FaceSmileIcon";
 import { UserIcon } from "./icons/UserIcon";
 import { LeafIcon } from "./icons/LeafIcon";
 import { NotificationIcon } from "./icons/NotificationIcon";
+import { ShareIcon } from "./icons/ShareIcon";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ interface SidebarProps {
   onPioneerUpgradeClick: () => void;
   onAchievementsClick: () => void;
   onNotificationsClick: () => void;
+  onOpenWeb: () => void;
   themeMode: ThemeMode;
 }
 
@@ -50,6 +52,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onPioneerUpgradeClick,
   onAchievementsClick,
   onNotificationsClick,
+  onOpenWeb,
   themeMode,
 }) => {
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
@@ -199,6 +202,15 @@ const Sidebar: React.FC<SidebarProps> = ({
               </p>
             </button>
             <button
+              onClick={onOpenWeb}
+              className="w-full text-left p-3 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50"
+            >
+              <ShareIcon className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`} />
+              <p className="font-semibold text-slate-700 dark:text-slate-200">
+                Ir a Garden Web
+              </p>
+            </button>
+            <button
               onClick={onSettingsClick}
               className="w-full text-left p-3 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50"
             >
@@ -261,9 +273,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     >
       <aside
         className={`fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-gray-100 dark:bg-slate-900 shadow-2xl flex flex-col pt-[calc(env(safe-area-inset-top)+0.25rem)] pb-[env(safe-area-inset-bottom)] ${hasBeenOpened
-            ? `transition-transform ${performanceMode ? "duration-0" : "duration-300"
-            } ease-in-out`
-            : ""
+          ? `transition-transform ${performanceMode ? "duration-0" : "duration-300"
+          } ease-in-out`
+          : ""
           } ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
         onClick={(e) => e.stopPropagation()}
       >
