@@ -30,6 +30,7 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
 }) => {
   const [title, setTitle] = useState("");
   const [timeRange, setTimeRange] = useState("");
+  const [reminderTime, setReminderTime] = useState("");
   const [selectedActivityIds, setSelectedActivityIds] = useState<Set<string>>(
     new Set()
   );
@@ -42,10 +43,12 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
       if (blockToEdit) {
         setTitle(blockToEdit.title);
         setTimeRange(blockToEdit.timeRange || "");
+        setReminderTime(blockToEdit.reminderTime || "");
         setSelectedActivityIds(new Set(blockToEdit.activityIds));
       } else {
         setTitle("");
         setTimeRange("");
+        setReminderTime("");
         setSelectedActivityIds(new Set());
       }
     }
@@ -63,6 +66,7 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
       onSave(date, {
         title: title.trim(),
         timeRange: timeRange.trim(),
+        reminderTime: reminderTime.trim(),
         activityIds: Array.from(selectedActivityIds),
       });
     }
@@ -90,22 +94,19 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 z-50 ${
-        hasBeenOpened ? "transition-colors duration-300" : ""
-      } ${isOpen ? "bg-black/40" : "bg-transparent pointer-events-none"}`}
+      className={`fixed inset-0 z-50 ${hasBeenOpened ? "transition-colors duration-300" : ""
+        } ${isOpen ? "bg-black/40" : "bg-transparent pointer-events-none"}`}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="planning-modal-title"
     >
       <div
-        className={`fixed bottom-0 left-0 right-0 bg-gray-100 dark:bg-slate-900 rounded-t-2xl shadow-2xl ${
-          hasBeenOpened
-            ? `transition-transform ${
-                performanceMode ? "duration-0" : "duration-300"
-              } ease-in-out`
-            : ""
-        } ${isOpen ? "translate-y-0" : "translate-y-full"} pb-[env(safe-area-inset-bottom)]`}
+        className={`fixed bottom-0 left-0 right-0 bg-gray-100 dark:bg-slate-900 rounded-t-2xl shadow-2xl ${hasBeenOpened
+          ? `transition-transform ${performanceMode ? "duration-0" : "duration-300"
+          } ease-in-out`
+          : ""
+          } ${isOpen ? "translate-y-0" : "translate-y-full"} pb-[env(safe-area-inset-bottom)]`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-4" />
@@ -139,9 +140,8 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Ej: Predicación Matutina"
-                  className={`mt-1 w-full px-4 py-2 bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${
-                    themeColor === "custom" ? "ring-custom" : theme.ring
-                  } outline-none transition dark:text-white border-slate-300 dark:border-slate-600`}
+                  className={`mt-1 w-full px-4 py-2 bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${themeColor === "custom" ? "ring-custom" : theme.ring
+                    } outline-none transition dark:text-white border-slate-300 dark:border-slate-600`}
                   required
                 />
               </div>
@@ -158,10 +158,38 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
                   value={timeRange}
                   onChange={(e) => setTimeRange(e.target.value)}
                   placeholder="Ej: 9:00 - 12:00"
-                  className={`mt-1 w-full px-4 py-2 bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${
-                    themeColor === "custom" ? "ring-custom" : theme.ring
-                  } outline-none transition dark:text-white border-slate-300 dark:border-slate-600`}
+                  className={`mt-1 w-full px-4 py-2 bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${themeColor === "custom" ? "ring-custom" : theme.ring
+                    } outline-none transition dark:text-white border-slate-300 dark:border-slate-600`}
                 />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="plan-reminder"
+                  className="text-sm font-medium text-slate-700 dark:text-slate-300"
+                >
+                  Hora de Recordatorio (opcional)
+                </label>
+                <div className="flex items-center gap-2 mt-1">
+                  <input
+                    id="plan-reminder"
+                    type="time"
+                    value={reminderTime}
+                    onChange={(e) => setReminderTime(e.target.value)}
+                    className={`flex-grow px-4 py-2 bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${themeColor === "custom" ? "ring-custom" : theme.ring
+                      } outline-none transition dark:text-white border-slate-300 dark:border-slate-600`}
+                  />
+                  {reminderTime && (
+                    <button
+                      type="button"
+                      onClick={() => setReminderTime("")}
+                      className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                      title="Borrar recordatorio"
+                    >
+                      <TrashIcon className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -175,18 +203,16 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
                         type="button"
                         key={act.id}
                         onClick={() => toggleActivitySelection(act.id)}
-                        className={`w-full text-left p-2 rounded-md flex items-center gap-3 ${
-                          selectedActivityIds.has(act.id)
-                            ? themeColor === "custom" ? "bg-custom-subtle" : `${theme.bg} bg-opacity-10 dark:bg-opacity-20`
-                            : "hover:bg-slate-100 dark:hover:bg-slate-700/50"
-                        }`}
+                        className={`w-full text-left p-2 rounded-md flex items-center gap-3 ${selectedActivityIds.has(act.id)
+                          ? themeColor === "custom" ? "bg-custom-subtle" : `${theme.bg} bg-opacity-10 dark:bg-opacity-20`
+                          : "hover:bg-slate-100 dark:hover:bg-slate-700/50"
+                          }`}
                       >
                         <div
-                          className={`w-5 h-5 flex-shrink-0 rounded border-2 flex items-center justify-center ${
-                            selectedActivityIds.has(act.id)
-                              ? `${themeColor === "custom" ? "bg-custom" : theme.bg} border-transparent`
-                              : "border-slate-300 dark:border-slate-500"
-                          }`}
+                          className={`w-5 h-5 flex-shrink-0 rounded border-2 flex items-center justify-center ${selectedActivityIds.has(act.id)
+                            ? `${themeColor === "custom" ? "bg-custom" : theme.bg} border-transparent`
+                            : "border-slate-300 dark:border-slate-500"
+                            }`}
                         >
                           {selectedActivityIds.has(act.id) && (
                             <div className="w-2.5 h-2.5 bg-white rounded-sm"></div>
@@ -214,11 +240,9 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
             <div className="flex flex-col space-y-3 mt-6">
               <button
                 type="submit"
-                className={`w-full px-6 py-3 rounded-lg ${
-                  themeColor === "custom" ? "bg-custom" : theme.bg
-                } text-white font-bold text-lg shadow-lg transition-transform ${
-                  !performanceMode && "transform hover:scale-105"
-                }`}
+                className={`w-full px-6 py-3 rounded-lg ${themeColor === "custom" ? "bg-custom" : theme.bg
+                  } text-white font-bold text-lg shadow-lg transition-transform ${!performanceMode && "transform hover:scale-105"
+                  }`}
               >
                 {blockToEdit ? "Guardar Cambios" : "Guardar Plan"}
               </button>
