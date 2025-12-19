@@ -70,6 +70,7 @@ import {
 } from "./utils";
 import ShareToast from "./components/ShareToast";
 import ShareReportModal from "./components/ShareReportModal";
+import StreakEndedToast from "./components/StreakEndedToast";
 import { ALL_ACHIEVEMENTS } from "./achievements";
 import { THEMES } from "./constants";
 
@@ -574,6 +575,7 @@ const App: React.FC = () => {
     useState(false);
   const [showShareToast, setShowShareToast] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [showStreakEndedToast, setShowStreakEndedToast] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1064,6 +1066,9 @@ const App: React.FC = () => {
       if (missedDaysAreProtected) {
         setStreak((s) => s + 1);
       } else {
+        if (streak > 1) {
+          setShowStreakEndedToast(true);
+        }
         setStreak(1);
       }
     }
@@ -1317,6 +1322,7 @@ const App: React.FC = () => {
       return newArchives;
     });
     setCurrentLdcHours((prev) => prev + ldcHoursToAdd);
+    if (ldcHoursToAdd > 0) updateStreak();
     handleCloseModal();
   };
 
@@ -1364,6 +1370,7 @@ const App: React.FC = () => {
       });
     }
     setCurrentLdcHours(totalLdcHours);
+    if (totalLdcHours > 0) updateStreak();
     handleCloseModal();
   };
 
@@ -1563,6 +1570,17 @@ const App: React.FC = () => {
 
       return newArchives;
     });
+
+    if (ldcHours > 0) {
+      const today = new Date();
+      if (date.getTime() <= today.getTime()) {
+        if (!lastLogDate || date > lastLogDate) {
+          setLastLogDate(date);
+          if (streak === 0) setStreak(1);
+        }
+      }
+    }
+
     handleCloseModal();
   };
 
@@ -2808,6 +2826,10 @@ const App: React.FC = () => {
       <ShareToast
         isVisible={showShareToast}
         onDismiss={() => setShowShareToast(false)}
+      />
+      <StreakEndedToast
+        isVisible={showStreakEndedToast}
+        onDismiss={() => setShowStreakEndedToast(false)}
       />
     </div>
   );
