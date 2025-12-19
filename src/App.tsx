@@ -97,6 +97,7 @@ const SHOW_TIMER_KEY = "garden-show-timer";
 const REPORT_NOTIFICATION_KEY = "garden-report-notification";
 const VISIT_NOTIFICATION_KEY = "garden-visit-notification";
 const STUDY_NOTIFICATION_KEY = "garden-study-notification";
+const PLAN_NOTIFICATION_KEY = "garden-plan-notification";
 
 const TUTORIALS: Record<AppView, TutorialStep[]> = {
   tracker: [
@@ -227,7 +228,7 @@ const getInitialState = (): AppState | null => {
     const today = new Date();
     // Force current date to today so the app always opens in the context of "now"
     parsed.currentDate = today;
-    
+
     const currentServiceYear = getServiceYear(today);
 
     // History migration to multi-year archive structure and DayEntry object structure
@@ -283,32 +284,32 @@ const getInitialState = (): AppState | null => {
     // This fixes the issue where starting a new month (e.g. Nov -> Dec) still shows Nov hours
     let recalculatedHours = 0;
     let recalculatedLdcHours = 0;
-    
+
     // We check the archives for the current service year
     const currentYearArchives = parsed.archives[currentServiceYear] || {};
-    
+
     // Sum hours for the specific current month
     for (const key in currentYearArchives) {
-        // Skip metadata keys
-        if (key.includes("SUMMARY") || key.includes("CARRYOVER")) continue;
-        
-        const entryDate = parseDateKey(key);
-        if (isNaN(entryDate.getTime())) continue;
+      // Skip metadata keys
+      if (key.includes("SUMMARY") || key.includes("CARRYOVER")) continue;
 
-        if (
-            entryDate.getFullYear() === today.getFullYear() &&
-            entryDate.getMonth() === today.getMonth()
-        ) {
-            const entry = currentYearArchives[key];
-            recalculatedHours += entry.hours || 0;
-            recalculatedLdcHours += entry.ldcHours || 0;
-        }
+      const entryDate = parseDateKey(key);
+      if (isNaN(entryDate.getTime())) continue;
+
+      if (
+        entryDate.getFullYear() === today.getFullYear() &&
+        entryDate.getMonth() === today.getMonth()
+      ) {
+        const entry = currentYearArchives[key];
+        recalculatedHours += entry.hours || 0;
+        recalculatedLdcHours += entry.ldcHours || 0;
+      }
     }
 
     // Add carryover for this month if it exists
     const carryoverKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-CARRYOVER`;
     if (currentYearArchives[carryoverKey]) {
-        recalculatedHours += currentYearArchives[carryoverKey].hours || 0;
+      recalculatedHours += currentYearArchives[carryoverKey].hours || 0;
     }
 
     parsed.currentHours = recalculatedHours;
@@ -798,21 +799,77 @@ const App: React.FC = () => {
               };
             }
           })
-          .catch((error) => console.log("SW registration failed: ", error));
+          .catch((error) => {
+            console.log("SW registration failed: ", error);
+          });
       });
     }
   }, []);
+
+  // Check for shared files (Pending Import) from MainActivity
+  const checkForPendingImport = useCallback(async () => {
+    try {
+      const filename = "pending_import.json";
+      try {
+        // Check if file exists by trying to read it
+        const result = await Filesystem.readFile({
+          path: filename,
+          directory: Directory.Cache,
+          encoding: Encoding.UTF8,
+        });
+
+        if (result.data) {
+          const content = typeof result.data === "string" ? result.data : JSON.stringify(result.data);
+          try {
+            const parsedState = JSON.parse(content) as AppState;
+            // Basic validation
+            if (parsedState.userName && parsedState.archives) {
+              setImportedState(parsedState);
+              setImportConfirmModalOpen(true);
+
+              // Delete the file after successful read
+              await Filesystem.deleteFile({
+                path: filename,
+                directory: Directory.Cache,
+              });
+            }
+          } catch (parseError) {
+            console.error("Error parsing imported file", parseError);
+          }
+        }
+      } catch (readError) {
+        // File mostly won't exist, which is normal
+      }
+    } catch (e) {
+      console.error("Error checking for pending import", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Check on launch
+    checkForPendingImport();
+
+    // Listen for custom event from MainActivity
+    const handleImportAvailable = () => {
+      checkForPendingImport();
+    };
+    window.addEventListener("gardenImportAvailable", handleImportAvailable);
+
+    return () => {
+      window.removeEventListener("gardenImportAvailable", handleImportAvailable);
+    };
+  }, [checkForPendingImport]);
 
   useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle("dark", themeMode !== "light");
     root.classList.toggle("theme-black", themeMode === "black");
-    
+
     // Apply custom colors if active
     if (themeColor === "custom") {
       root.style.setProperty("--custom-color", customColor);
       root.style.setProperty("--custom-gradient-to", customGradientTo);
-      
+
       const hexToRgb = (hex: string) => {
         if (!hex || hex.length < 7) return "59 130 246";
         const r = parseInt(hex.slice(1, 3), 16);
@@ -820,7 +877,7 @@ const App: React.FC = () => {
         const b = parseInt(hex.slice(5, 7), 16);
         return `${r} ${g} ${b}`;
       };
-      
+
       try {
         root.style.setProperty("--custom-color-rgb", hexToRgb(customColor));
         root.style.setProperty("--custom-gradient-to-rgb", hexToRgb(customGradientTo));
@@ -980,16 +1037,16 @@ const App: React.FC = () => {
       for (let i = 1; i < daysDiff; i++) {
         const checkDate = new Date(lastLogDate);
         checkDate.setDate(checkDate.getDate() + i);
-        
+
         // Extended protection logic:
         // Protected if: Weekend OR Protected Weekday OR Special Event (Assembly, Memorial)
-        
+
         const serviceYear = getServiceYear(checkDate);
         const dateKey = formatDateKey(checkDate);
         const dayEntry = archives[serviceYear]?.[dateKey];
-        const hasProtectedEvent = dayEntry?.event === 'circuit_assembly' || 
-                                  dayEntry?.event === 'regional_convention' || 
-                                  dayEntry?.event === 'memorial';
+        const hasProtectedEvent = dayEntry?.event === 'circuit_assembly' ||
+          dayEntry?.event === 'regional_convention' ||
+          dayEntry?.event === 'memorial';
 
         if (
           !(
@@ -1016,13 +1073,13 @@ const App: React.FC = () => {
     if (hoursToAdd <= 0) return;
 
     const today = new Date();
-    
+
     // Ensure currentDate is in sync with today to properly recalculate hours
     // This fixes the issue where hours aren't displayed after crossing month boundaries
     if (!isSameDay(today, currentDate)) {
       setCurrentDate(today);
     }
-    
+
     const serviceYear = getServiceYear(today);
     const dateKey = formatDateKey(today);
 
@@ -1091,28 +1148,34 @@ const App: React.FC = () => {
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
   const [timerHours, setTimerHours] = useState<number | null>(null);
   const [showTimer, setShowTimer] = useState(() => {
-     try {
-         const saved = localStorage.getItem(SHOW_TIMER_KEY);
-         return saved === null ? true : saved === "true";
-     } catch { return true; }
+    try {
+      const saved = localStorage.getItem(SHOW_TIMER_KEY);
+      return saved === null ? true : saved === "true";
+    } catch { return true; }
   });
   const [reportNotificationEnabled, setReportNotificationEnabled] = useState(() => {
-     try {
-         const saved = localStorage.getItem(REPORT_NOTIFICATION_KEY);
-         return saved === null ? false : saved === "true"; 
-     } catch { return false; }
+    try {
+      const saved = localStorage.getItem(REPORT_NOTIFICATION_KEY);
+      return saved === null ? false : saved === "true";
+    } catch { return false; }
   });
   const [visitNotificationsEnabled, setVisitNotificationsEnabled] = useState(() => {
-     try {
-         const saved = localStorage.getItem(VISIT_NOTIFICATION_KEY);
-         return saved === null ? true : saved === "true"; 
-     } catch { return true; }
+    try {
+      const saved = localStorage.getItem(VISIT_NOTIFICATION_KEY);
+      return saved === null ? true : saved === "true";
+    } catch { return true; }
   });
   const [studyNotificationsEnabled, setStudyNotificationsEnabled] = useState(() => {
-     try {
-         const saved = localStorage.getItem(STUDY_NOTIFICATION_KEY);
-         return saved === null ? true : saved === "true"; 
-     } catch { return true; }
+    try {
+      const saved = localStorage.getItem(STUDY_NOTIFICATION_KEY);
+      return saved === null ? true : saved === "true";
+    } catch { return true; }
+  });
+  const [planNotificationsEnabled, setPlanNotificationsEnabled] = useState(() => {
+    try {
+      const saved = localStorage.getItem(PLAN_NOTIFICATION_KEY);
+      return saved === null ? true : saved === "true";
+    } catch { return true; }
   });
 
   const backButtonListenerRef = useRef<any>(null);
@@ -1418,9 +1481,9 @@ const App: React.FC = () => {
       const today = new Date();
       // Only update last log date if the entry is for today or in the past
       if (date.getTime() <= today.getTime()) {
-         // Should we strictly update lastLogDate? 
-         // If I mark memorial today, I want to keep my streak active.
-         // Current logic updates lastLogDate if date > lastLogDate.
+        // Should we strictly update lastLogDate? 
+        // If I mark memorial today, I want to keep my streak active.
+        // Current logic updates lastLogDate if date > lastLogDate.
         if (!lastLogDate || date > lastLogDate) {
           setLastLogDate(date);
           // Only increment streak if it was 0, otherwise let updateStreak handle the diff logic?
@@ -1590,38 +1653,42 @@ const App: React.FC = () => {
     localStorage.setItem(REPORT_NOTIFICATION_KEY, String(reportNotificationEnabled));
   }, [reportNotificationEnabled]);
 
+  useEffect(() => {
+    localStorage.setItem(PLAN_NOTIFICATION_KEY, String(planNotificationsEnabled));
+  }, [planNotificationsEnabled]);
+
   // Handle Report Notification Scheduling
   const scheduleReportNotification = async (enabled: boolean) => {
     if (!Capacitor.isNativePlatform()) return;
 
     if (enabled) {
-        // Request Permissions
-        const permStatus = await LocalNotifications.requestPermissions();
-        if (permStatus.display === 'granted') {
-             // Schedule for 1st of next month at 9:00 AM
-             await LocalNotifications.schedule({
-                 notifications: [
-                     {
-                         title: "garden",
-                         body: "garden te recuerda que ya puedes enviar tu informe a tu sup. de grupo",
-                         id: 1001,
-                         schedule: {
-                             on: { day: 1, hour: 9, minute: 0 },
-                             allowWhileIdle: true
-                         }
-                     }
-                 ]
-             });
-        }
+      // Request Permissions
+      const permStatus = await LocalNotifications.requestPermissions();
+      if (permStatus.display === 'granted') {
+        // Schedule for 1st of next month at 9:00 AM
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              title: "garden",
+              body: "garden te recuerda que ya puedes enviar tu informe a tu sup. de grupo",
+              id: 1001,
+              schedule: {
+                on: { day: 1, hour: 9, minute: 0 },
+                allowWhileIdle: true
+              }
+            }
+          ]
+        });
+      }
     } else {
-        // Cancel if disabled
-        await LocalNotifications.cancel({ notifications: [{ id: 1001 }] });
+      // Cancel if disabled
+      await LocalNotifications.cancel({ notifications: [{ id: 1001 }] });
     }
   };
 
   const handleToggleReportNotification = async (enabled: boolean) => {
-      setReportNotificationEnabled(enabled);
-      await scheduleReportNotification(enabled);
+    setReportNotificationEnabled(enabled);
+    await scheduleReportNotification(enabled);
   };
 
   const handleCloseModal = () => {
@@ -1640,58 +1707,125 @@ const App: React.FC = () => {
     if (!Capacitor.isNativePlatform()) return;
 
     try {
-        // 1. Cancel all previous activity notifications (range 2000-5000)
-        const pending = await LocalNotifications.getPending();
-        const activityNotificationIds = pending.notifications
-            .filter(n => n.id >= 2000 && n.id <= 5000)
-            .map(n => ({ id: n.id }));
-        
-        if (activityNotificationIds.length > 0) {
-            await LocalNotifications.cancel({ notifications: activityNotificationIds });
+      // 1. Cancel all previous activity notifications (range 2000-5000)
+      const pending = await LocalNotifications.getPending();
+      const activityNotificationIds = pending.notifications
+        .filter(n => n.id >= 2000 && n.id <= 5000)
+        .map(n => ({ id: n.id }));
+
+      if (activityNotificationIds.length > 0) {
+        await LocalNotifications.cancel({ notifications: activityNotificationIds });
+      }
+
+      // 2. Schedule new ones for recurring activities
+      const notificationsToSchedule = [];
+      let idCounter = 2000;
+
+      for (const act of currentActivities) {
+        if (act.recurring && act.recurringDays && act.recurringDays.length > 0) {
+          for (const day of act.recurringDays) {
+            if (idCounter > 5000) break; // Safety limit
+
+            const isStudy = act.type === "study";
+
+            if (isStudy && !studyNotificationsEnabled) continue;
+            if (!isStudy && !visitNotificationsEnabled) continue;
+
+            const body = isStudy
+              ? `Recuerda darle estudio a ${act.name}`
+              : `Recuerda revisitar a ${act.name}`;
+
+            notificationsToSchedule.push({
+              title: isStudy ? "Estudio Bíblico" : "Revisita",
+              body,
+              id: idCounter++,
+              schedule: {
+                on: {
+                  weekday: day + 1, // Capacitor uses 1-7 (Sun-Sat), we have 0-6
+                  hour: 7,
+                  minute: 0
+                },
+                allowWhileIdle: true
+              }
+            });
+          }
         }
+      }
 
-        // 2. Schedule new ones for recurring activities
-        const notificationsToSchedule = [];
-        let idCounter = 2000;
-
-        for (const act of currentActivities) {
-            if (act.recurring && act.recurringDays && act.recurringDays.length > 0) {
-                for (const day of act.recurringDays) {
-                    if (idCounter > 5000) break; // Safety limit
-                    
-                    const isStudy = act.type === "study";
-                    
-                    if (isStudy && !studyNotificationsEnabled) continue;
-                    if (!isStudy && !visitNotificationsEnabled) continue;
-
-                    const body = isStudy 
-                        ? `Recuerda darle estudio a ${act.name}`
-                        : `Recuerda revisitar a ${act.name}`;
-                    
-                    notificationsToSchedule.push({
-                        title: isStudy ? "Estudio Bíblico" : "Revisita",
-                        body,
-                        id: idCounter++,
-                        schedule: {
-                            on: {
-                                weekday: day + 1, // Capacitor uses 1-7 (Sun-Sat), we have 0-6
-                                hour: 7,
-                                minute: 0
-                            },
-                            allowWhileIdle: true
-                        }
-                    });
-                }
-            }
-        }
-
-        if (notificationsToSchedule.length > 0) {
-            await LocalNotifications.schedule({ notifications: notificationsToSchedule });
-        }
+      if (notificationsToSchedule.length > 0) {
+        await LocalNotifications.schedule({ notifications: notificationsToSchedule });
+      }
     } catch (e) {
-        console.error("Error scheduling activity notifications:", e);
+      console.error("Error scheduling activity notifications:", e);
     }
   };
+
+  const schedulePlanNotifications = async (currentPlanningData: PlanningData) => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    try {
+      // 1. Cancel previous plan notifications (range 6000-9000)
+      const pending = await LocalNotifications.getPending();
+      const planNotificationIds = pending.notifications
+        .filter((n) => n.id >= 6000 && n.id <= 9000)
+        .map((n) => ({ id: n.id }));
+
+      if (planNotificationIds.length > 0) {
+        await LocalNotifications.cancel({ notifications: planNotificationIds });
+      }
+
+      if (!planNotificationsEnabled) return;
+
+      // 2. Schedule new ones
+      const notificationsToSchedule = [];
+      let idCounter = 6000;
+      const today = new Date();
+
+      for (const dateKey in currentPlanningData) {
+        const dateBlocks = currentPlanningData[dateKey];
+        if (!dateBlocks || dateBlocks.length === 0) continue;
+
+        const dateObj = parseDateKey(dateKey);
+        // Skip past dates (simple check, refining with time below)
+        if (dateObj < new Date(today.setHours(0, 0, 0, 0))) continue;
+
+        for (const block of dateBlocks) {
+          if (block.reminderTime) {
+            if (idCounter > 9000) break;
+
+            const [hours, minutes] = block.reminderTime.split(":").map(Number);
+            const scheduleDate = new Date(dateObj);
+            scheduleDate.setHours(hours, minutes, 0, 0);
+
+            // Only schedule if it's in the future
+            if (scheduleDate > new Date()) {
+              notificationsToSchedule.push({
+                title: "Recordatorio de Plan",
+                body: block.title,
+                id: idCounter++,
+                schedule: {
+                  at: scheduleDate,
+                  allowWhileIdle: true,
+                },
+              });
+            }
+          }
+        }
+      }
+
+      if (notificationsToSchedule.length > 0) {
+        await LocalNotifications.schedule({
+          notifications: notificationsToSchedule,
+        });
+      }
+    } catch (e) {
+      console.error("Error scheduling plan notifications:", e);
+    }
+  };
+
+  useEffect(() => {
+    schedulePlanNotifications(planningData);
+  }, [planningData, planNotificationsEnabled]);
 
   const handleSaveActivity = (
     data: Omit<ActivityItem, "id" | "date"> & { recurring?: boolean }
@@ -1929,7 +2063,7 @@ const App: React.FC = () => {
     if (Capacitor.isNativePlatform()) {
       try {
         const fileName = `garden-backup-${new Date().toISOString().split("T")[0]}.json`;
-        
+
         await Filesystem.writeFile({
           path: fileName,
           data: stateString,
@@ -2408,7 +2542,7 @@ const App: React.FC = () => {
         onProfileClick={() => {
           setSidebarOpen(false);
           setIsProfileModalOpen(true);
-        } }
+        }}
         performanceMode={performanceMode}
         onSetPerformanceMode={setPerformanceMode}
         onExport={handleExportData}
@@ -2417,16 +2551,16 @@ const App: React.FC = () => {
         onSettingsClick={() => {
           setSidebarOpen(false);
           setIsSettingsOpen(true);
-        } }
+        }}
         userRole={userRole}
         onPioneerUpgradeClick={() => {
           setSidebarOpen(false);
           setIsPioneerUpgradeModalOpen(true);
-        } }
+        }}
         onAchievementsClick={() => {
           window.location.hash = "#/achievements";
           setSidebarOpen(false);
-        } }
+        }}
 
 
         onNotificationsClick={() => {
@@ -2605,18 +2739,20 @@ const App: React.FC = () => {
         onToggleReportNotification={handleToggleReportNotification}
         visitNotificationsEnabled={visitNotificationsEnabled}
         onToggleVisitNotifications={(enabled) => {
-            setVisitNotificationsEnabled(enabled);
-            localStorage.setItem(VISIT_NOTIFICATION_KEY, String(enabled));
+          setVisitNotificationsEnabled(enabled);
+          localStorage.setItem(VISIT_NOTIFICATION_KEY, String(enabled));
         }}
         studyNotificationsEnabled={studyNotificationsEnabled}
         onToggleStudyNotifications={(enabled) => {
-            setStudyNotificationsEnabled(enabled);
-            localStorage.setItem(STUDY_NOTIFICATION_KEY, String(enabled));
+          setStudyNotificationsEnabled(enabled);
+          localStorage.setItem(STUDY_NOTIFICATION_KEY, String(enabled));
         }}
         showTimer={showTimer}
         onToggleShowTimer={setShowTimer}
         themeColor={themeColor}
         themeMode={themeMode}
+        planNotificationsEnabled={planNotificationsEnabled}
+        onTogglePlanNotifications={setPlanNotificationsEnabled}
       />
 
       <PioneerUpgradeModal

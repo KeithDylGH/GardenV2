@@ -88,10 +88,10 @@ export type ActivityItem = {
   lng?: number;
   recurring?: boolean;
   recurringDays?: number[]; // 0-6 for Sun-Sat
-  
+
   // Revisita fields
   conversationStage?: ConversationStage; // Default: "first"
-  
+
   // Estudio fields  
   weeklyFrequency?: number; // How many times per week (1-7)
   currentLesson?: number;   // Lesson number in "Disfrute de la Vida" (1-60)
@@ -188,6 +188,7 @@ export type PlanningBlock = {
   id: string;
   title: string;
   timeRange?: string;
+  reminderTime?: string; // HH:mm format
   activityIds: string[];
 };
 
