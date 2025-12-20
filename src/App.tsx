@@ -2158,15 +2158,16 @@ const App: React.FC = () => {
       try {
         const fileName = `garden-backup-${new Date().toISOString().split("T")[0]}.json`;
 
+        // Use Cache directory for Android 11+ compatibility (scoped storage)
         await Filesystem.writeFile({
           path: fileName,
           data: stateString,
-          directory: Directory.Documents,
+          directory: Directory.Cache,
           encoding: Encoding.UTF8,
         });
 
         const uriResult = await Filesystem.getUri({
-          directory: Directory.Documents,
+          directory: Directory.Cache,
           path: fileName,
         });
 
