@@ -72,6 +72,7 @@ import {
 import ShareToast from "./components/ShareToast";
 import ShareReportModal from "./components/ShareReportModal";
 import StreakEndedToast from "./components/StreakEndedToast";
+import UpdateToast from "./components/UpdateToast";
 import { ALL_ACHIEVEMENTS } from "./achievements";
 import { THEMES } from "./constants";
 
@@ -98,6 +99,8 @@ const SETTINGS_KEY = "garden-settings";
 const PRIVACY_MODE_KEY = "garden-privacy-mode";
 const SHOW_TIMER_KEY = "garden-show-timer";
 const REPORT_NOTIFICATION_KEY = "garden-report-notification";
+const APP_VERSION_KEY = "garden-app-version";
+const APP_VERSION = "2.0.1";
 const VISIT_NOTIFICATION_KEY = "garden-visit-notification";
 const STUDY_NOTIFICATION_KEY = "garden-study-notification";
 const PLAN_NOTIFICATION_KEY = "garden-plan-notification";
@@ -579,6 +582,7 @@ const App: React.FC = () => {
   const [showShareToast, setShowShareToast] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [showStreakEndedToast, setShowStreakEndedToast] = useState(false);
+  const [showUpdateToast, setShowUpdateToast] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -679,6 +683,15 @@ const App: React.FC = () => {
     const settings = { performanceMode };
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   }, [performanceMode]);
+
+  // Check for app version updates (Live Update detection)
+  useEffect(() => {
+    const lastVersion = localStorage.getItem(APP_VERSION_KEY);
+    if (lastVersion && lastVersion !== APP_VERSION) {
+      setShowUpdateToast(true);
+    }
+    localStorage.setItem(APP_VERSION_KEY, APP_VERSION);
+  }, []);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -2898,6 +2911,11 @@ const App: React.FC = () => {
       <StreakEndedToast
         isVisible={showStreakEndedToast}
         onDismiss={() => setShowStreakEndedToast(false)}
+      />
+      <UpdateToast
+        isVisible={showUpdateToast}
+        onDismiss={() => setShowUpdateToast(false)}
+        onTap={() => setIsNewsModalOpen(true)}
       />
     </div>
   );
