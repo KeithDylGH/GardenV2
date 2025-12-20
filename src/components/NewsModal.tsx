@@ -15,6 +15,21 @@ interface NewsItem {
 
 const NEWS_DATA: NewsItem[] = [
   {
+    id: "5",
+    version: "2.0.2",
+    date: "20 de diciembre, 2024",
+    title: "Arreglo de bug al exportar datos",
+    importance: "urgent",
+  },
+  {
+    id: "4",
+    version: "2.0.2",
+    date: "20 de diciembre, 2024",
+    title: "Cambios mínimos",
+    description: "Mejoras menores y correcciones de estabilidad.",
+    importance: "info",
+  },
+  {
     id: "2",
     version: "2.0.1",
     date: "20 de diciembre, 2024",

@@ -138,7 +138,7 @@ const ActivityView: React.FC<ActivityViewProps> = ({
             Organiza tu semana
           </p>
           <p className="text-slate-500 dark:text-slate-400 mt-2 mb-6 max-w-md mx-auto">
-            Copia el texto de los grupos de predicación que recibes y pégalo
+            Copia el texto o imagen de los grupos de predicación que recibes y pégalo
             aquí para verlo de forma ordenada.
           </p>
           <button

@@ -199,8 +199,8 @@ const StreakModal: React.FC<StreakModalProps> = ({
                     horas.
                   </p>
                   <p>
-                    🛡️ Los{" "}
-                    <strong>sábados, domingos y tu día de descanso</strong>{" "}
+                    🛡️ Tus{" "}
+                    <strong>días de reunión, los sábados, domingos y tu día de descanso</strong>{" "}
                     semanal no rompen tu racha.
                   </p>
                   <p>

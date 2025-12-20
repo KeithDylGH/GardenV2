@@ -100,7 +100,7 @@ const PRIVACY_MODE_KEY = "garden-privacy-mode";
 const SHOW_TIMER_KEY = "garden-show-timer";
 const REPORT_NOTIFICATION_KEY = "garden-report-notification";
 const APP_VERSION_KEY = "garden-app-version";
-const APP_VERSION = "2.0.1";
+const APP_VERSION = "2.0.2";
 const VISIT_NOTIFICATION_KEY = "garden-visit-notification";
 const STUDY_NOTIFICATION_KEY = "garden-study-notification";
 const PLAN_NOTIFICATION_KEY = "garden-plan-notification";
@@ -1298,6 +1298,8 @@ const App: React.FC = () => {
                 setIsNotificationsModalOpen(false);
               } else if (isTimerSelectionModalOpen) {
                 setIsTimerSelectionModalOpen(false);
+              } else if (isNewsModalOpen) {
+                setIsNewsModalOpen(false);
               } else if (isSidebarOpen) {
                 setSidebarOpen(false);
               }
@@ -1353,6 +1355,7 @@ const App: React.FC = () => {
     isSidebarOpen,
     isNotificationsModalOpen,
     isTimerSelectionModalOpen,
+    isNewsModalOpen,
     isStatsMode,
     activeView,
   ]);
