@@ -21,7 +21,7 @@ const config: CapacitorConfig = {
     },
     LiveUpdates: {
       appId: 'b8a00d75', 
-      channel: 'production',
+      channel: 'Production',
       autoUpdateMethod: 'background',
       maxVersions: 2 // Recomendado para no llenar el almacenamiento del usuario
     }
