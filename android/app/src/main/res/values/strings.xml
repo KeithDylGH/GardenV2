@@ -4,4 +4,9 @@
     <string name="title_activity_main">Garden</string>
     <string name="package_name">com.garden.app</string>
     <string name="custom_url_scheme">com.garden.app</string>
+    <string name="ionic_app_id">b8a00d75</string>
+    <string name="ionic_channel_name">Production</string>
+    <string name="ionic_update_method">background</string>
+    <string name="ionic_max_versions">2</string>
+
 </resources>
