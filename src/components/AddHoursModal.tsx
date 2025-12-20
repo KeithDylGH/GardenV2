@@ -71,6 +71,7 @@ interface AddHoursModalProps {
   planningData: PlanningData;
   userRole: UserRole;
   initialHours?: number | null;
+  initialTab?: ModalTab;
 }
 
 type ModalTab = "hours" | "ldc" | "visit" | "study";
@@ -132,6 +133,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
   planningData,
   userRole,
   initialHours,
+  initialTab,
 }) => {
   const [activeTab, setActiveTab] = useState<ModalTab>("hours");
 
@@ -212,7 +214,16 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
       setNotesInput("");
 
       if (initialHours && initialHours > 0) {
-        if (isEditLdcMode) {
+        if (initialTab) {
+          setActiveTab(initialTab);
+          if (initialTab === "ldc") {
+            setLdcHoursInput(hoursToHHMM(initialHours));
+            setHoursInput("");
+          } else if (initialTab === "hours") {
+            setHoursInput(hoursToHHMM(initialHours));
+            setLdcHoursInput("");
+          }
+        } else if (isEditLdcMode) {
           setActiveTab("ldc");
           setLdcHoursInput(hoursToHHMM(initialHours));
           setHoursInput("");
@@ -226,7 +237,10 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
         setName(activityToEdit.name);
         setLocation(activityToEdit.location || "");
         setComments(activityToEdit.comments || "");
-        setRecurringDays(activityToEdit.recurringDays || (activityToEdit.recurring ? [new Date(activityToEdit.date).getDay()] : []));
+        setRecurringDays(
+          activityToEdit.recurringDays ||
+            (activityToEdit.recurring ? [new Date(activityToEdit.date).getDay()] : [])
+        );
         setConversationStage(activityToEdit.conversationStage || "first");
         setWeeklyFrequency(activityToEdit.weeklyFrequency || 1);
         setCurrentLesson(activityToEdit.currentLesson || 1);
@@ -240,9 +254,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
             : ""
         );
         setLdcHoursInput(
-          dayEntryForDate &&
-            dayEntryForDate.ldcHours &&
-            dayEntryForDate.ldcHours > 0
+          dayEntryForDate && dayEntryForDate.ldcHours && dayEntryForDate.ldcHours > 0
             ? hoursToHHMM(dayEntryForDate.ldcHours)
             : ""
         );
@@ -267,6 +279,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
   }, [
     isOpen,
     initialHours,
+    initialTab,
     activityToEdit,
     dateForEntry,
     isEditMode,

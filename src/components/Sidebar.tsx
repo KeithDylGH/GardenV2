@@ -15,6 +15,7 @@ import { UserIcon } from "./icons/UserIcon";
 import { LeafIcon } from "./icons/LeafIcon";
 import { NotificationIcon } from "./icons/NotificationIcon";
 import { ShareIcon } from "./icons/ShareIcon";
+import { SparklesIcon } from "./icons/SparklesIcon";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ interface SidebarProps {
   onAchievementsClick: () => void;
   onNotificationsClick: () => void;
   onOpenWeb: () => void;
+  onNewsClick: () => void;
   themeMode: ThemeMode;
 }
 
@@ -53,6 +55,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onAchievementsClick,
   onNotificationsClick,
   onOpenWeb,
+  onNewsClick,
   themeMode,
 }) => {
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
@@ -258,6 +261,22 @@ const Sidebar: React.FC<SidebarProps> = ({
               </p>
             </div>
           </a>
+          <button
+            onClick={onNewsClick}
+            className="w-full text-left p-3 flex items-center bg-white dark:bg-slate-800 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 mt-2"
+          >
+            <SparklesIcon
+              className={`w-6 h-6 mr-3 ${iconAndTextColorClass}`}
+            />
+            <div>
+              <p className="font-semibold text-slate-700 dark:text-slate-200">
+                Novedades
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Últimas actualizaciones
+              </p>
+            </div>
+          </button>
         </div>
       </div>
     </>

@@ -29,6 +29,7 @@ import InteractiveTutorial from "./components/InteractiveTutorial";
 import TutorialConfirmationModal from "./components/TutorialConfirmationModal";
 import GoalReachedModal from "./components/GoalReachedModal";
 import Sidebar from "./components/Sidebar";
+import NewsModal from "./components/NewsModal";
 import EndOfYearModal from "./components/EndOfYearModal";
 import ConfirmationModal from "./components/ConfirmationModal";
 import PlanningModal from "./components/PlanningModal";
@@ -543,6 +544,8 @@ const App: React.FC = () => {
   const [isHelpModalOpen, setHelpModalOpen] = useState(false);
   const [isOfflineReady, setIsOfflineReady] = useState(false);
   const [isTimerSelectionModalOpen, setIsTimerSelectionModalOpen] = useState(false);
+  const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
+  const [initialTabForModal, setInitialTabForModal] = useState<"hours" | "ldc" | "visit" | "study" | undefined>(undefined);
 
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [performanceMode, setPerformanceMode] = useState(
@@ -1102,6 +1105,7 @@ const App: React.FC = () => {
           !(
             isWeekend(checkDate) ||
             (protectedDay !== null && checkDate.getDay() === protectedDay) ||
+            meetingDays.includes(checkDate.getDay()) ||
             hasProtectedEvent
           )
         ) {
@@ -1349,7 +1353,7 @@ const App: React.FC = () => {
 
     setArchives((prev) => {
       const newArchives = { ...prev };
-      const yearHistory = { ...(newArchives[currentServiceYear] || {}) };
+      const yearHistory = { ...(newArchives[serviceYear] || {}) };
       const oldEntry: DayEntry = yearHistory[dateKey] || { hours: 0 };
 
       let updatedNotes = oldEntry.notes;
@@ -1365,7 +1369,7 @@ const App: React.FC = () => {
         ldcHours: (oldEntry.ldcHours || 0) + ldcHoursToAdd,
         notes: updatedNotes,
       };
-      newArchives[currentServiceYear] = yearHistory;
+      newArchives[serviceYear] = yearHistory;
       return newArchives;
     });
     setCurrentLdcHours((prev) => prev + ldcHoursToAdd);
@@ -1766,6 +1770,7 @@ const App: React.FC = () => {
     setDateToEdit(null);
     setIsEditTotalHoursMode(false);
     setIsEditLdcHoursMode(false);
+    setInitialTabForModal(undefined);
     setIsPlanningModalOpen(false);
     setDateForPlanning(null);
     setPlanningBlockToEdit(null);
@@ -2394,7 +2399,9 @@ const App: React.FC = () => {
   const handleSelectStandardHours = () => {
     if (timerHours !== null) {
       setInitialHoursForModal(timerHours);
+      setIsEditTotalHoursMode(false);
       setIsEditLdcHoursMode(false);
+      setInitialTabForModal("hours");
       setAddHoursModalOpen(true);
       setIsTimerSelectionModalOpen(false);
       setTimerHours(null);
@@ -2404,7 +2411,9 @@ const App: React.FC = () => {
   const handleSelectLdcHours = () => {
     if (timerHours !== null) {
       setInitialHoursForModal(timerHours);
-      setIsEditLdcHoursMode(true);
+      setIsEditTotalHoursMode(false);
+      setIsEditLdcHoursMode(false);
+      setInitialTabForModal("ldc");
       setAddHoursModalOpen(true);
       setIsTimerSelectionModalOpen(false);
       setTimerHours(null);
@@ -2641,6 +2650,10 @@ const App: React.FC = () => {
           setIsNotificationsModalOpen(true);
         }}
         onOpenWeb={handleOpenWeb}
+        onNewsClick={() => {
+          setSidebarOpen(false);
+          setIsNewsModalOpen(true);
+        }}
         themeMode={themeMode}
       />
       <input
@@ -2689,6 +2702,7 @@ const App: React.FC = () => {
         planningData={planningData}
         userRole={userRole}
         initialHours={initialHoursForModal}
+        initialTab={initialTabForModal}
       />
 
       <PlanningModal
@@ -2746,6 +2760,13 @@ const App: React.FC = () => {
         onSaveProtectedDay={handleSaveProtectedDay}
         protectedDaySetDate={protectedDaySetDate}
         meetingDays={meetingDays}
+        performanceMode={performanceMode}
+      />
+
+      <NewsModal
+        isOpen={isNewsModalOpen}
+        onClose={() => setIsNewsModalOpen(false)}
+        themeColor={themeColor}
         performanceMode={performanceMode}
       />
 
