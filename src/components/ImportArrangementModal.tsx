@@ -7,7 +7,7 @@ import GroupArrangementCard from "./GroupArrangementCard";
 import { RefreshIcon } from "./icons/RefreshIcon";
 
 const AI_COOLDOWN_KEY = "ai_import_cooldown_timestamp";
-const COOLDOWN_DURATION = 3 * 60 * 1000; // 3 minutes in ms
+const COOLDOWN_DURATION = 5 * 60 * 1000; // 5 minutes in ms
 
 interface ImportArrangementModalProps {
   isOpen: boolean;
