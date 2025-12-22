@@ -26,6 +26,7 @@ import { InformationCircleIcon } from "./icons/InformationCircleIcon";
 import { flexibleInputToHours } from "../utils";
 import { EyeSlashIcon } from "./icons/EyeSlashIcon";
 import { CalendarIcon } from "./icons/CalendarIcon";
+import { ChevronDownIcon } from "./icons/ChevronDownIcon";
 import { ClockIcon } from "./icons/ClockIcon";
 import { PauseIcon } from "./icons/PauseIcon";
 import { TrophyIcon } from "./icons/TrophyIcon";
@@ -695,7 +696,7 @@ const Welcome: React.FC<WelcomeProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-between p-6 text-center transition-colors duration-500`}
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-between p-6 pb-[env(safe-area-inset-bottom,24px)] text-center transition-colors duration-500`}
     >
       <div
         className={`absolute inset-0 ${backgroundClasses} transition-all duration-500 overflow-hidden`}
@@ -911,6 +912,13 @@ const Welcome: React.FC<WelcomeProps> = ({
                                   Ingresa el total de cada mes para un historial
                                   más completo y para activar el 'Modo Espejo'.
                                 </p>
+                                {monthsForSetup.length > 2 && (
+                                  <div className="flex items-center justify-center gap-1 mt-2 text-xs text-slate-400 animate-bounce">
+                                    <ChevronDownIcon className="w-4 h-4" />
+                                    <span>Desliza para ver más</span>
+                                    <ChevronDownIcon className="w-4 h-4" />
+                                  </div>
+                                )}
                               </div>
                               <div className="mt-2 space-y-2 overflow-y-auto pr-2 flex-grow">
                                 {monthsForSetup.map((date) => {
@@ -1171,7 +1179,7 @@ const Welcome: React.FC<WelcomeProps> = ({
         </div>
       </div>
 
-      <div className="relative z-10 w-full flex-shrink-0 pb-4">
+      <div className="relative z-10 w-full flex-shrink-0 pb-8">
         {currentSlide === 0 ? (
           <div
             className="w-full max-w-sm mx-auto animate-fadeInUp"

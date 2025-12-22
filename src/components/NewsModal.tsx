@@ -15,6 +15,13 @@ interface NewsItem {
 
 const NEWS_DATA: NewsItem[] = [
   {
+    id: "6",
+    version: "2.0.3",
+    date: "21 de diciembre, 2024",
+    title: "Mejoras menores y correciones gramáticas",
+    importance: "info",
+  },
+  {
     id: "5",
     version: "2.0.2",
     date: "20 de diciembre, 2024",

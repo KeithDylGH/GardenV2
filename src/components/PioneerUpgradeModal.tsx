@@ -67,7 +67,7 @@ const PioneerUpgradeModal: React.FC<PioneerUpgradeModalProps> = ({
           </h2>
           <p className="text-slate-600 dark:text-slate-300 mb-6">
             Al iniciar tu precursorado, desbloquearás nuevas funciones como el
-            registro de horas LDC y el 'Modo Fantasma'.
+            registro de horas acreditadas y el 'Modo Fantasma'.
           </p>
           <div className="space-y-3 mb-6">
             <button

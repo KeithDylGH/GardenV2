@@ -100,7 +100,7 @@ const PRIVACY_MODE_KEY = "garden-privacy-mode";
 const SHOW_TIMER_KEY = "garden-show-timer";
 const REPORT_NOTIFICATION_KEY = "garden-report-notification";
 const APP_VERSION_KEY = "garden-app-version";
-const APP_VERSION = "2.0.2";
+const APP_VERSION = "2.0.3";
 const VISIT_NOTIFICATION_KEY = "garden-visit-notification";
 const STUDY_NOTIFICATION_KEY = "garden-study-notification";
 const PLAN_NOTIFICATION_KEY = "garden-plan-notification";
@@ -1226,8 +1226,8 @@ const App: React.FC = () => {
   const [reportNotificationEnabled, setReportNotificationEnabled] = useState(() => {
     try {
       const saved = localStorage.getItem(REPORT_NOTIFICATION_KEY);
-      return saved === null ? false : saved === "true";
-    } catch { return false; }
+      return saved === null ? true : saved === "true";
+    } catch { return true; }
   });
   const [visitNotificationsEnabled, setVisitNotificationsEnabled] = useState(() => {
     try {
@@ -1249,6 +1249,27 @@ const App: React.FC = () => {
   });
 
   const backButtonListenerRef = useRef<any>(null);
+
+  // Persist Notification Preferences
+  useEffect(() => {
+    localStorage.setItem(SHOW_TIMER_KEY, String(showTimer));
+  }, [showTimer]);
+
+  useEffect(() => {
+    localStorage.setItem(REPORT_NOTIFICATION_KEY, String(reportNotificationEnabled));
+  }, [reportNotificationEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem(VISIT_NOTIFICATION_KEY, String(visitNotificationsEnabled));
+  }, [visitNotificationsEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem(STUDY_NOTIFICATION_KEY, String(studyNotificationsEnabled));
+  }, [studyNotificationsEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem(PLAN_NOTIFICATION_KEY, String(planNotificationsEnabled));
+  }, [planNotificationsEnabled]);
 
   // Handle Android Back Button
   useEffect(() => {
@@ -1759,7 +1780,7 @@ const App: React.FC = () => {
           notifications: [
             {
               title: "garden",
-              body: "garden te recuerda que ya puedes enviar tu informe a tu sup. de grupo",
+              body: "¡Recuerda enviar tu informe de servicio!",
               id: 1001,
               schedule: {
                 on: { day: 1, hour: 9, minute: 0 },
