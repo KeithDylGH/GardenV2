@@ -293,7 +293,7 @@ const slideData: Slide[] = [
     icon: (theme: Theme, isActive?: boolean) => (
       <GhostModeVisualExample isActive={isActive ?? false} />
     ),
-    title: "Compite contra ti mismo",
+    title: "Analiza tu progreso",
     description:
       "Activa el modo espejo para comparar tu ritmo actual con el del mes pasado. ¡Una excelente forma de mantener la motivación!",
   },

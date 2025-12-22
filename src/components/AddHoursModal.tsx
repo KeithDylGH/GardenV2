@@ -741,7 +741,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                     id="notes-input"
                     value={notesInput}
                     onChange={(e) => setNotesInput(e.target.value)}
-                    placeholder="¿Qué actividad hiciste? ¿qué trabajaste?"
+                    placeholder="Registra tus horas LDC u otra actividad que hayas realizado"
                     rows={3}
                     className={`w-full p-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${
                       themeColor === "custom" ? "ring-custom" : theme.ring
