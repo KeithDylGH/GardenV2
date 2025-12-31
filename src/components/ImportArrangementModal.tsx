@@ -5,6 +5,8 @@ import { THEMES } from "../constants";
 import { SparklesIcon } from "./icons/SparklesIcon";
 import GroupArrangementCard from "./GroupArrangementCard";
 import { RefreshIcon } from "./icons/RefreshIcon";
+import EditGroupModal from "./EditGroupModal";
+import { PencilIcon } from "./icons/PencilIcon";
 
 const AI_COOLDOWN_KEY = "ai_import_cooldown_timestamp";
 const COOLDOWN_DURATION = 5 * 60 * 1000; // 5 minutes in ms
@@ -39,6 +41,9 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
   const processingCancelledRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -267,6 +272,19 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
     setIsLoading(false);
   };
 
+  const handleStartEdit = (index: number) => {
+    setEditingIndex(index);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = (updated: GroupArrangement) => {
+    if (processedArrangements && editingIndex !== null) {
+      const newArrangements = [...processedArrangements];
+      newArrangements[editingIndex] = updated;
+      setProcessedArrangements(newArrangements);
+    }
+  };
+
   return (
     <div
       className={`fixed inset-0 z-50 ${hasBeenOpened ? "transition-colors duration-300" : ""
@@ -285,7 +303,7 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-4" />
-        <div className="p-6 pt-0 max-h-[85vh] overflow-y-auto">
+        <div className="p-6 pt-0 max-h-[80vh] overflow-y-auto">
           {processedArrangements ? (
             <div className="animate-fadeIn">
               <h2
@@ -302,11 +320,19 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
               <div className="space-y-3 max-h-64 overflow-y-auto pr-2 mb-6 bg-slate-200/50 dark:bg-slate-800/50 p-3 rounded-lg">
                 {processedArrangements.length > 0 ? (
                   processedArrangements.map((arrangement, index) => (
-                    <GroupArrangementCard
-                      key={index}
-                      arrangement={arrangement}
-                      themeColor={themeColor}
-                    />
+                    <div key={index} className="relative group">
+                      <GroupArrangementCard
+                        arrangement={arrangement}
+                        themeColor={themeColor}
+                      />
+                      <button
+                        onClick={() => handleStartEdit(index)}
+                        className="absolute top-2 right-2 p-1.5 bg-white dark:bg-slate-700/80 rounded-full shadow-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Editar grupo"
+                      >
+                        <PencilIcon className="w-4 h-4" />
+                      </button>
+                    </div>
                   ))
                 ) : (
                   <p className="text-center text-sm text-slate-500 dark:text-slate-400 py-8">
@@ -479,6 +505,15 @@ const ImportArrangementModal: React.FC<ImportArrangementModalProps> = ({
           )}
         </div>
       </div>
+
+      <EditGroupModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        arrangement={editingIndex !== null && processedArrangements ? processedArrangements[editingIndex] : null}
+        onSave={handleSaveEdit}
+        themeColor={themeColor}
+        performanceMode={performanceMode}
+      />
     </div>
   );
 };

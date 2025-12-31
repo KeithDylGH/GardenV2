@@ -38,6 +38,9 @@ import { HomeIcon } from "./icons/HomeIcon";
 import { SparklesIcon } from "./icons/SparklesIcon";
 import WineIcon from "./icons/WineIcon";
 import { COVisitIcon } from "./icons/COVisitIcon";
+import { SpecialCampaignIcon } from "./icons/SpecialCampaignIcon";
+import { HammerWrenchIcon } from "./icons/HammerWrenchIcon";
+import { ChevronDownIcon } from "./icons/ChevronDownIcon";
 
 interface AddHoursModalProps {
   isOpen: boolean;
@@ -105,6 +108,18 @@ const eventOptions: {
       label: "Visita del Sup.",
       Icon: COVisitIcon,
       colorClass: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700",
+    },
+    {
+      id: "special_campaign",
+      label: "Campaña Especial",
+      Icon: SpecialCampaignIcon,
+      colorClass: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700",
+    },
+    {
+      id: "maintenance",
+      label: "Instalación",
+      Icon: HammerWrenchIcon,
+      colorClass: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700",
     }
   ];
 
@@ -158,6 +173,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
   const [weeklyFrequency, setWeeklyFrequency] = useState<number>(1);
   const [currentLesson, setCurrentLesson] = useState<number>(1);
 
+  const [isEventsAccordionOpen, setIsEventsAccordionOpen] = useState(false);
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
   const theme = THEMES[themeColor] || THEMES.blue;
   const isPioneer = userRole !== "publisher";
@@ -289,7 +305,17 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
     currentLdcHours,
   ]);
 
-  const handleHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (isEditingForDate) {
+      if (selectedEvent && selectedEvent !== 'cleaning' && selectedEvent !== 'sick') {
+        setIsCampaignDay(true);
+      } else if (!selectedEvent) {
+        setIsCampaignDay(false);
+      }
+    }
+  }, [selectedEvent, isEditingForDate]);
+
+  const handleManualHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setHoursInput(value);
     if (value.trim() === "") {
@@ -339,13 +365,8 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
       const hoursValue = flexibleInputToHours(hoursInput);
       const finalHours = isNaN(hoursValue) || hoursValue < 0 ? 0 : hoursValue;
 
-      if (isEditingForDate) {
-        onSetHoursForDate(
-          finalHours,
-          dateForEntry!,
-          selectedEvent,
-          isCampaignDay
-        );
+      if (isEditingForDate && onSetHoursForDate) {
+        onSetHoursForDate(finalHours, dateForEntry!, selectedEvent, isCampaignDay);
       } else if (isEditMode) {
         onSetHours(finalHours);
       } else {
@@ -383,7 +404,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
 
   const getModalTitle = () => {
     if (isEditingActivity)
-      return `Editar ${activityToEdit.type === "study" ? "Estudio" : "Revisita"
+      return `Editar ${activityToEdit.type === "study" ? "Curso" : "Revisita"
         }`;
     if (isEditLdcMode) return "Editar Horas Acreditadas";
     if (dateForEntry) {
@@ -432,7 +453,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
     hours: "Horas",
     ldc: "Acreditadas",
     visit: "Revisita",
-    study: "Estudio",
+    study: "Curso",
   };
 
   return (
@@ -452,8 +473,8 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
           } ${isOpen ? "translate-y-0" : "translate-y-full"}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-4" />
-        <div className="p-6 pt-0 max-h-[85vh] overflow-y-auto">
+        <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-4 flex-shrink-0" />
+        <div className="p-6 pt-0 max-h-[calc(100dvh-env(safe-area-inset-top)-3rem)] overflow-y-auto">
           <form onSubmit={handleSubmit}>
             {!isEditingForDate && !isEditingActivity && !isEditLdcMode && (
               <div className="flex bg-slate-200 dark:bg-slate-800 rounded-lg p-1 mb-6">
@@ -498,11 +519,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                 >
                   {getModalTitle()}
                 </h2>
-                {!isEditMode && !dateForEntry && (
-                  <p className="text-center text-sm text-slate-500 dark:text-slate-400 -mt-3">
-                    Añadir Horas
-                  </p>
-                )}
+
 
                 {isEditingForDate &&
                   plannedBlocksForDay &&
@@ -594,7 +611,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                       id="hours-input"
                       type="text"
                       value={hoursInput}
-                      onChange={handleHoursChange}
+                      onChange={handleManualHoursChange}
                       placeholder="1:30"
                       className={`w-full px-4 py-3 text-center text-2xl font-bold bg-white dark:bg-slate-800 border rounded-lg focus:ring-2 ${
                         themeColor === "custom" ? "ring-custom" : theme.ring
@@ -622,50 +639,82 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                   </p>
                 )}
 
-                {(!isEditMode || isEditingForDate) && (
-                  <div>
-                    <div>
-                      <label className="block text-center text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                        ¿Hubo algún evento especial?
-                      </label>
-                      <div className="grid grid-cols-2 gap-2 max-w-sm mx-auto">
-                        {eventOptions.map(
-                          ({ id, label, Icon, colorClass }) => (
-                            <button
-                              key={id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedEvent(selectedEvent === id ? undefined : id);
-                              }}
-                              className={`px-3 py-2 border rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${selectedEvent === id
-                                ? colorClass + " ring-2 ring-offset-1 dark:ring-offset-slate-800"
-                                : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                                }`}
-                            >
-                              <Icon className="w-4 h-4 shrink-0" />
-                              <span className="truncate">{label}</span>
-                            </button>
-                          )
-                        )}
-                      </div>
-                    </div>
+                {/* Quick hour buttons */}
+                {!isDaySick && !isEditMode && (
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {[1, 1.5, 2, 2.5, 3, 3.5].map((hours) => (
+                      <button
+                        key={hours}
+                        type="button"
+                        onClick={() => {
+                          setHoursInput(hoursToHHMM(hours));
+                          setIsHoursValid(true);
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                          themeColor === "custom"
+                            ? "bg-custom-subtle text-custom hover:bg-custom hover:text-white"
+                            : `${theme.bg} bg-opacity-10 ${theme.text} hover:bg-opacity-100 hover:text-white`
+                        }`}
+                      >
+                        {hours % 1 === 0 ? hours : `${Math.floor(hours)}:30`}
+                      </button>
+                    ))}
                   </div>
                 )}
 
-                {isEditingForDate && (
-                  <div className="mt-4 bg-white dark:bg-slate-800 p-3 rounded-lg space-y-3 border border-slate-200 dark:border-slate-700">
-                    <div className="flex items-center justify-between">
-                      <label
-                        htmlFor="campaign-toggle"
-                        className="font-semibold text-slate-700 dark:text-slate-200"
-                      >
-                        Día de Campaña
-                      </label>
-                      <ToggleSwitch
-                        checked={isCampaignDay}
-                        onChange={setIsCampaignDay}
-                        themeColor={themeColor}
+
+
+                {/* Special Events Accordion - Only visible from History */}
+                {activeTab === "hours" && isEditingForDate && (
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={() => setIsEventsAccordionOpen(!isEventsAccordionOpen)}
+                      className="w-full flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <SparklesIcon className={`w-5 h-5 ${themeColor === "custom" ? "text-custom" : theme.text}`} />
+                        <span className="font-semibold text-slate-700 dark:text-slate-200">
+                          Eventos especiales
+                        </span>
+                      </div>
+                      <ChevronDownIcon 
+                        className={`w-5 h-5 text-slate-400 transition-transform duration-200 ${isEventsAccordionOpen ? "rotate-180" : ""}`} 
                       />
+                    </button>
+
+                    <div 
+                      className={`grid transition-all duration-300 ease-in-out ${
+                        isEventsAccordionOpen ? "grid-template-rows-[1fr] opacity-100 mt-2" : "grid-template-rows-[0fr] opacity-0 mt-0"
+                      }`}
+                      style={{ 
+                        gridTemplateRows: isEventsAccordionOpen ? "1fr" : "0fr" 
+                      }}
+                    >
+                      <div className="overflow-hidden">
+                        <div className="p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-2">
+                          {eventOptions.map((event) => {
+                            const isSelected = selectedEvent === event.id;
+                            const Icon = event.Icon;
+                            return (
+                              <button
+                                key={event.id}
+                                type="button"
+                                onClick={() => setSelectedEvent(isSelected ? undefined : event.id)}
+                                className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all ${isSelected
+                                  ? event.colorClass
+                                  : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600"
+                                  }`}
+                              >
+                                <Icon className="w-5 h-5 mb-1" />
+                                <span className="text-[10px] font-bold text-center leading-tight">
+                                  {event.label}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -741,7 +790,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                     id="notes-input"
                     value={notesInput}
                     onChange={(e) => setNotesInput(e.target.value)}
-                    placeholder="Registra tus horas LDC u otra actividad que hayas realizado"
+                    placeholder="Registra tus horas acreditadas u otra actividad que hayas realizado"
                     rows={3}
                     className={`w-full p-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 ${
                       themeColor === "custom" ? "ring-custom" : theme.ring
@@ -756,7 +805,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 text-center">
                   {isEditingActivity ? "Editar" : "Anotar"}{" "}
-                  {activeTab === "visit" ? "Revisita" : "Estudio"}
+                  {activeTab === "visit" ? "Revisita" : "Curso"}
                 </h2>
                 <div>
                   <label htmlFor="name-input" className="sr-only">
@@ -853,7 +902,7 @@ const AddHoursModal: React.FC<AddHoursModalProps> = ({
                       className={`w-full py-2 px-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 font-semibold flex items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors`}
                     >
                       <BookOpenIcon className="w-5 h-5" />
-                      Pasar a estudio
+                      Pasar a curso
                     </button>
                   </div>
                 )}

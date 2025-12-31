@@ -10,8 +10,8 @@ interface PlanningModalProps {
   onClose: () => void;
   date: Date | null;
   blockToEdit: PlanningBlock | null;
-  onSave: (date: Date, blockData: Omit<PlanningBlock, "id">) => void;
-  onDelete: (date: Date, blockId: string) => void;
+  onSave: (date: Date, blockData: Omit<PlanningBlock, "id">, range?: { start: string, end: string }) => void;
+  onDelete: (date: Date, blockId: string, range?: { start: string, end: string }) => void;
   activities: ActivityItem[];
   themeColor: ThemeColor;
   performanceMode: boolean;
@@ -35,24 +35,34 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
     new Set()
   );
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
+  const [isRange, setIsRange] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
   const theme = THEMES[themeColor] || THEMES.blue;
 
   useEffect(() => {
     if (isOpen) {
       setHasBeenOpened(true);
+      const initialDate = date ? date.toISOString().split("T")[0] : "";
+      setStartDate(initialDate);
+      setEndDate(initialDate);
+      
       if (blockToEdit) {
         setTitle(blockToEdit.title);
         setTimeRange(blockToEdit.timeRange || "");
         setReminderTime(blockToEdit.reminderTime || "");
         setSelectedActivityIds(new Set(blockToEdit.activityIds));
+        setIsRange(false); // Default to false when opening to edit a single block
       } else {
         setTitle("");
         setTimeRange("");
         setReminderTime("");
         setSelectedActivityIds(new Set());
+        setIsRange(false);
       }
     }
-  }, [isOpen, blockToEdit]);
+  }, [isOpen, blockToEdit, date]);
 
   const availableActivities = useMemo(() => {
     return activities.sort(
@@ -62,19 +72,39 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (date && title.trim()) {
-      onSave(date, {
+    if (title.trim()) {
+      const blockData: Omit<PlanningBlock, "id"> = {
         title: title.trim(),
         timeRange: timeRange.trim(),
         reminderTime: reminderTime.trim(),
         activityIds: Array.from(selectedActivityIds),
-      });
+      };
+
+      if (isRange && startDate && endDate) {
+        const startParts = startDate.split("-").map(Number);
+        const endParts = endDate.split("-").map(Number);
+        const startLocal = new Date(startParts[0], startParts[1] - 1, startParts[2]);
+        const endLocal = new Date(endParts[0], endParts[1] - 1, endParts[2]);
+
+        if (startLocal <= endLocal) {
+          onSave(date || startLocal, blockData, { start: startDate, end: endDate });
+        } else if (date) {
+          onSave(date, blockData);
+        }
+      } else if (date) {
+        onSave(date, blockData);
+      }
+      onClose();
     }
   };
 
   const handleDelete = () => {
     if (date && blockToEdit) {
-      onDelete(date, blockToEdit.id);
+      if (isRange && startDate && endDate) {
+        onDelete(date, blockToEdit.id, { start: startDate, end: endDate });
+      } else {
+        onDelete(date, blockToEdit.id);
+      }
     }
   };
 
@@ -109,8 +139,8 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
           } ${isOpen ? "translate-y-0" : "translate-y-full"} pb-[env(safe-area-inset-bottom)]`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-4" />
-        <div className="p-6 pt-0 max-h-[85vh] overflow-y-auto">
+        <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-4 flex-shrink-0" />
+        <div className="p-6 pt-0 max-h-[calc(100dvh-env(safe-area-inset-top)-3rem)] overflow-y-auto">
           <form onSubmit={handleSubmit}>
             <h2
               id="planning-modal-title"
@@ -145,6 +175,46 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
                   required
                 />
               </div>
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setIsRange(!isRange)}
+                  className="flex items-center justify-between w-full"
+                >
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {blockToEdit ? "Aplicar a varios días (Rango)" : "Añadir a varios días (Rango)"}
+                  </span>
+                  <div className={`w-12 h-6 rounded-full transition-colors relative ${isRange ? (themeColor === "custom" ? "bg-custom" : theme.bg) : "bg-slate-300 dark:bg-slate-600"}`}>
+                    <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${isRange ? "translate-x-6" : ""}`} />
+                  </div>
+                </button>
+
+                <div className={`grid transition-all duration-300 ease-in-out ${isRange ? "grid-rows-[1fr] opacity-100 mt-3" : "grid-rows-[0fr] opacity-0"}`}>
+                  <div className="overflow-hidden">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">Desde</label>
+                        <input
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm dark:text-white outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">Hasta</label>
+                        <input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm dark:text-white outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label
                   htmlFor="plan-time"
@@ -230,7 +300,7 @@ const PlanningModal: React.FC<PlanningModalProps> = ({
                     ))
                   ) : (
                     <p className="text-center text-sm text-slate-400 dark:text-slate-500 py-4">
-                      No hay revisitas o estudios para vincular.
+                      No hay revisitas o cursos para vincular.
                     </p>
                   )}
                 </div>

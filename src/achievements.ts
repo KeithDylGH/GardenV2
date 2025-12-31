@@ -48,7 +48,7 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   {
     id: "total_studies",
     title: "Maestro Dedicado",
-    description: (tier) => `Alcanza un total de ${tier} estudios bíblicos.`,
+    description: (tier) => `Alcanza un total de ${tier} cursos bíblicos.`,
     icon: BookOpenIcon,
     tiers: [1, 3, 5, 10],
     check: (state: AppState) => {
@@ -137,7 +137,7 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   {
     id: "ldc_hours_total",
     title: "Constructor del Reino",
-    description: (tier) => `Registra un total de ${tier} horas LDC.`,
+    description: (tier) => `Registra un total de ${tier} horas acreditadas.`,
     icon: BuildingOfficeIcon,
     tiers: [8, 40, 100, 250],
     check: (state: AppState) => {

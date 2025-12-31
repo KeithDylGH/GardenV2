@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   ActivityItem,
   ThemeColor,
@@ -7,12 +7,13 @@ import {
 } from "../types";
 import { THEMES } from "../constants";
 import ActivityCard from "./ActivityCard";
-import ImportArrangementModal from "./ImportArrangementModal";
 import GroupArrangementCard from "./GroupArrangementCard";
 import { ClipboardPasteIcon } from "./icons/ClipboardPasteIcon";
 import { TrashIcon } from "./icons/TrashIcon";
 import { ArrowUturnLeftIcon } from "./icons/ArrowUturnLeftIcon";
 import { BookOpenIcon } from "./icons/BookOpenIcon";
+import EditGroupModal from "./EditGroupModal";
+import { PencilIcon } from "./icons/PencilIcon";
 
 interface ActivityViewProps {
   activities: ActivityItem[];
@@ -27,8 +28,11 @@ interface ActivityViewProps {
   isPrivacyMode: boolean;
   notes: string;
   onSaveNotes: (notes: string) => void;
-
+  onImportClick: () => void;
   themeMode: ThemeMode;
+  onUpdateGroup: (index: number, updated: GroupArrangement) => void;
+  onDeleteGroup: (index: number) => void;
+  onImportActivity: (activity: ActivityItem) => void;
 }
 
 type ActivityTab = "groups" | "visits" | "studies" | "notes";
@@ -46,12 +50,17 @@ const ActivityView: React.FC<ActivityViewProps> = ({
   isPrivacyMode,
   notes,
   onSaveNotes,
-
+  onImportClick,
   themeMode,
+  onUpdateGroup,
+  onDeleteGroup,
+  onImportActivity,
 }) => {
   const [activeTab, setActiveTab] = useState<ActivityTab>("groups");
-  const [isImportModalOpen, setImportModalOpen] = useState(false);
   const [localNotes, setLocalNotes] = useState(notes);
+  const [editingGroupIndex, setEditingGroupIndex] = useState<number | null>(null);
+  const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const theme = THEMES[themeColor] || THEMES.blue;
   const privacyBlur = isPrivacyMode
     ? "blur-md select-none pointer-events-none"
@@ -89,14 +98,9 @@ const ActivityView: React.FC<ActivityViewProps> = ({
   const tabs: { id: ActivityTab; label: string }[] = [
     { id: "groups", label: "Grupos" },
     { id: "visits", label: "Revisitas" },
-    { id: "studies", label: "Estudios" },
+    { id: "studies", label: "Cursos" },
     { id: "notes", label: "Notas" },
   ];
-
-  const handleProcessComplete = (arrangements: GroupArrangement[]) => {
-    onSaveArrangements(arrangements);
-    setImportModalOpen(false);
-  };
 
   const renderContent = () => {
     if (activeTab === "groups") {
@@ -113,7 +117,7 @@ const ActivityView: React.FC<ActivityViewProps> = ({
               </button>
               <button
                 id="import-groups-button"
-                onClick={() => setImportModalOpen(true)}
+                onClick={onImportClick}
                 className={`flex items-center gap-2 text-sm font-semibold px-3 py-1 rounded-lg ${
                   themeColor === "custom" ? "bg-custom-subtle text-custom" : `${theme.bg} bg-opacity-10 hover:bg-opacity-20 ${dynamicTextColor}`
                 }`}
@@ -123,11 +127,22 @@ const ActivityView: React.FC<ActivityViewProps> = ({
               </button>
             </div>
             {groupArrangements.map((arrangement, index) => (
-              <GroupArrangementCard
-                key={index}
-                arrangement={arrangement}
-                themeColor={themeColor}
-              />
+              <div key={index} className="relative group">
+                <GroupArrangementCard
+                  arrangement={arrangement}
+                  themeColor={themeColor}
+                />
+                <button
+                  onClick={() => {
+                    setEditingGroupIndex(index);
+                    setIsEditGroupModalOpen(true);
+                  }}
+                  className="absolute top-2 right-2 p-2 bg-white dark:bg-slate-800 rounded-full shadow-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="Editar grupo"
+                >
+                  <PencilIcon className="w-4 h-4" />
+                </button>
+              </div>
             ))}
           </div>
         );
@@ -143,7 +158,7 @@ const ActivityView: React.FC<ActivityViewProps> = ({
           </p>
           <button
             id="import-groups-button"
-            onClick={() => setImportModalOpen(true)}
+            onClick={onImportClick}
             className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg ${
               themeColor === "custom" ? "bg-custom" : theme.bg
               } text-white font-bold text-lg shadow-md transition-transform ${!performanceMode && "transform hover:scale-105"
@@ -180,6 +195,17 @@ const ActivityView: React.FC<ActivityViewProps> = ({
     if (filteredActivities.length > 0) {
       return (
         <div className="space-y-4">
+          <div className="flex justify-end">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className={`flex items-center gap-2 text-sm font-semibold px-3 py-1.5 rounded-lg ${
+                themeColor === "custom" ? "bg-custom-subtle text-custom" : `${theme.bg} bg-opacity-10 hover:bg-opacity-20 ${dynamicTextColor}`
+              }`}
+            >
+              <ClipboardPasteIcon className="w-4 h-4" />
+              Importar {activeTab === "visits" ? "Revisita" : "Curso"}
+            </button>
+          </div>
           {filteredActivities.map((activity) => (
             <ActivityCard
               key={activity.id}
@@ -196,20 +222,56 @@ const ActivityView: React.FC<ActivityViewProps> = ({
     return (
       <div className="text-center py-16 px-4">
         <p className="text-lg font-semibold text-slate-700 dark:text-slate-200">
-          No hay {activeTab === "visits" ? "revisitas" : "estudios"} anotados.
+          No hay {activeTab === "visits" ? "revisitas" : "cursos"} anotados.
         </p>
-        <p className="text-slate-500 dark:text-slate-400 mt-2">
-          ¡Usa el botón "Agregar" para empezar a registrar tu actividad!
-        </p>
+        <div className="flex flex-col items-center gap-4 mt-6">
+          <p className="text-slate-500 dark:text-slate-400">
+            ¡Usa el botón "Agregar" para empezar o importa un archivo!
+          </p>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${
+              themeColor === "custom" ? "bg-custom-subtle text-custom" : `${theme.bg} bg-opacity-10 ${theme.text}`
+            } font-semibold`}
+          >
+            <ClipboardPasteIcon className="w-5 h-5" />
+            Importar Archivo
+          </button>
+        </div>
       </div>
     );
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string;
+        const imported = JSON.parse(content);
+        
+        if (imported.type === "garden_activity_import" && imported.data) {
+          // Reset file input
+          e.target.value = "";
+          onImportActivity(imported.data);
+        } else {
+          alert("Archivo no válido o formato incorrecto.");
+        }
+      } catch (err) {
+        console.error("Error parsing import file:", err);
+        alert("Error al leer el archivo.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
-    <div className="w-full max-w-4xl mx-auto mt-4">
+    <div className="w-full max-w-4xl mx-auto">
       <div
         id="activity-tabs"
-        className="bg-white dark:bg-slate-800 rounded-2xl p-2 sticky top-20 z-10 mb-4 shadow-sm"
+        className="bg-white dark:bg-slate-800 rounded-2xl p-2 sticky top-0 z-10 mb-4 mt-4 shadow-sm"
       >
         <div className="flex bg-slate-100 dark:bg-slate-900 rounded-lg p-1">
           {tabs.map((tab) => (
@@ -258,7 +320,7 @@ const ActivityView: React.FC<ActivityViewProps> = ({
               {isPrivacyMode ? "**" : monthlySummary.studies}
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Estudios actuales
+              Cursos actuales
             </p>
           </div>
         </div>
@@ -277,13 +339,22 @@ const ActivityView: React.FC<ActivityViewProps> = ({
         renderContent()
       )}
 
-      <ImportArrangementModal
-        isOpen={isImportModalOpen}
-        onClose={() => setImportModalOpen(false)}
-        onProcessComplete={handleProcessComplete}
+      <EditGroupModal
+        isOpen={isEditGroupModalOpen}
+        onClose={() => setIsEditGroupModalOpen(false)}
+        arrangement={editingGroupIndex !== null ? groupArrangements[editingGroupIndex] : null}
+        onSave={(updated) => editingGroupIndex !== null && onUpdateGroup(editingGroupIndex, updated)}
+        onDelete={() => editingGroupIndex !== null && onDeleteGroup(editingGroupIndex)}
         themeColor={themeColor}
-        isOnline={isOnline}
         performanceMode={performanceMode}
+      />
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept=".json,application/json,text/plain"
+        className="hidden"
       />
     </div>
   );

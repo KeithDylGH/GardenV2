@@ -8,6 +8,12 @@ import { BookOpenIcon } from "./icons/BookOpenIcon"; // for study
 import { ArrowUturnLeftIcon } from "./icons/ArrowUturnLeftIcon"; // for visit
 import { PencilIcon } from "./icons/PencilIcon";
 import { TrashIcon } from "./icons/TrashIcon";
+import { ShareIcon } from "./icons/ShareIcon";
+import { CalendarIcon } from "./icons/CalendarIcon";
+import { ChatBubbleBottomCenterTextIcon } from "./icons/ChatBubbleBottomCenterTextIcon";
+import { AcademicCapIcon } from "./icons/AcademicCapIcon";
+import { Share } from "@capacitor/share";
+import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
 
 interface ActivityCardProps {
   activity: ActivityItem;
@@ -35,92 +41,175 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
 }) => {
   const theme = THEMES[themeColor] || THEMES.blue;
   const isStudy = activity.type === "study";
+  const dateObj = new Date(activity.date);
 
-  const date = new Date(activity.date);
-  const formattedDate = date.toLocaleDateString("es-ES", {
+  const handleShare = async () => {
+    const dateFormatted = dateObj.toLocaleDateString('es-ES', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    });
+    
+    const activityData = {
+      version: "1.2.0",
+      type: "garden_activity_import",
+      data: activity
+    };
+
+    const jsonString = JSON.stringify(activityData, null, 2);
+    const fileName = `actividad_${activity.name.replace(/\s+/g, '_')}_${Date.now()}.json`;
+
+    try {
+      // Create temporary file for sharing
+      const result = await Filesystem.writeFile({
+        path: fileName,
+        data: jsonString,
+        directory: Directory.Cache,
+        encoding: Encoding.UTF8,
+      });
+
+      await Share.share({
+        title: isStudy ? 'Curso Bíblico' : 'Revisita',
+        text: `Compartiendo ${isStudy ? 'curso' : 'revisita'} de ${activity.name}`,
+        url: result.uri,
+        dialogTitle: 'Compartir Actividad'
+      });
+    } catch (err) {
+      console.error("Error sharing file:", err);
+      // Fallback to text sharing if file writing fails
+      let text = `*${isStudy ? 'Curso Bíblico' : 'Revisita'}*\n`;
+      text += `👤 *Nombre:* ${activity.name}\n`;
+      text += `📅 *Fecha:* ${dateFormatted}\n`;
+      if (activity.location) text += `📍 *Lugar:* ${activity.location}\n`;
+      if (activity.comments) text += `📝 *Notas:* ${activity.comments}\n`;
+      text += `\n_Enviado desde Garden_`;
+
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: 'Actividad', text });
+        } else {
+          await navigator.clipboard.writeText(text);
+          alert("Copiado al portapapeles");
+        }
+      } catch (innerErr) {
+        console.error("Fallback share error:", innerErr);
+      }
+    }
+  };
+  const formattedDate = dateObj.toLocaleDateString("es-ES", {
     day: "numeric",
-    month: "long",
+    month: "short",
     year: "numeric",
-  });
+  }).replace(/ de /g, " ").replace(/\./g, "");
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-700 p-4 space-y-3 relative">
-      <div className="absolute top-3 right-3 flex items-center space-x-2">
-        <button
-          onClick={() => onEdit(activity)}
-          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"
-        >
-          <PencilIcon className="w-5 h-5" />
-        </button>
-        <button
-          onClick={() => onDelete(activity.id)}
-          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 rounded-full hover:bg-red-50 dark:hover:bg-red-500/10"
-        >
-          <TrashIcon className="w-5 h-5" />
-        </button>
-      </div>
-
-      <div className="flex items-start justify-between pr-20">
-        <div>
-          <p className="font-bold text-lg text-slate-800 dark:text-slate-100">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-700 p-4 space-y-4">
+      {/* Header with Title and Actions */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <p className="font-bold text-lg text-slate-800 dark:text-slate-100 truncate pt-1">
             {activity.name}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {formattedDate}
-          </p>
         </div>
-        <div
-          className={`flex items-center space-x-2 text-sm font-semibold px-3 py-1 rounded-full ${
-            themeColor === "custom" ? "bg-custom-subtle text-custom" : `${theme.bg} bg-opacity-10 ${theme.text}`
-          }`}
-        >
-          {isStudy ? (
-            <BookOpenIcon className="w-4 h-4" />
-          ) : (
-            <ArrowUturnLeftIcon className="w-4 h-4" />
-          )}
-          <span>{isStudy ? "Estudio" : "Revisita"}</span>
+        
+        <div className="flex items-center gap-1 flex-shrink-0 -mr-1">
+          <button
+            onClick={handleShare}
+            className="p-2 text-slate-400 hover:text-custom transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-700/50"
+            title="Compartir"
+          >
+            <ShareIcon className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => onEdit(activity)}
+            className="p-2 text-slate-400 hover:text-blue-500 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-700/50"
+            title="Editar"
+          >
+            <PencilIcon className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => onDelete(activity.id)}
+            className="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-50 dark:hover:bg-red-500/10"
+            title="Eliminar"
+          >
+            <TrashIcon className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
-      {/* Conversation stage for revisitas */}
-      {!isStudy && (
-        <div className="flex items-center">
-          <span className="text-xs font-medium px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400">
-            {getConversationStageLabel(activity.conversationStage)}
-          </span>
-        </div>
-      )}
-
-      {/* Lesson info for estudios */}
-      {isStudy && (activity.currentLesson || activity.weeklyFrequency) && (
-        <div className="flex flex-wrap items-center gap-2">
-          {activity.currentLesson && (
-            <span className="text-xs font-medium px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400">
-              📖 Lección {activity.currentLesson}/60
+      {/* Metadata Section (Icon-led list) */}
+      <div className="space-y-2.5">
+        {/* Date and Type Badge */}
+        <div className="flex items-center gap-2">
+          <CalendarIcon className="w-4 h-4 text-slate-400 flex-shrink-0" />
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 capitalize">
+              {formattedDate}
             </span>
-          )}
-          {activity.weeklyFrequency && (
-            <span className="text-xs font-medium px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400">
-              📅 {activity.weeklyFrequency}x por semana
+            <span className="text-slate-300 dark:text-slate-700 text-xs">•</span>
+            <div
+              className={`flex items-center space-x-1 text-[9px] font-black tracking-widest px-1.5 py-0.5 rounded-md ${
+                themeColor === "custom" ? "bg-custom-subtle text-custom" : `${theme.bg} bg-opacity-10 ${theme.text}`
+              }`}
+            >
+              {isStudy ? <BookOpenIcon className="w-2.5 h-2.5" /> : <ArrowUturnLeftIcon className="w-2.5 h-2.5" />}
+              <span>{isStudy ? "CURSO" : "REVISITA"}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Stage for revisitas */}
+        {!isStudy && (
+          <div className="flex items-center gap-2">
+            <ChatBubbleBottomCenterTextIcon className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+              {getConversationStageLabel(activity.conversationStage)}
             </span>
-          )}
-        </div>
-      )}
+          </div>
+        )}
 
-      {activity.location && (
-        <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-300">
-          <LocationMarkerIcon className="w-5 h-5 flex-shrink-0 text-slate-400 dark:text-slate-500" />
-          <p className="text-sm">{activity.location}</p>
-        </div>
-      )}
+        {/* Lesson/Frequency for estudios */}
+        {isStudy && (activity.currentLesson || activity.weeklyFrequency) && (
+          <div className="flex items-center gap-2">
+            <AcademicCapIcon className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <div className="flex flex-wrap items-center gap-1.5">
+              {activity.currentLesson && (
+                <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                  Lección {activity.currentLesson}
+                </span>
+              )}
+              {activity.currentLesson && activity.weeklyFrequency && (
+                <span className="text-slate-300 dark:text-slate-700 text-xs">•</span>
+              )}
+              {activity.weeklyFrequency && (
+                <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                  {activity.weeklyFrequency}x semana
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
-      {activity.comments && (
-        <div className="flex items-start space-x-2 text-slate-600 dark:text-slate-300">
-          <DocumentTextIcon className="w-5 h-5 flex-shrink-0 text-slate-400 dark:text-slate-500 mt-0.5" />
-          <p className="text-sm">{activity.comments}</p>
-        </div>
-      )}
+        {/* Location */}
+        {activity.location && (
+          <div className="flex items-center gap-2">
+            <LocationMarkerIcon className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <p className="text-xs text-slate-600 dark:text-slate-300 truncate">
+              {activity.location}
+            </p>
+          </div>
+        )}
+
+        {/* Comments */}
+        {activity.comments && (
+          <div className="flex items-start gap-2 pt-1 border-t border-slate-100 dark:border-slate-700/50 mt-1">
+            <DocumentTextIcon className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed italic">
+              {activity.comments}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -28,26 +28,37 @@ public class MainActivity extends BridgeActivity {
   }
 
   private void handleIntent(Intent intent) {
-    if (Intent.ACTION_SEND.equals(intent.getAction())) {
-      String type = intent.getType();
-      String content = null;
+    String action = intent.getAction();
+    String type = intent.getType();
+    String content = null;
 
+    if (Intent.ACTION_SEND.equals(action)) {
       if ("text/plain".equals(type)) {
         content = intent.getStringExtra(Intent.EXTRA_TEXT);
       } else if (type != null && (type.startsWith("application/") || type.startsWith("text/"))) {
-        // Handle application/json, text/plain, etc.
         Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
         if (uri != null) {
           content = readUri(uri);
         }
       }
+    } else if (Intent.ACTION_VIEW.equals(action)) {
+      Uri data = intent.getData();
+      if (data != null) {
+        content = readUri(data);
+      }
+    }
 
-      if (content != null) {
-        saveToCache(content);
-        // Try to notify if bridge is ready (hot resume)
-        if (getBridge() != null) {
+    if (content != null) {
+      saveToCache(content);
+      // Notify the webview if the bridge is already ready (hot resume)
+      final String finalContent = content;
+      if (getBridge() != null) {
+        getBridge().executeOnMainThread(new Runnable() {
+          @Override
+          public void run() {
             getBridge().triggerWindowJSEvent("gardenImportAvailable");
-        }
+          }
+        });
       }
     }
   }

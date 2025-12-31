@@ -7,6 +7,8 @@ const URLS_TO_PRECACHE = [
   "/manifest.json",
   "/assets/icon-192x192.svg",
   "/assets/icon-512x512.svg",
+  "/assets/fonts/StackSansNotch-Regular.woff2",
+  "/assets/fonts/StackSansNotch-Regular-Ext.woff2",
 ];
 
 const APP_STORAGE_KEY = "garden-service-tracker";

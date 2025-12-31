@@ -4,7 +4,7 @@ import { THEMES } from "../constants";
 import { UserIcon } from "./icons/UserIcon";
 import { LocationMarkerIcon } from "./icons/LocationMarkerIcon";
 import { ClockIcon } from "./icons/ClockIcon";
-
+import { TerritoryIcon } from "./icons/TerritoryIcon";
 
 interface GroupArrangementCardProps {
   arrangement: GroupArrangement;
@@ -31,8 +31,6 @@ const InfoRow: React.FC<{
   );
 };
 
-import { TerritoryIcon } from "./icons/TerritoryIcon";
-
 const GroupArrangementCard: React.FC<GroupArrangementCardProps> = ({
   arrangement,
   themeColor,
@@ -42,23 +40,32 @@ const GroupArrangementCard: React.FC<GroupArrangementCardProps> = ({
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-700 p-4 space-y-3">
-      {groupNumber && (
-        <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
+        {groupNumber ? (
           <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">
             {groupNumber}
           </h3>
-          {conductor && (
+        ) : (
+          <div /> // Spacer
+        )}
+        {(() => {
+          const hasConductor = conductor && 
+                              conductor.toString().toLowerCase() !== "null" && 
+                              conductor.toString().trim() !== "";
+          return (
             <div
               className={`flex items-center space-x-2 text-sm font-semibold px-3 py-1 rounded-full ${
                 themeColor === "custom" ? "bg-custom-subtle text-custom" : `${theme.bg} bg-opacity-10 ${theme.text}`
               }`}
             >
               <UserIcon className="w-4 h-4" />
-              <span>{conductor}</span>
+              <span className={hasConductor ? "" : "italic opacity-70"}>
+                {hasConductor ? conductor : "Sin conductor"}
+              </span>
             </div>
-          )}
-        </div>
-      )}
+          );
+        })()}
+      </div>
 
       <div className="space-y-2 pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
         <InfoRow

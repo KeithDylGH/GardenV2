@@ -20,6 +20,8 @@ import { PlusIcon } from "./icons/PlusIcon";
 import { CalendarPlanIcon } from "./icons/CalendarPlanIcon";
 import { MedicalIcon } from "./icons/MedicalIcon";
 import { COVisitIcon } from "./icons/COVisitIcon";
+import { SpecialCampaignIcon } from "./icons/SpecialCampaignIcon";
+import { HammerWrenchIcon } from "./icons/HammerWrenchIcon";
 
 interface CalendarGridProps {
   selectedMonth: Date;
@@ -240,6 +242,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
               dayClasses.push("bg-teal-100 dark:bg-teal-900/40 border-teal-200 dark:border-teal-700");
             } else if (dayEntry?.event === 'co_visit') {
               dayClasses.push("bg-emerald-100 dark:bg-emerald-900/40 border-emerald-200 dark:border-emerald-700");
+            } else if (dayEntry?.event === 'special_campaign') {
+              dayClasses.push("bg-amber-100 dark:bg-amber-900/40 border-amber-200 dark:border-amber-700");
+            } else if (dayEntry?.event === 'maintenance') {
+              dayClasses.push("bg-blue-100 dark:bg-blue-900/40 border-blue-200 dark:border-blue-700");
             } else if (isCampaign || dayEntry?.event === 'campaign') {
               dayClasses.push(theme.bg, "bg-opacity-20 dark:bg-opacity-20");
             } else if (status === "sick" || dayEntry?.event === 'sick') {
@@ -317,6 +323,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                              else if (dayEntry?.event === 'memorial') icons.push(<WineIcon key="event" className={`${iconSizeClass} text-rose-500`} />);
                              else if (dayEntry?.event === 'cleaning') icons.push(<SparklesIcon key="event" className={`${iconSizeClass} text-slate-500 dark:text-slate-400`} />);
                              else if (dayEntry?.event === 'co_visit') icons.push(<COVisitIcon key="event" className={`${iconSizeClass} text-emerald-500`} />);
+                             else if (dayEntry?.event === 'special_campaign') icons.push(<SpecialCampaignIcon key="event" className={`${iconSizeClass} text-amber-500`} />);
+                             else if (dayEntry?.event === 'maintenance') icons.push(<HammerWrenchIcon key="event" className={`${iconSizeClass} text-blue-500`} />);
                              else if (dayEntry?.event === 'sick' || status === 'sick') icons.push(<MedicalIcon key="event" className={`${iconSizeClass} text-red-500`} />);
                         }
                         

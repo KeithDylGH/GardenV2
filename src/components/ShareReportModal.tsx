@@ -108,7 +108,7 @@ const ShareReportModal: React.FC<ShareReportModalProps> = ({
       }
       // Only include studies if there are any
       if (studies > 0) {
-        lines.push(`Estudios: ${studies}`);
+        lines.push(`Cursos: ${studies}`);
       }
       // Add sick note if applicable
       if (wasSickThisMonth) {

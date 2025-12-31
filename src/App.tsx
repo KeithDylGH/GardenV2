@@ -8,6 +8,8 @@ import React, {
 import { Capacitor } from "@capacitor/core";
 import { Share } from "@capacitor/share";
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/css';
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { App as CapacitorApp } from "@capacitor/app";
 import Header from "./components/Header";
@@ -30,6 +32,7 @@ import TutorialConfirmationModal from "./components/TutorialConfirmationModal";
 import GoalReachedModal from "./components/GoalReachedModal";
 import Sidebar from "./components/Sidebar";
 import NewsModal from "./components/NewsModal";
+import ImportArrangementModal from "./components/ImportArrangementModal";
 import EndOfYearModal from "./components/EndOfYearModal";
 import ConfirmationModal from "./components/ConfirmationModal";
 import PlanningModal from "./components/PlanningModal";
@@ -37,6 +40,8 @@ import PioneerUpgradeModal from "./components/PioneerUpgradeModal";
 import AchievementsView from "./components/AchievementsView";
 import AchievementToast from "./components/AchievementToast";
 import TimerSelectionModal from "./components/TimerSelectionModal";
+import ImportToast from "./components/ImportToast";
+import WhatsNewModal from "./components/WhatsNewModal";
 import { useOnlineStatus } from "./hooks/useOnlineStatus";
 import {
   AppView,
@@ -100,7 +105,7 @@ const PRIVACY_MODE_KEY = "garden-privacy-mode";
 const SHOW_TIMER_KEY = "garden-show-timer";
 const REPORT_NOTIFICATION_KEY = "garden-report-notification";
 const APP_VERSION_KEY = "garden-app-version";
-const APP_VERSION = "2.0.3";
+const APP_VERSION = "2.1.0";
 const VISIT_NOTIFICATION_KEY = "garden-visit-notification";
 const STUDY_NOTIFICATION_KEY = "garden-study-notification";
 const PLAN_NOTIFICATION_KEY = "garden-plan-notification";
@@ -125,7 +130,7 @@ const TUTORIALS: Record<AppView, TutorialStep[]> = {
       target: "#ghost-mode-toggle",
       title: "Modo Espejo",
       content:
-        "Compite contra ti mismo. El espejo marca las horas que llevabas en la misma fecha del mes anterior. Ten en cuenta que esta función estará disponible después de que completes tu primer mes de registro en la app.",
+        "Evalúa tu progreso. El espejo marca las horas que llevabas en la misma fecha del mes anterior. Ten en cuenta que esta función estará disponible después de que completes tu primer mes de registro en la app.",
       position: "bottom",
     },
     {
@@ -146,7 +151,7 @@ const TUTORIALS: Record<AppView, TutorialStep[]> = {
       target: "#add-hours-button",
       title: "Añadir Horas y Actividad",
       content:
-        "Usa este botón para añadir rápidamente las horas de tus sesiones de predicación o para registrar una revisita o estudio.",
+        "Usa este botón para añadir rápidamente las horas de tus sesiones de predicación o para registrar una revisita o curso.",
       position: "top",
     },
   ],
@@ -155,7 +160,7 @@ const TUTORIALS: Record<AppView, TutorialStep[]> = {
       target: "#activity-tabs",
       title: "Organiza tu Ministerio",
       content:
-        "Cambia entre estas pestañas para ver tus grupos, revisitas y estudios bíblicos.",
+        "Cambia entre estas pestañas para ver tus grupos, revisitas y cursos bíblicos.",
       position: "bottom",
     },
     {
@@ -201,7 +206,7 @@ const TUTORIALS: Record<AppView, TutorialStep[]> = {
       target: "#add-plan-block-button",
       title: "Bloques de Servicio",
       content:
-        'Toca el botón "+" para añadir un bloque de servicio. Dentro, podrás darle un título, un horario y vincular tus revisitas y estudios para tener un plan claro.',
+        'Toca el botón "+" para añadir un bloque de servicio. Dentro, podrás darle un título, un horario y vincular tus revisitas y cursos para tener un plan claro.',
       position: "bottom",
     },
   ],
@@ -528,6 +533,7 @@ const App: React.FC = () => {
   const [isEditLdcHoursMode, setIsEditLdcHoursMode] = useState(false);
   const [dateToEdit, setDateToEdit] = useState<Date | null>(null);
   const [isGoalReachedModalOpen, setGoalReachedModalOpen] = useState(false);
+  const [isImportModalOpen, setImportModalOpen] = useState(false);
   const [isEndOfYearModalOpen, setEndOfYearModalOpen] = useState(false);
   const [isImportConfirmModalOpen, setImportConfirmModalOpen] = useState(false);
   const [importedState, setImportedState] = useState<AppState | null>(null);
@@ -583,6 +589,9 @@ const App: React.FC = () => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [showStreakEndedToast, setShowStreakEndedToast] = useState(false);
   const [showUpdateToast, setShowUpdateToast] = useState(false);
+  const [showImportToast, setShowImportToast] = useState(false);
+  const [importType, setImportType] = useState<ActivityType | null>(null);
+  const [isWhatsNewModalOpen, setIsWhatsNewModalOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -688,6 +697,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const lastVersion = localStorage.getItem(APP_VERSION_KEY);
     if (lastVersion && lastVersion !== APP_VERSION) {
+      setIsWhatsNewModalOpen(true);
       setShowUpdateToast(true);
     }
     localStorage.setItem(APP_VERSION_KEY, APP_VERSION);
@@ -1112,7 +1122,11 @@ const App: React.FC = () => {
         const dayEntry = archives[serviceYear]?.[dateKey];
         const hasProtectedEvent = dayEntry?.event === 'circuit_assembly' ||
           dayEntry?.event === 'regional_convention' ||
-          dayEntry?.event === 'memorial';
+          dayEntry?.event === 'memorial' ||
+          dayEntry?.event === 'co_visit' ||
+          dayEntry?.event === 'special_campaign' ||
+          dayEntry?.event === 'maintenance' ||
+          dayEntry?.isCampaign;
 
         if (
           !(
@@ -1529,7 +1543,7 @@ const App: React.FC = () => {
 
       if (
         newEntry.hours > 0 ||
-        newEntry.event ||
+        (newEntry.event && newEntry.event !== 'cleaning' && newEntry.event !== 'sick') ||
         newEntry.weather || // Keep checking for legacy data
         newEntry.status || // Keep checking for legacy data
         newEntry.isCampaign ||
@@ -1576,7 +1590,7 @@ const App: React.FC = () => {
       return newArchives;
     });
 
-    if (newTotalHours > 0 || event === 'memorial' || event === 'circuit_assembly' || event === 'regional_convention') {
+    if (newTotalHours > 0 || event === 'memorial' || event === 'circuit_assembly' || event === 'regional_convention' || event === 'co_visit' || event === 'special_campaign' || event === 'maintenance') {
       const today = new Date();
       // Only update last log date if the entry is for today or in the past
       if (date.getTime() <= today.getTime()) {
@@ -1843,11 +1857,11 @@ const App: React.FC = () => {
             if (!isStudy && !visitNotificationsEnabled) continue;
 
             const body = isStudy
-              ? `Recuerda darle estudio a ${act.name}`
+              ? `Recuerda darle curso bíblico a ${act.name}`
               : `Recuerda revisitar a ${act.name}`;
 
             notificationsToSchedule.push({
-              title: isStudy ? "Estudio Bíblico" : "Revisita",
+              title: isStudy ? "Curso Bíblico" : "Revisita",
               body,
               id: idCounter++,
               schedule: {
@@ -1989,49 +2003,189 @@ const App: React.FC = () => {
 
   const handleSavePlanningBlock = (
     date: Date,
-    blockData: Omit<PlanningBlock, "id">
+    blockData: Omit<PlanningBlock, "id">,
+    range?: { start: string, end: string }
   ) => {
-    const dateKey = formatDateKey(date);
     setPlanningData((prev) => {
       const newPlanningData = { ...prev };
-      const dayBlocks = newPlanningData[dateKey]
-        ? [...newPlanningData[dateKey]]
-        : [];
-      if (planningBlockToEdit) {
-        // Editing existing block
-        const blockIndex = dayBlocks.findIndex(
-          (b) => b.id === planningBlockToEdit.id
-        );
-        if (blockIndex > -1) {
-          dayBlocks[blockIndex] = { ...planningBlockToEdit, ...blockData };
+
+      if (range) {
+        const startParts = range.start.split("-").map(Number);
+        const endParts = range.end.split("-").map(Number);
+        const startLocal = new Date(startParts[0], startParts[1] - 1, startParts[2]);
+        const endLocal = new Date(endParts[0], endParts[1] - 1, endParts[2]);
+
+        let current = new Date(startLocal);
+        while (current <= endLocal) {
+          const currentKey = formatDateKey(current);
+          const dayBlocks = newPlanningData[currentKey] ? [...newPlanningData[currentKey]] : [];
+
+          if (planningBlockToEdit) {
+            // Bulk Edit: find blocks matching the ORIGINAL title/time of the block being edited
+            const blockIndex = dayBlocks.findIndex(
+              (b) =>
+                b.id === planningBlockToEdit.id ||
+                (b.title === planningBlockToEdit.title && b.timeRange === planningBlockToEdit.timeRange)
+            );
+            if (blockIndex > -1) {
+              dayBlocks[blockIndex] = { ...dayBlocks[blockIndex], ...blockData };
+              newPlanningData[currentKey] = dayBlocks;
+            } else {
+              // If not found, we could either add it or skip. 
+              // Usually, range edit on specific recurring-like items means update if exists.
+              // But for this simple app, adding it is also valid if it's a "fill range" operation.
+              // Let's stick to update-if-exists for bulk edit, or just overwriting?
+              // The user said "editarlo en conjunto", so if I edit one, I expect others to update.
+              // If others don't exist, maybe they don't get updated.
+            }
+          } else {
+            // Bulk Add
+            dayBlocks.push({ ...blockData, id: Date.now().toString() + current.getTime() });
+            newPlanningData[currentKey] = dayBlocks;
+          }
+          current.setDate(current.getDate() + 1);
         }
       } else {
-        // Adding new block
-        dayBlocks.push({ ...blockData, id: Date.now().toString() });
+        // Single Day logic
+        const dateKey = formatDateKey(date);
+        const dayBlocks = newPlanningData[dateKey] ? [...newPlanningData[dateKey]] : [];
+        if (planningBlockToEdit) {
+          const blockIndex = dayBlocks.findIndex((b) => b.id === planningBlockToEdit.id);
+          if (blockIndex > -1) {
+            dayBlocks[blockIndex] = { ...planningBlockToEdit, ...blockData };
+          }
+        } else {
+          dayBlocks.push({ ...blockData, id: Date.now().toString() });
+        }
+        newPlanningData[dateKey] = dayBlocks;
       }
-      newPlanningData[dateKey] = dayBlocks;
+
       return newPlanningData;
     });
     handleCloseModal();
   };
 
-  const handleDeletePlanningBlock = (date: Date, blockId: string) => {
-    const dateKey = formatDateKey(date);
+  const handleDeletePlanningBlock = (
+    date: Date, 
+    blockId: string, 
+    range?: { start: string, end: string }
+  ) => {
     setPlanningData((prev) => {
       const newPlanningData = { ...prev };
-      const dayBlocks = newPlanningData[dateKey]
-        ? [...newPlanningData[dateKey]]
-        : [];
-      const updatedBlocks = dayBlocks.filter((b) => b.id !== blockId);
-      if (updatedBlocks.length > 0) {
-        newPlanningData[dateKey] = updatedBlocks;
+      
+      if (range) {
+        // Bulk delete based on title and timeRange
+        const blockToDelete = prev[formatDateKey(date)]?.find(b => b.id === blockId);
+        if (blockToDelete) {
+          const startParts = range.start.split("-").map(Number);
+          const endParts = range.end.split("-").map(Number);
+          const startLocal = new Date(startParts[0], startParts[1] - 1, startParts[2]);
+          const endLocal = new Date(endParts[0], endParts[1] - 1, endParts[2]);
+          
+          let current = new Date(startLocal);
+          while (current <= endLocal) {
+            const currentKey = formatDateKey(current);
+            if (newPlanningData[currentKey]) {
+              newPlanningData[currentKey] = newPlanningData[currentKey].filter(
+                b => b.title !== blockToDelete.title || b.timeRange !== blockToDelete.timeRange
+              );
+              if (newPlanningData[currentKey].length === 0) {
+                delete newPlanningData[currentKey];
+              }
+            }
+            current.setDate(current.getDate() + 1);
+          }
+        }
       } else {
-        delete newPlanningData[dateKey];
+        // Single delete
+        const dateKey = formatDateKey(date);
+        const dayBlocks = newPlanningData[dateKey] ? [...newPlanningData[dateKey]] : [];
+        const updatedBlocks = dayBlocks.filter((b) => b.id !== blockId);
+        if (updatedBlocks.length > 0) {
+          newPlanningData[dateKey] = updatedBlocks;
+        } else {
+          delete newPlanningData[dateKey];
+        }
       }
       return newPlanningData;
     });
     handleCloseModal();
   };
+
+  const handleUpdateGroupArrangement = (index: number, updated: GroupArrangement) => {
+    setGroupArrangements(prev => {
+      const next = [...prev];
+      next[index] = updated;
+      return next;
+    });
+  };
+
+  const handleDeleteGroupArrangement = (index: number) => {
+    setGroupArrangements(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleImportActivity = (activity: ActivityItem) => {
+    const newActivity: ActivityItem = {
+      ...activity,
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
+    };
+    setActivities(prev => [newActivity, ...prev]);
+    setImportType(activity.type);
+    setShowImportToast(true);
+  };
+
+  const checkPendingImport = useCallback(async () => {
+    try {
+      const fileName = "pending_import.json";
+      // We use Cache directory as defined in MainActivity.java
+      const result = await Filesystem.readFile({
+        path: fileName,
+        directory: Directory.Cache,
+        encoding: Encoding.UTF8
+      });
+
+      if (result.data) {
+        const imported = JSON.parse(result.data as string);
+        if (imported.type === "garden_activity_import" && imported.data) {
+          handleImportActivity(imported.data);
+        }
+
+        // Delete the file after processing
+        await Filesystem.deleteFile({
+          path: fileName,
+          directory: Directory.Cache
+        });
+      }
+    } catch (err) {
+      // File likely doesn't exist, which is fine
+    }
+  }, [handleImportActivity]);
+
+  useEffect(() => {
+    // Check on startup
+    checkPendingImport();
+
+    // Listen for events from MainActivity (Hot Resume)
+    const handleExternalImport = () => {
+      checkPendingImport();
+    };
+
+    window.addEventListener('gardenImportAvailable', handleExternalImport);
+    
+    // Also keep appUrlOpen as a secondary mechanism just in case
+    const urlListenerPromise = CapacitorApp.addListener('appUrlOpen', () => {
+      checkPendingImport();
+    });
+
+    return () => {
+      window.removeEventListener('gardenImportAvailable', handleExternalImport);
+      urlListenerPromise.then(h => h.remove());
+    };
+  }, [checkPendingImport]);
+
+  useEffect(() => {
+    // (Removed old appUrlOpen effect that was here)
+  }, []);
 
   const openAddModal = () => {
     setActivityToEdit(null);
@@ -2498,11 +2652,73 @@ const App: React.FC = () => {
     return filteredHistory;
   }, [currentDate, archives]);
 
+  const [swiperInstance, setSwiperInstance] = useState<any>(null);
+
+  // Sync Swiper with activeView changes
+  useEffect(() => {
+    if (swiperInstance && activeView !== "achievements") {
+      const viewToIndex: Record<string, number> = {
+        tracker: 0,
+        planning: 1,
+        activity: 2,
+        history: 3,
+      };
+      const index = viewToIndex[activeView];
+      if (typeof index === "number" && swiperInstance.activeIndex !== index) {
+        swiperInstance.slideTo(index);
+      }
+    }
+  }, [activeView, swiperInstance]);
+
+  const handleSlideChange = (swiper: any) => {
+    const indexToView: Record<number, string> = {
+      0: "tracker",
+      1: "planning",
+      2: "activity",
+      3: "history",
+    };
+    const view = indexToView[swiper.activeIndex];
+    if (view && view !== activeView) {
+       // Update hash directly to trigger navigation, or use pushState if hash logic is too coupled
+       // Since handleHashChange updates activeView, we should just update the hash.
+       // However, we want to avoid double-firing if we slid because of a hash change.
+       // But handleHashChange checks window.location.hash. 
+       // If we swipe, we want to update the URL.
+       window.location.hash = `#/${view === "tracker" ? "" : view}`;
+    }
+  };
+
   const renderContent = () => {
-    switch (activeView) {
-      case "tracker":
-        return (
-          <>
+    if (activeView === "achievements") {
+      return (
+        <AchievementsView
+          allAchievements={ALL_ACHIEVEMENTS}
+          unlockedAchievements={unlockedAchievements}
+          themeColor={themeColor}
+          appState={appStateForSaving}
+        />
+      );
+    }
+
+    // Default to Swiper for main views
+    return (
+      <Swiper
+        spaceBetween={0}
+        slidesPerView={1}
+        onSwiper={setSwiperInstance}
+        onSlideChange={handleSlideChange}
+        initialSlide={
+          activeView === "tracker" ? 0 :
+          activeView === "planning" ? 1 :
+          activeView === "activity" ? 2 :
+          activeView === "history" ? 3 : 0
+        }
+        className="h-full"
+        allowTouchMove={true}
+        style={{ height: 'calc(100vh - 4rem - env(safe-area-inset-top) - 5rem - env(safe-area-inset-bottom))' }}
+      >
+        <SwiperSlide>
+          <div className="h-full overflow-y-auto px-4 animate-fadeIn">
             <ServiceTracker
               currentHours={currentHours}
               currentLdcHours={currentLdcHours}
@@ -2529,61 +2745,60 @@ const App: React.FC = () => {
               showTimer={showTimer}
               archives={archives}
             />
-          </>
-        );
-      case "activity":
-        return (
-          <ActivityView
-            activities={activities}
-            groupArrangements={groupArrangements}
-            onSaveArrangements={handleSaveArrangements}
-            themeColor={themeColor}
-            onEdit={handleStartEditActivity}
-            onDelete={handleDeleteActivity}
-            isOnline={isOnline}
-            performanceMode={performanceMode}
-            currentDate={currentDate}
-            isPrivacyMode={isPrivacyMode}
-            notes={notes}
-            onSaveNotes={handleSaveNotes}
+          </div>
+        </SwiperSlide>
+        
+        <SwiperSlide>
+          <div className="h-full overflow-y-auto px-4 animate-fadeIn">
+            <PlanningView
+              planningData={planningData}
+              activities={activities}
+              onOpenModal={handleOpenPlanningModal}
+              themeColor={themeColor}
+            />
+          </div>
+        </SwiperSlide>
 
-            themeMode={themeMode}
-          />
-        );
-      case "history":
-        return (
-          <HistoryView
-            archives={archives}
-            currentServiceYear={currentServiceYear}
-            themeColor={themeColor}
-            isPrivacyMode={isPrivacyMode}
-            onDayClick={handleDayClickForHistory}
-            activities={activities}
-            planningData={planningData}
-            meetingDays={meetingDays}
-          />
-        );
-      case "planning":
-        return (
-          <PlanningView
-            planningData={planningData}
-            activities={activities}
-            onOpenModal={handleOpenPlanningModal}
-            themeColor={themeColor}
-          />
-        );
-      case "achievements":
-        return (
-          <AchievementsView
-            allAchievements={ALL_ACHIEVEMENTS}
-            unlockedAchievements={unlockedAchievements}
-            themeColor={themeColor}
-            appState={appStateForSaving}
-          />
-        );
-      default:
-        return null;
-    }
+        <SwiperSlide>
+          <div className="h-full overflow-y-auto px-4 animate-fadeIn">
+            <ActivityView
+              activities={activities}
+              groupArrangements={groupArrangements}
+              onSaveArrangements={handleSaveArrangements}
+              themeColor={themeColor}
+              onEdit={handleStartEditActivity}
+              onDelete={handleDeleteActivity}
+              isOnline={isOnline}
+              performanceMode={performanceMode}
+              currentDate={currentDate}
+              isPrivacyMode={isPrivacyMode}
+              notes={notes}
+              onSaveNotes={handleSaveNotes}
+              onImportClick={() => setImportModalOpen(true)}
+              themeMode={themeMode}
+              onUpdateGroup={handleUpdateGroupArrangement}
+              onDeleteGroup={handleDeleteGroupArrangement}
+              onImportActivity={handleImportActivity}
+            />
+          </div>
+        </SwiperSlide>
+
+        <SwiperSlide>
+          <div className="h-full overflow-y-auto px-4 animate-fadeIn">
+            <HistoryView
+              archives={archives}
+              currentServiceYear={currentServiceYear}
+              themeColor={themeColor}
+              isPrivacyMode={isPrivacyMode}
+              onDayClick={handleDayClickForHistory}
+              activities={activities}
+              planningData={planningData}
+              meetingDays={meetingDays}
+            />
+          </div>
+        </SwiperSlide>
+      </Swiper>
+    );
   };
 
   if (showWelcome) {
@@ -2702,8 +2917,8 @@ const App: React.FC = () => {
         className="hidden"
       />
 
-      <main className="pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:pb-[calc(7rem+env(safe-area-inset-bottom))]">
-        <div className="px-4 animate-fadeIn max-h-full">{renderContent()}</div>
+      <main className="pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:pb-[calc(7rem+env(safe-area-inset-bottom))] h-[calc(100vh-4rem-env(safe-area-inset-top)-6.5rem-env(safe-area-inset-bottom))]">
+        <div className="animate-fadeIn h-full">{renderContent()}</div>
       </main>
 
       <BottomNav
@@ -2805,6 +3020,18 @@ const App: React.FC = () => {
         isOpen={isNewsModalOpen}
         onClose={() => setIsNewsModalOpen(false)}
         themeColor={themeColor}
+        performanceMode={performanceMode}
+      />
+
+      <ImportArrangementModal
+        isOpen={isImportModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onProcessComplete={(arrangements) => {
+            handleSaveArrangements(arrangements);
+            setImportModalOpen(false);
+        }}
+        themeColor={themeColor}
+        isOnline={isOnline}
         performanceMode={performanceMode}
       />
 
@@ -2941,6 +3168,26 @@ const App: React.FC = () => {
         isVisible={showUpdateToast}
         onDismiss={() => setShowUpdateToast(false)}
         onTap={() => setIsNewsModalOpen(true)}
+      />
+      <ImportToast 
+        isVisible={showImportToast}
+        onDismiss={() => setShowImportToast(false)}
+        type={importType}
+      />
+      <WhatsNewModal
+        isOpen={isWhatsNewModalOpen}
+        onClose={() => setIsWhatsNewModalOpen(false)}
+        title="2.1: ¡Ajustes y Visitas!"
+        features={[
+            "Soporte nativo para compartir e importar archivos .json",
+            "Mejora de la IA: Ahora puedes editar, ajustar y eliminar los grupos importados.",
+            "Mejora en el sistema de planificación (rango de días extendido)",
+            "Mejor interfaz para añadir horas de Servicio",
+            "Mejor interfaz para añadir eventos y actividades en el historial",
+            "Mejor navegación (deslizar entre secciones)"
+        ]}
+        themeColor={themeColor}
+        performanceMode={performanceMode}
       />
     </div>
   );

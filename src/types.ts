@@ -50,6 +50,8 @@ export type DayEvent =
   | "memorial"
   | "cleaning"
   | "co_visit"
+  | "special_campaign"
+  | "maintenance"
   | "sick";
 
 export type DayEntry = {

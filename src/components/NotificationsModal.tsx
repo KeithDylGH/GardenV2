@@ -156,7 +156,7 @@ const NotificationsModal: React.FC<NotificationsModalProps> = ({
                   </div>
                   <div>
                     <p className="font-semibold text-slate-700 dark:text-slate-200">
-                      Recordar Estudios
+                      Recordar Cursos
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       Aviso a las 7:00 AM el día seleccionado.

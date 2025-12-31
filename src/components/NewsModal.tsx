@@ -10,28 +10,45 @@ interface NewsItem {
   date: string;
   title: string;
   description?: string;
+  features?: string[];
   importance: "info" | "important" | "urgent";
 }
 
 const NEWS_DATA: NewsItem[] = [
   {
+    id: "7",
+    version: "2.1",
+    date: "30 de diciembre, 2025",
+    title: "2.1: ¡Ajustes y Visitas!",
+    description: "Una actualización mayor con grandes mejoras en funcionalidad e interfaz.",
+    features: [
+      "Comparte tus cursos y revisiones en la sección de “Actividad”.",
+      "Ajusta los mensajes de nuestra I.A. en los grupos. ¡Siéntete libre de editar lo que necesites!.",
+      "Planificación mejorada (rango de días).",
+      "Disfruta de una interfaz más fluida. ¡Desliza para cambiar de sección!.",
+      "Nuevos accesos rápidos para “Añadir horas”.",
+      "Dos nuevos eventos especiales en “Historial” (Campaña e Instalación)."
+    ],
+    importance: "important",
+  },
+  {
     id: "6",
     version: "2.0.3",
-    date: "21 de diciembre, 2024",
+    date: "21 de diciembre, 2025",
     title: "Mejoras menores y correciones gramáticas",
     importance: "info",
   },
   {
     id: "5",
     version: "2.0.2",
-    date: "20 de diciembre, 2024",
+    date: "20 de diciembre, 2025",
     title: "Arreglo de bug al exportar datos",
     importance: "urgent",
   },
   {
     id: "4",
     version: "2.0.2",
-    date: "20 de diciembre, 2024",
+    date: "20 de diciembre, 2025",
     title: "Cambios mínimos",
     description: "Mejoras menores y correcciones de estabilidad.",
     importance: "info",
@@ -39,7 +56,7 @@ const NEWS_DATA: NewsItem[] = [
   {
     id: "2",
     version: "2.0.1",
-    date: "20 de diciembre, 2024",
+    date: "20 de diciembre, 2025",
     title: "Corrección del temporizador de horas acreditadas",
     description:
       "Se arregló un error en que el temporizador de las horas acreditadas reemplazaba las horas en vez de añadirlas correctamente.",
@@ -48,7 +65,7 @@ const NEWS_DATA: NewsItem[] = [
   {
     id: "3",
     version: "2.0.1",
-    date: "20 de diciembre, 2024",
+    date: "20 de diciembre, 2025",
     title: "Días de reunión protegen la racha",
     description:
       "Los días de reunión ahora protegen tu racha, al igual que los fines de semana y tu día de descanso.",
@@ -57,7 +74,7 @@ const NEWS_DATA: NewsItem[] = [
   {
     id: "1",
     version: "2.0",
-    date: "19 de diciembre, 2024",
+    date: "19 de diciembre, 2025",
     title: "¡Garden salió oficialmente!",
     description: "Bienvenido a la nueva versión de Garden.",
     importance: "info",
@@ -150,7 +167,7 @@ const NewsModal: React.FC<NewsModalProps> = ({
           </button>
         </header>
 
-        <main className="flex-grow p-4 overflow-y-auto">
+        <main className="flex-grow p-4 overflow-y-auto max-h-[80vh]">
           <div className="relative pl-6">
             {/* Timeline line */}
             <div className="absolute left-2.5 top-2 bottom-2 w-0.5 bg-slate-300 dark:bg-slate-700" />
@@ -181,9 +198,21 @@ const NewsModal: React.FC<NewsModalProps> = ({
                     {item.title}
                   </h3>
                   {item.description && (
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 mb-2">
                       {item.description}
                     </p>
+                  )}
+                  {item.features && (
+                    <ul className="space-y-1.5 mt-2">
+                      {item.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <div className={`flex-shrink-0 w-1 h-1 rounded-full mt-1.5 ${getImportanceColor(item.importance)}`} />
+                          <p className="text-sm text-slate-600 dark:text-slate-400 leading-snug">
+                            {feature}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </div>
               </div>

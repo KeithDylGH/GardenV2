@@ -21,6 +21,8 @@ import { BuildingOfficeIcon } from "./icons/BuildingOfficeIcon";
 import { MegaphoneIcon } from "./icons/MegaphoneIcon";
 import { MedicalIcon } from "./icons/MedicalIcon";
 import { COVisitIcon } from "./icons/COVisitIcon";
+import { SpecialCampaignIcon } from "./icons/SpecialCampaignIcon";
+import { HammerWrenchIcon } from "./icons/HammerWrenchIcon";
 
 interface HistoryViewProps {
   archives: Record<string, HistoryLog>;
@@ -112,7 +114,9 @@ const HistoryView: React.FC<HistoryViewProps> = ({
         cleaning: 0,
         sick: 0,
         memorial: 0,
-        co_visit: 0
+        co_visit: 0,
+        special_campaign: 0,
+        maintenance: 0,
     };
     let ldcHours = 0;
     if (isSummaryMonth)
@@ -259,6 +263,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({
           {eventCounts.cleaning > 0 && <Stat Icon={SparklesIcon} count={eventCounts.cleaning} label="Limpieza" colorClass="text-slate-500 dark:text-slate-400" />}
           {eventCounts.sick > 0 && <Stat Icon={MedicalIcon} count={eventCounts.sick} label="Enfermo" colorClass="text-red-500" />}
           {eventCounts.co_visit > 0 && <Stat Icon={COVisitIcon} count={eventCounts.co_visit} label="Visita Sup." colorClass="text-emerald-500" />}
+          {eventCounts.special_campaign > 0 && <Stat Icon={SpecialCampaignIcon} count={eventCounts.special_campaign} label="Campaña Esp." colorClass="text-amber-500" />}
+          {eventCounts.maintenance > 0 && <Stat Icon={HammerWrenchIcon} count={eventCounts.maintenance} label="Instalación" colorClass="text-blue-500" />}
 
           {totalLdcHours > 0 && (
             <Stat

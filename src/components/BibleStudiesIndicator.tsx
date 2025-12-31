@@ -40,7 +40,7 @@ const BibleStudiesIndicator: React.FC<BibleStudiesIndicatorProps> = ({
         {studyCount}
       </p>
       <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-        Estudios
+        Cursos
       </p>
     </div>
   );
