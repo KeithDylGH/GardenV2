@@ -23,7 +23,7 @@ const AchievementsView: React.FC<AchievementsViewProps> = ({
   const unlockedCount = Object.keys(unlockedAchievements).length;
 
   return (
-    <div className="w-full max-w-4xl mx-auto pt-6">
+    <div className="w-full max-w-4xl mx-auto pt-6 px-5 pb-32">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
           Mis Logros
@@ -33,7 +33,7 @@ const AchievementsView: React.FC<AchievementsViewProps> = ({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {allAchievements.map((achievement) => (
           <AchievementCard
             key={achievement.id}
